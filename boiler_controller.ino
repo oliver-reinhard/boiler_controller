@@ -12,7 +12,7 @@
  */
 ConfigParams configParams;
 OperationalParams opParams;
-MockControlActions controlActions;
+ControlActions controlActions;
 
 void setup() {
   Serial.begin(9600);

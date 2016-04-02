@@ -21,14 +21,14 @@
         void getStat();
         
         // Mock counters:
-        unsigned short heatTrueCount;
-        unsigned short heatFalseCount;
-        unsigned short logValuesTrueCount;
-        unsigned short logValuesFalseCount;
-        unsigned short setConfigParamCount;
-        unsigned short getLogCount;
-        unsigned short getConfigCount;
-        unsigned short getStatCount;
+        unsigned short heatTrueCount = 0;
+        unsigned short heatFalseCount = 0;
+        unsigned short logValuesTrueCount = 0;
+        unsigned short logValuesFalseCount = 0;
+        unsigned short setConfigParamCount = 0;
+        unsigned short getLogCount = 0;
+        unsigned short getConfigCount = 0;
+        unsigned short getStatCount = 0;
         
         unsigned short totalInvocations();
 

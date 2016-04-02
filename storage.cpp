@@ -18,12 +18,12 @@ const unsigned short EEPROM_CONFIG_OFFSET  = EEPROM_VERSION_OFFSET + VERSION_SIZ
 const unsigned short EEPROM_LOG_OFFSET     = EEPROM_CONFIG_OFFSET + CONFIG_SIZE;
 
 #ifndef UNIT_TEST
-const unsigned short STORAGE_SIZE = EEPROM.length();
+  const unsigned short STORAGE_SIZE = EEPROM.length();
 #endif
 #ifdef UNIT_TEST
-const unsigned short STORAGE_SIZE = EEPROM_LOG_OFFSET + UNIT_TEST_LOG_ENTRIES * LOG_ENTRY_SIZE;
+  const unsigned short STORAGE_SIZE = EEPROM_LOG_OFFSET + UNIT_TEST_LOG_ENTRIES * LOG_ENTRY_SIZE;
 #endif
-const unsigned short LOG_ENTRIES = (STORAGE_SIZE - EEPROM_LOG_OFFSET) / LOG_ENTRY_SIZE;
+const unsigned short MAX_LOG_ENTRIES = (STORAGE_SIZE - EEPROM_LOG_OFFSET) / LOG_ENTRY_SIZE;
 
 /*
  * GLOBAL VARIABLES
@@ -53,10 +53,14 @@ void clearLogEntry(unsigned short index) {
  * Writes a log entry at the current logHead position and updates logHead and logTail.
  */
 void writeLogEntry(const LogEntry *entry) {
+  #ifdef DEBUG_STORAGE
+    Serial.print("DEBUG_STORAGE: Writing log entry, type = ");
+    Serial.println(entry->type);
+  #endif
   EEPROM.put(eepromLogOffset(logHead), *entry);
-  logHead = (logHead + 1) % LOG_ENTRIES;
+  logHead = (logHead + 1) % MAX_LOG_ENTRIES;
   if (logHead == logTail) {
-    logTail = (logTail + 1) % LOG_ENTRIES;
+    logTail = (logTail + 1) % MAX_LOG_ENTRIES;
   }
   // clear the next entry
   clearLogEntry(logHead);
@@ -77,13 +81,13 @@ unsigned short size() {
 }
 
 unsigned short maxLogEntries() {
-  return LOG_ENTRIES;
+  return MAX_LOG_ENTRIES;
 }
 
 unsigned short currentLogEntries() {
   if (logHead == logTail) return 0;
   if (logHead > logTail) return logHead - logTail;
-  return LOG_ENTRIES - (logTail - logHead);
+  return MAX_LOG_ENTRIES - (logTail - logHead);
 }
 
 /**
@@ -140,7 +144,7 @@ void initConfigParams(ConfigParams *configParams, boolean *updated) {
 void getConfigParams(ConfigParams *configParams) {
   if (version() != EEPROM_LAYOUT_VERSION) {
     #ifdef DEBUG_STORAGE
-    Serial.println("Updating EEPROM Layout Version");
+      Serial.println("DEBUG_STORAGE: Updating EEPROM Layout Version");
     #endif
     EEPROM.put(EEPROM_VERSION_OFFSET, EEPROM_LAYOUT_VERSION);
   }
@@ -152,7 +156,7 @@ void getConfigParams(ConfigParams *configParams) {
   // End initialise
   if (updated) {
     #ifdef DEBUG_STORAGE
-    Serial.println("Updating EEPROM ConfigParams");
+      Serial.println("DEBUG_STORAGE: Updating EEPROM ConfigParams");
     #endif
     updateConfigParams(configParams);
   }
@@ -170,11 +174,15 @@ void clearConfigParams() {
 }
 
 void initLog() {
+  #ifdef DEBUG_STORAGE
+    Serial.print("DEBUG_STORAGE: initlog(), log size = ");
+    Serial.println(MAX_LOG_ENTRIES);
+  #endif
   LogEntry entry;
   Timestamp latest = 0L;  // timestamp of the the most recent log entry
-  logHead = LOG_ENTRIES; // out of range => assert later that logHead was updated!
+  logHead = MAX_LOG_ENTRIES; // out of range => assert later that logHead was updated!
   // find log head (= first empty log entry)
-  for (unsigned short i = 0; i < LOG_ENTRIES ; i++) {
+  for (unsigned short i = 0; i < MAX_LOG_ENTRIES ; i++) {
     EEPROM.get(eepromLogOffset(i), entry);
     
     if (entry.timestamp == 0L) {
@@ -182,7 +190,7 @@ void initLog() {
       if(i == 0) {
         // if the head (= empty entry) is the very first entry  of the array, then the most recent is the very last one:
         LogEntry mostRecent;
-        EEPROM.get(eepromLogOffset(LOG_ENTRIES-1), mostRecent);      
+        EEPROM.get(eepromLogOffset(MAX_LOG_ENTRIES-1), mostRecent);      
         latest = mostRecent.timestamp;
       }
       break;
@@ -190,25 +198,25 @@ void initLog() {
     latest = entry.timestamp;
   }
   
-  assert(logHead != LOG_ENTRIES);
+  assert(logHead != MAX_LOG_ENTRIES);
   assert(latest != 0L);
   adjustLogTime(latest);
   
-  logTail = LOG_ENTRIES; // out of range => assert later that logHead was updated!
-  for (unsigned short i = 1; i < LOG_ENTRIES ; i++) {
-    unsigned short index = (logHead + i) % LOG_ENTRIES;
+  logTail = MAX_LOG_ENTRIES; // out of range => assert later that logHead was updated!
+  for (unsigned short i = 1; i < MAX_LOG_ENTRIES ; i++) {
+    unsigned short index = (logHead + i) % MAX_LOG_ENTRIES;
     EEPROM.get(eepromLogOffset(index), entry);
     if (entry.timestamp != 0L) {
       logTail = index;
       break;
     }
   }
-  assert(logTail != LOG_ENTRIES);
+  assert(logTail != MAX_LOG_ENTRIES);
 }
 
 void resetLog() {
   // clear
-  for (unsigned short i = 0; i < LOG_ENTRIES; i++) {
+  for (unsigned short i = 0; i < MAX_LOG_ENTRIES; i++) {
     clearLogEntry(i);
   }
   resetLogTime();
@@ -223,6 +231,10 @@ void logValues(Temperature water, Temperature ambient, Flags flags) {
   writeLogEntry(&entry);
 }
 
+void logState(StateID previous, StateID current, EventID event) {
+  LogEntry entry = createLogStateEntry(previous, current, event);
+  writeLogEntry(&entry);
+}
 
 void logMessage(MessageID id, short param1, short param2) {
   LogEntry entry = createLogValuesEntry(id, param1, param2);

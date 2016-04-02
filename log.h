@@ -30,7 +30,7 @@
   const LogType LOG_CONFIG = 3;
 
   typedef byte StateID;
-  typedef byte TransitionID;
+  typedef byte EventID;
   
   /**
    * Generic "supertype" for log data.
@@ -54,7 +54,7 @@
   struct LogStateData {
     StateID previous;
     StateID current;
-    TransitionID trans;
+    EventID event;
     byte unused[2]; // filler bytes
   };
   
@@ -111,7 +111,12 @@
    * Returns a LogEntry with a data field of "type" LogValuesData.
    */
   LogEntry createLogValuesEntry(Temperature water, Temperature ambient, Flags flags);
-  
+
+  /**
+   * Returns a LogEntry with a data field of "type" LogStateData.
+   */
+  LogEntry createLogStateEntry(StateID previous, StateID current, EventID event);
+
   /**
    * Returns a LogEntry with a data field of "type" LogMessageData.
    */

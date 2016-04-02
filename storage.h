@@ -60,6 +60,8 @@
   
   void logValues(Temperature water, Temperature ambient, Flags flags);
   
+  void logState(StateID previous, StateID current, EventID event);
+  
   void logMessage(MessageID id, short param1, short param2);
   
   /*

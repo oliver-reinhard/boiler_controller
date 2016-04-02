@@ -46,10 +46,10 @@ Timestamp timestamp() {
     }
   }
   #ifdef DEBUG_LOG
-  Serial.print("Timestamp ");
-  Serial.print(t.sec);
-  Serial.print(".");
-  Serial.println(count);
+    Serial.print("DEBUG_LOG: Timestamp ");
+    Serial.print(t.sec);
+    Serial.print(".");
+    Serial.println(count);
   #endif
   return t.sec << ID_BITS | count;
 }
@@ -65,30 +65,44 @@ LogEntry createLogEntry(LogType type, LogData data) {
 
 
 LogEntry createLogValuesEntry(Temperature water, Temperature ambient, Flags flags) {
-  LogValuesData values;
-  values.water = water;
-  values.ambient = ambient;
-  values.flags = flags;
+  LogValuesData data;
+  data.water = water;
+  data.ambient = ambient;
+  data.flags = flags;
 
   // copy data to generic log-data type:
-  LogData data;
+  LogData generic;
   assert(sizeof(LogValuesData) == sizeof(LogData));
-  memcpy(&data, &values, sizeof(LogValuesData));
+  memcpy(&generic, &data, sizeof(LogValuesData));
   
-  return createLogEntry(LOG_VALUES, data);
+  return createLogEntry(LOG_VALUES, generic);
+}
+
+LogEntry createLogStateEntry(StateID previous, StateID current, EventID event) {
+  LogStateData data;
+  data.previous = previous;
+  data.current = current;
+  data.event = event;
+
+  // copy data to generic log-data type:
+  LogData generic;
+  assert(sizeof(LogStateData) == sizeof(LogData));
+  memcpy(&generic, &data, sizeof(LogStateData));
+  
+  return createLogEntry(LOG_STATE, generic);
 }
 
 LogEntry createLogMessageEntry(MessageID id, short param1, short param2) {
-  LogMessageData values;
-  values.id = id;
-  values.params[0] = param1;
-  values.params[1] = param2;
+  LogMessageData data;
+  data.id = id;
+  data.params[0] = param1;
+  data.params[1] = param2;
 
   // copy data to generic log-data type:
-  LogData data;
+  LogData generic;
   assert(sizeof(LogMessageData) == sizeof(LogData));
-  memcpy(&data, &values, sizeof(LogMessageData));
+  memcpy(&generic, &data, sizeof(LogMessageData));
   
-  return createLogEntry(LOG_MESSAGE, data);
+  return createLogEntry(LOG_MESSAGE, generic);
 }
 

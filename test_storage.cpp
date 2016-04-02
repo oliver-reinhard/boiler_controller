@@ -2,7 +2,6 @@
 #ifdef TEST_STORAGE
   #line 4 "test_storage.cpp"
   #include <ArduinoUnit.h>
-  #include "Arduino.h"
   #include "storage.h"
   
   test(timestamp) {

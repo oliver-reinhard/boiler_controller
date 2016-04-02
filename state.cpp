@@ -1,5 +1,8 @@
 #include "state.h"
+#include "storage.h"
 #include <assert.h>
+
+#define DEBUG_STATE
 
 /*
  * STATE
@@ -349,9 +352,17 @@ void BoilerStateAutomaton::transition(EventEnum event) {
   StateEnum oldState = currentState->id();
   StateEnum newState = currentState->trans(event, context);
   if (newState == STATE_UNDEFINED) {
-    //
-    // TODO Log error
-    //
+    if ((event & currentState->illegalTransitionLogged) == 0) { // this illegal event has not been logged at this state
+      #ifdef DEBUG_STATE
+        Serial.print("DEBUG_STATE: State ");
+        Serial.print(currentState->id());
+        Serial.print(": log invalid event ");
+        Serial.println(event);
+      #endif
+
+      logMessage(MSG_ILLEGAL_TRANS, currentState->id(), event);
+      currentState->illegalTransitionLogged |= event;
+    }
     
   } else if (newState != STATE_SAME && oldState != newState) { // we are in a different new state!
     currentState = getState(newState);
@@ -360,9 +371,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
     newState = currentState->enter(context);
     currentState = getState(newState);
     
-    //
-    // TODO Log transition
-    //
+    logState(oldState, newState, event);
   }
 }
 

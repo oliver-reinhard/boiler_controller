@@ -59,6 +59,13 @@
        * The containing state, or NULL if none.
        */
       AbstractState *containingState = NULL;
+      
+      /*
+       * Records whether an illegal transition has been logged at this state in order to avoid excessive logging.
+       * Note: the presence of an event bit in the set EventCandidates means the attempt has been logged and will not be logged again
+       * at this state for the lifetime of the state object.
+       */
+      EventCandidates illegalTransitionLogged = EVENT_NONE;
 
       /*
        * The non-object ID of the state.
@@ -96,7 +103,8 @@
        */
       virtual void exit(EventEnum event, StateEnum next, ExecutionContext *context) = 0;
   
-    protected:     
+    protected:
+          
       /*
        * Executes the transition actions for this event (if any), calculates and returns the next state.
        * 
