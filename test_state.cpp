@@ -296,8 +296,8 @@
     //
     // set water-sensor temp to overheated
     //
-    op.water.currentTemp = DEFAULT_WATER_SENSOR_CUT_OUT_TEMP + 1;
-    assertEqual(config.waterSensorCutOutTemp, DEFAULT_WATER_SENSOR_CUT_OUT_TEMP); 
+    op.water.currentTemp = DEFAULT_HEATER_CUT_OUT_WATER_TEMP + 1;
+    assertEqual(config.heaterCutOutWaterTemp, DEFAULT_HEATER_CUT_OUT_WATER_TEMP); 
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_TEMP_OVER));
 
@@ -317,7 +317,8 @@
     //
     // set water-sensor temp to ok
     //
-    op.water.currentTemp = DEFAULT_WATER_SENSOR_BACK_OK_TEMP -1;
+    op.water.currentTemp = DEFAULT_HEATER_BACK_OK_WATER_TEMP -1;
+    assertEqual(config.heaterBackOkWaterTemp, DEFAULT_HEATER_BACK_OK_WATER_TEMP); 
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_TEMP_OK));
     op.water.currentTemp = 4500;

@@ -94,13 +94,13 @@ void Storage::initConfigParams(ConfigParams *configParams, boolean *updated) {
     *updated = true;
   }
 
-  if (configParams->waterSensorCutOutTemp == 0) {
-    configParams->waterSensorCutOutTemp = DEFAULT_WATER_SENSOR_CUT_OUT_TEMP;
+  if (configParams->heaterCutOutWaterTemp == 0) {
+    configParams->heaterCutOutWaterTemp = DEFAULT_HEATER_CUT_OUT_WATER_TEMP;
     *updated = true;
   }
 
-  if (configParams->waterSensorBackOkTemp == 0) {
-    configParams->waterSensorBackOkTemp = DEFAULT_WATER_SENSOR_BACK_OK_TEMP;
+  if (configParams->heaterBackOkWaterTemp == 0) {
+    configParams->heaterBackOkWaterTemp = DEFAULT_HEATER_BACK_OK_WATER_TEMP;
     *updated = true;
   }
 

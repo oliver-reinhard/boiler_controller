@@ -260,7 +260,7 @@ EventCandidates Heating::eval(ExecutionContext *context) {
   if (context->op->userCommands & CMD_HEAT_OFF) {
     result |= EVENT_HEAT_OFF;
   }
-  if (context->op->water.currentTemp >= context->config->waterSensorCutOutTemp) {
+  if (context->op->water.currentTemp >= context->config->heaterCutOutWaterTemp) {
     result |= EVENT_TEMP_OVER;
   }
   return result;
@@ -295,7 +295,7 @@ EventCandidates Overheated::eval(ExecutionContext *context) {
   if (context->op->userCommands & CMD_RESET) {
     result |= EVENT_RESET;
   }
-  if (context->op->water.currentTemp <= context->config->waterSensorBackOkTemp) {
+  if (context->op->water.currentTemp <= context->config->heaterBackOkWaterTemp) {
     result |= EVENT_TEMP_OK;
   }
   return result;
