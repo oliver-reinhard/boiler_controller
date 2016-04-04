@@ -4,6 +4,10 @@
     if (op == NULL) { } // prevent warning "unused parameter ..."
   }
 
+ void ControlActions::readUserCommands(OperationalParams *op) {
+    if (op == NULL) { } // prevent warning "unused parameter ..."
+ }
+
   void ControlActions::heat(boolean on, OperationalParams *op) {
     op->heating = on;
     if (on) {

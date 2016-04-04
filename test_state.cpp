@@ -6,6 +6,8 @@
   #include "state.h"
   #include "test_state.h"
 
+  //#define DEBUG_TEST_STATE
+  
   /*
    * Class MockControlActions
    */
@@ -35,8 +37,15 @@
   void MockControlActions::readSensors(OperationalParams *op) {
     if (op == NULL) { } // prevent warning "unused parameter ..."
   }
+  
+  void MockControlActions::readUserCommands(OperationalParams *op) {
+    if (op == NULL) { } // prevent warning "unused parameter ..."
+  }
 
   void MockControlActions::heat(boolean on, OperationalParams *op) {
+    #ifdef DEBUG_TEST_STATE
+      Serial.println("DEBUG_TEST_STATE: heat(on/off)");
+    #endif
     op->heating = on;
     if (on) {
       heatTrueCount++;
@@ -46,6 +55,9 @@
   }
 
   void MockControlActions::logValues(boolean on, OperationalParams *op) {
+    #ifdef DEBUG_TEST_STATE
+      Serial.println("DEBUG_TEST_STATE: logValues(on/off)");
+    #endif
     op->loggingValues = on;
     if (on) {
       logValuesTrueCount++;
@@ -70,19 +82,92 @@
     getStatCount++;
   }
 
+  /*
+   * Class MockStorage
+   */
+  unsigned short MockStorage::totalInvocations() {
+    return 
+      logValuesCount +
+      logStateCount +
+      logMessageCount;
+  }
+   
+  void MockStorage::resetCounters() {
+    logValuesCount = 0;
+    logStateCount = 0;
+    logMessageCount = 0;
+  }
+
+  Version MockStorage::version() {
+    return EEPROM_LAYOUT_VERSION;
+  }
+  
+  void MockStorage::clearConfigParams() {
+    // none
+  }
+  
+  void MockStorage::getConfigParams(ConfigParams *configParams) {
+    if (configParams == NULL) { } // prevent warning "unused parameter ..."
+  }
+  
+  void MockStorage::updateConfigParams(const ConfigParams *configParams) {
+    if (configParams == NULL) { } // prevent warning "unused parameter ..."
+  }
+  
+  void MockStorage::readConfigParams(ConfigParams *configParams) {
+    if (configParams == NULL) { } // prevent warning "unused parameter ..."
+  }
+  
+  void MockStorage::resetLog() {
+    // none
+  }
+  
+  void MockStorage::initLog() {
+    // none
+  }
+  
+  Timestamp MockStorage::logValues(Temperature water, Temperature ambient, Flags flags) {
+    #ifdef DEBUG_TEST_STATE
+      Serial.println("DEBUG_TEST_STATE: logValues(...)");
+    #endif
+    if (water == 0 || ambient == 0 || flags == 0) { } // prevent warning "unused parameter ..."
+    logValuesCount++;
+    return timestamp();
+  }
+  
+  Timestamp MockStorage::logState(StateID previous, StateID current, EventID event) {
+    #ifdef DEBUG_TEST_STATE
+      Serial.println("DEBUG_TEST_STATE: logState(...)");
+    #endif
+    if (previous == 0 || current == 0 || event == 0) { } // prevent warning "unused parameter ..."
+    logStateCount++;
+    return timestamp();
+  }
+  
+  Timestamp MockStorage::logMessage(MessageID id, short param1, short param2) {    
+    #ifdef DEBUG_TEST_STATE
+      Serial.println("DEBUG_TEST_STATE: logMessage(...)");
+    #endif
+    if (id == 0 || param1 == 0 || param2 == 0) { } // prevent warning "unused parameter ..."
+    logMessageCount++;
+    return timestamp();
+  }
+  
 
   /*
    * Tests
    */
-  test(stateInit) {
+  test(state_automaton) {
+    MockStorage storage = MockStorage();
     ConfigParams config;
     boolean updated;
-    initConfigParams(&config, &updated);
+    storage.initConfigParams(&config, &updated);
     
     OperationalParams op;
     MockControlActions control;
 
     ExecutionContext context;
+    context.storage = &storage;
     context.config = &config;
     context.op = &op;
     context.control = &control;
@@ -102,9 +187,14 @@
     automaton.transition(EVENT_SET_CONFIG); 
     assertEqual(automaton.state()->id(), STATE_INIT);
     assertEqual(control.totalInvocations(), 0);
+    // invalid event logging
+    assertEqual(storage.logMessageCount, 1);
+    assertEqual(storage.totalInvocations(), 1);
+    storage.resetCounters();
 
-    // test transition again, must not log again
+    // transition again (INVALID event) => must NOT LOG again
     automaton.transition(EVENT_SET_CONFIG); 
+    assertEqual(storage.totalInvocations(), 0);
 
     //
     // set water sensor OK => evaluate => event READY
@@ -115,13 +205,19 @@
     assertEqual(int(cand), int(EVENT_READY));
     assertEqual(automaton.state()->id(), STATE_INIT);
     assertEqual(control.totalInvocations(), 0);
+    assertEqual(storage.totalInvocations(), 0);
+    
 
-    // transition (event READY) => state IDLE
+    // transition state INIT => event READY => state IDLE
     automaton.transition(EVENT_READY);
     assertEqual(automaton.state()->id(), STATE_IDLE);
     assertEqual(control.totalInvocations(), 0);
     assertEqual(int(op.loggingValues), int(false));
     assertEqual(int(op.heating), int(false));
+    // state logging
+    assertEqual(storage.logStateCount, 1);
+    assertEqual(storage.totalInvocations(), 1);
+    storage.resetCounters();
 
     //
     // user command SET_CONFIG
@@ -131,7 +227,7 @@
     assertEqual(int(cand), int(EVENT_SET_CONFIG));
     op.userCommands = CMD_NONE;
     
-    // transition (event SET_CONFIG) => stay in state IDLE
+    // transition state IDLE => event SET_CONFIG => stay in state IDLE
     automaton.transition(EVENT_SET_CONFIG); 
     assertEqual(automaton.state()->id(), STATE_IDLE);
     assertEqual(control.setConfigParamCount, 1);
@@ -146,7 +242,7 @@
     assertEqual(int(cand), int(EVENT_REC_ON));
     op.userCommands = CMD_NONE;
     
-    // transition (event REC_ON) => state STANDBY
+    // transition state IDLE => event REC_ON => state STANDBY
     automaton.transition(EVENT_REC_ON); 
     assertEqual(automaton.state()->id(), STATE_STANDBY);
     assertEqual(control.logValuesTrueCount, 1);
@@ -163,7 +259,7 @@
     assertEqual(int(cand), int(EVENT_REC_OFF));
     op.userCommands = CMD_NONE;
     
-    // transition (event REC_OFF) => state IDLE
+    // transition state STANDBY => event REC_OFF => state IDLE
     automaton.transition(EVENT_REC_OFF); 
     assertEqual(automaton.state()->id(), STATE_IDLE);
     assertEqual(control.logValuesFalseCount, 1);
@@ -172,10 +268,85 @@
     assertEqual(int(op.heating), int(false));
     control.resetCounters();
 
-    // transition (event REC_ON) => state STANDBY
+    // transition state IDLE => event REC_ON => state STANDBY
     automaton.transition(EVENT_REC_ON);
-
+    control.resetCounters();
     
+    //
+    // user command HEAT ON
+    //
+    op.userCommands = CMD_HEAT_ON;
+    cand = automaton.evaluate();
+    assertEqual(int(cand), int(EVENT_HEAT_ON));
+    op.userCommands = CMD_NONE;
+    
+    // transition state STANDBY => event HEAT_ON => state HEATING
+    automaton.transition(EVENT_HEAT_ON); 
+    assertEqual(automaton.state()->id(), STATE_HEATING);
+    assertEqual(control.heatTrueCount, 1);
+    assertEqual(control.totalInvocations(), 1);
+    assertEqual(int(op.loggingValues), int(true));
+    assertEqual(int(op.heating), int(true));
+    control.resetCounters();
+
+    // evaluate => no event
+    cand = automaton.evaluate();
+    assertEqual(int(cand), int(EVENT_NONE));
+
+    //
+    // set water-sensor temp to overheated
+    //
+    op.water.currentTemp = DEFAULT_WATER_SENSOR_CUT_OUT_TEMP + 1;
+    assertEqual(config.waterSensorCutOutTemp, DEFAULT_WATER_SENSOR_CUT_OUT_TEMP); 
+    cand = automaton.evaluate();
+    assertEqual(int(cand), int(EVENT_TEMP_OVER));
+
+    // transition state HEATING => event EVENT_TEMP_OVER => state OVERHEATED
+    automaton.transition(EVENT_TEMP_OVER); 
+    assertEqual(automaton.state()->id(), STATE_OVERHEATED);
+    assertEqual(control.heatFalseCount, 1);
+    assertEqual(control.totalInvocations(), 1);
+    assertEqual(int(op.loggingValues), int(true));
+    assertEqual(int(op.heating), int(false));
+    control.resetCounters();
+    
+    // evaluate => no event
+    cand = automaton.evaluate();
+    assertEqual(int(cand), int(EVENT_NONE));
+
+    //
+    // set water-sensor temp to ok
+    //
+    op.water.currentTemp = DEFAULT_WATER_SENSOR_BACK_OK_TEMP -1;
+    cand = automaton.evaluate();
+    assertEqual(int(cand), int(EVENT_TEMP_OK));
+    op.water.currentTemp = 4500;
+
+    // transition state OVERHEATED => event EVENT_TEMP_OK => state HEATING
+    automaton.transition(EVENT_TEMP_OK); 
+    assertEqual(automaton.state()->id(), STATE_HEATING);
+    assertEqual(control.heatTrueCount, 1);
+    assertEqual(control.totalInvocations(), 1);
+    assertEqual(int(op.loggingValues), int(true));
+    assertEqual(int(op.heating), int(true));
+    control.resetCounters();
+    
+    //
+    // user command HEAT OFF
+    //
+    op.userCommands = CMD_HEAT_OFF;
+    cand = automaton.evaluate();
+    assertEqual(int(cand), int(EVENT_HEAT_OFF));
+    op.userCommands = CMD_NONE;
+    
+    // transition state HEATING => event HEAT_OFF => state STANDBY
+    automaton.transition(EVENT_HEAT_OFF); 
+    assertEqual(automaton.state()->id(), STATE_STANDBY);
+    assertEqual(control.heatFalseCount, 1);
+    assertEqual(control.totalInvocations(), 1);
+    assertEqual(int(op.loggingValues), int(true));
+    assertEqual(int(op.heating), int(false));
+    control.resetCounters();
   }
   
 #endif

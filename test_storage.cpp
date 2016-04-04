@@ -3,12 +3,14 @@
   #line 4 "test_storage.cpp"
   #include <ArduinoUnit.h>
   #include "storage.h"
+
   
-  test(timestamp) {
+  
+  test(storage_timestamp) {
     // ensure this test is not run within the first second of Arduino board time:
     delay(1000);
     unsigned long ms = millis();
-    if (ms % 1000 > 800) {
+    if (ms % 1000 > 500) {
       // sleep until the next full second has started
       delay(1000 - (ms % 1000) + 1);
       ms = millis();
@@ -41,107 +43,107 @@
     assertEqual(t1 & 0xF, 1L);
   }
   
-  /*
-  test(config) {
-    clearConfig();
-    assertEqual(version(), 0L);
-    
-    Config c0;
-    readConfig(&c0);
-    assertEqual(c0.targetTemp, 0.0);
   
-    Config c;
-    initConfig(&c);
-    assertNotEqual(version(), 0L);
+  test(storage_config) {
+    Storage storage = Storage();
+    
+    storage.clearConfigParams();
+    assertEqual(storage.version(), 0L);
+    
+    ConfigParams c;
+    storage.getConfigParams(&c);
+    assertNotEqual(storage.version(), 0L);
     assertEqual(c.targetTemp, DEFAULT_TARGET_TEMP);
     
     c.targetTemp = 40.0;
-    updateConfig(&c);
-    Config c1;
-    readConfig(&c1);
+    storage.updateConfigParams(&c);
+    ConfigParams c1;
+    storage.getConfigParams(&c1);
     assertEqual(c1.targetTemp, 40.0);
     
-    clearConfig();
-    assertEqual(version(), 0L);
-    Config c2;
-    readConfig(&c2);
+    storage.clearConfigParams();
+    assertEqual(storage.version(), 0L);
+    ConfigParams c2;
+    storage.readConfigParams(&c2);
     assertEqual(c2.targetTemp, 0.0);
   }
   
-  */
-  test(log) {
-    resetLog();
-    assertEqual(maxLogEntries(), UNIT_TEST_LOG_ENTRIES);
-    assertEqual(currentLogEntries(), 1);
-    assertEqual(logTailIndex(), 0);
-    assertEqual(logHeadIndex(), 1);
+  
+  test(storage_log) {
+    Storage storage = Storage();
+
+    storage.resetLog();
+    assertEqual(storage.maxLogEntries(), UNIT_TEST_LOG_ENTRIES);
+    assertEqual(storage.currentLogEntries(), 1);
+    assertEqual(storage.logTailIndex(), 0);
+    assertEqual(storage.logHeadIndex(), 1);
   
     // Test ring buffer logging:
-    logValues(30.0, 20.0, 0);
-    assertEqual(currentLogEntries(), 2);
-    assertEqual(logTailIndex(), 0);
-    assertEqual(logHeadIndex(), 2);
+    storage.logValues(30.0, 20.0, 0);
+    assertEqual(storage.currentLogEntries(), 2);
+    assertEqual(storage.logTailIndex(), 0);
+    assertEqual(storage.logHeadIndex(), 2);
     
-    logValues(31.0, 20.0, 0);
-    assertEqual(currentLogEntries(), 3);
-    assertEqual(logTailIndex(), 0);
-    assertEqual(logHeadIndex(), 3);
+    storage.logValues(31.0, 20.0, 0);
+    assertEqual(storage.currentLogEntries(), 3);
+    assertEqual(storage.logTailIndex(), 0);
+    assertEqual(storage.logHeadIndex(), 3);
     
-    logValues(32.0, 20.0, 0);
-    assertEqual(currentLogEntries(), 4);
-    assertEqual(logTailIndex(), 0);
-    assertEqual(logHeadIndex(), 4);
+    storage.logValues(32.0, 20.0, 0);
+    assertEqual(storage.currentLogEntries(), 4);
+    assertEqual(storage.logTailIndex(), 0);
+    assertEqual(storage.logHeadIndex(), 4);
     
-    logValues(33.0, 20.0, 0);
-    assertEqual(currentLogEntries(), 4);
-    assertEqual(logTailIndex(), 1);
-    assertEqual(logHeadIndex(), 0);
+    storage.logValues(33.0, 20.0, 0);
+    assertEqual(storage.currentLogEntries(), 4);
+    assertEqual(storage.logTailIndex(), 1);
+    assertEqual(storage.logHeadIndex(), 0);
     
-    logValues(34.0, 20.0, 0);
-    assertEqual(currentLogEntries(), 4);
-    assertEqual(logTailIndex(), 2);
-    assertEqual(logHeadIndex(), 1);
+    storage.logValues(34.0, 20.0, 0);
+    assertEqual(storage.currentLogEntries(), 4);
+    assertEqual(storage.logTailIndex(), 2);
+    assertEqual(storage.logHeadIndex(), 1);
     
-    logValues(35.0, 20.0, 0);
-    assertEqual(currentLogEntries(), 4);
-    assertEqual(logTailIndex(), 3);
-    assertEqual(logHeadIndex(), 2);
+    storage.logValues(35.0, 20.0, 0);
+    assertEqual(storage.currentLogEntries(), 4);
+    assertEqual(storage.logTailIndex(), 3);
+    assertEqual(storage.logHeadIndex(), 2);
   
     // Test initialisation:
-    resetLog();
-    initLog();
-    assertEqual(logTailIndex(), 0);
-    assertEqual(logHeadIndex(), 1);
+    storage.resetLog();
+    storage.initLog();
+    assertEqual(storage.logTailIndex(), 0);
+    assertEqual(storage.logHeadIndex(), 1);
     
-    logValues(30.0, 20.0, 0);
-    initLog();
-    assertEqual(logTailIndex(), 0);
-    assertEqual(logHeadIndex(), 2);
+    storage.logValues(30.0, 20.0, 0);
+    storage.initLog();
+    assertEqual(storage.logTailIndex(), 0);
+    assertEqual(storage.logHeadIndex(), 2);
     
-    logValues(31.0, 20.0, 0);
-    initLog();
-    assertEqual(logTailIndex(), 0);
-    assertEqual(logHeadIndex(), 3);
+    storage.logValues(31.0, 20.0, 0);
+    storage.initLog();
+    assertEqual(storage.logTailIndex(), 0);
+    assertEqual(storage.logHeadIndex(), 3);
     
-    logValues(32.0, 20.0, 0);
-    initLog();
-    assertEqual(logTailIndex(), 0);
-    assertEqual(logHeadIndex(), 4);
+    storage.logValues(32.0, 20.0, 0);
+    storage.initLog();
+    assertEqual(storage.logTailIndex(), 0);
+    assertEqual(storage.logHeadIndex(), 4);
     
-    logValues(33.0, 20.0, 0);
-    initLog();
-    assertEqual(logTailIndex(), 1);
-    assertEqual(logHeadIndex(), 0);
+    storage.logValues(33.0, 20.0, 0);
+    storage.initLog();
+    assertEqual(storage.logTailIndex(), 1);
+    assertEqual(storage.logHeadIndex(), 0);
     
-    logValues(34.0, 20.0, 0);
-    initLog();
-    assertEqual(logTailIndex(), 2);
-    assertEqual(logHeadIndex(), 1);
+    storage.logValues(34.0, 20.0, 0);
+    storage.initLog();
+    assertEqual(storage.logTailIndex(), 2);
+    assertEqual(storage.logHeadIndex(), 1);
     
-    logValues(35.0, 20.0, 0);
-    initLog();
-    assertEqual(logTailIndex(), 3);
-    assertEqual(logHeadIndex(), 2);
+    storage.logValues(35.0, 20.0, 0);
+    storage.initLog();
+    assertEqual(storage.logTailIndex(), 3);
+    assertEqual(storage.logHeadIndex(), 2);
   }
 #endif
 

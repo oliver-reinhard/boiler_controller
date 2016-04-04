@@ -50,6 +50,7 @@
   class ControlActions {
     public:
       virtual void readSensors(OperationalParams *op);
+      virtual void readUserCommands(OperationalParams *op);
   
       virtual void heat(boolean on, OperationalParams *op);
   

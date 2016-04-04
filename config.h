@@ -4,6 +4,7 @@
   #include "Arduino.h"
   
   typedef byte ConfigParamID;
+  
   typedef enum {
     PARAM_TARGET_TEMP = 0,
     PARAM_WATER_SENSOR_CUT_OUT_TEMP = 1,

@@ -1,7 +1,7 @@
 #ifndef BOILER_STATE_H_INCLUDED
   #define BOILER_STATE_H_INCLUDED
   
-  #include "log.h"
+  #include "storage.h"
   #include "control.h"
   
   typedef enum  {
@@ -39,9 +39,10 @@
    * The result of the evaluation of the operational parameters by a state.
    * Denotes all possible events that result from the evaluation by a state as or'ed ("|") together.
    */
-  typedef byte EventCandidates;
+  typedef unsigned short EventCandidates;
 
   struct ExecutionContext {
+    Storage *storage;
     const ConfigParams *config;
     OperationalParams *op;
     ControlActions *control;

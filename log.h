@@ -30,7 +30,7 @@
   const LogType LOG_CONFIG = 3;
 
   typedef byte StateID;
-  typedef byte EventID;
+  typedef unsigned short EventID;
   
   /**
    * Generic "supertype" for log data.
@@ -55,7 +55,7 @@
     StateID previous;
     StateID current;
     EventID event;
-    byte unused[2]; // filler bytes
+    byte unused; // filler byte
   };
   
   /**

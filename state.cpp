@@ -2,7 +2,7 @@
 #include "storage.h"
 #include <assert.h>
 
-#define DEBUG_STATE
+//#define DEBUG_STATE
 
 /*
  * STATE
@@ -360,7 +360,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
         Serial.println(event);
       #endif
 
-      logMessage(MSG_ILLEGAL_TRANS, currentState->id(), event);
+      context->storage->logMessage(MSG_ILLEGAL_TRANS, currentState->id(), event);
       currentState->illegalTransitionLogged |= event;
     }
     
@@ -371,7 +371,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
     newState = currentState->enter(context);
     currentState = getState(newState);
     
-    logState(oldState, newState, event);
+    context->storage->logState(oldState, newState, event);
   }
 }
 
