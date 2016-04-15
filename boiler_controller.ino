@@ -64,9 +64,11 @@ void loop() {
 }
 
 EventEnum processEventCandidates(EventCandidates cand) {
-  //
-  // TODO implement
-  //
+  for(unsigned int i; i< NUM_EVENTS; i++) {
+    if (cand & EVENT_PRIORITIES[i]) {
+      return EVENT_PRIORITIES[i];
+    }
+  }
   return EVENT_NONE;
 }
 

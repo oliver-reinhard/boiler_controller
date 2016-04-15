@@ -5,8 +5,17 @@
 //#define DEBUG_STATE
 
 /*
- * STATE
+ * ABSTRACT STATE
  */
+UserCommands AbstractState::userCommands(ExecutionContext *context) {
+  // default implementation: delegate to containing state (if any):
+  if(containingState != NULL) { 
+    return containingState->userCommands(context);
+  } else {
+    return CMD_NONE;
+  }
+}
+
 EventCandidates AbstractState::eval(ExecutionContext *context) {
   // default implementation: delegate to containing state (if any):
   if(containingState != NULL) { 
@@ -111,6 +120,8 @@ StateEnum Init::id() {
   return STATE_INIT;
 }
 
+// No user commands available.
+
 EventCandidates Init::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
   //
@@ -134,6 +145,10 @@ StateEnum Init::transAction(EventEnum event, ExecutionContext *context) {
  */
 StateEnum Ready::id() {
   return STATE_READY;
+}
+
+UserCommands Ready::userCommands(ExecutionContext *context) {
+  return AbstractState::eval(context) | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
 }
 
 EventCandidates Ready::eval(ExecutionContext *context) {
@@ -173,6 +188,10 @@ StateEnum Idle::id() {
   return STATE_IDLE;
 }
 
+UserCommands Idle::userCommands(ExecutionContext *context) {
+  return AbstractState::eval(context) | CMD_SET_CONFIG | CMD_REC_ON;
+}
+
 EventCandidates Idle::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
   if (context->op->userCommands & CMD_SET_CONFIG) {
@@ -200,6 +219,10 @@ StateEnum Idle::transAction(EventEnum event, ExecutionContext *context) {
  */
 StateEnum Recording::id() {
   return STATE_RECORDING;
+}
+
+UserCommands Recording::userCommands(ExecutionContext *context) {
+  return AbstractState::eval(context) | CMD_REC_OFF;
 }
 
 
@@ -233,6 +256,10 @@ StateEnum Standby::id() {
   return STATE_STANDBY;
 }
 
+UserCommands Standby::userCommands(ExecutionContext *context) {
+  return AbstractState::eval(context) | CMD_HEAT_ON;
+}
+
 EventCandidates Standby::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
   if (context->op->userCommands & CMD_HEAT_ON) {
@@ -253,6 +280,10 @@ StateEnum Standby::transAction(EventEnum event, ExecutionContext *context) {
  */
 StateEnum Heating::id() {
   return STATE_HEATING;
+}
+
+UserCommands Heating::userCommands(ExecutionContext *context) {
+  return AbstractState::eval(context) | CMD_HEAT_OFF;
 }
 
 EventCandidates Heating::eval(ExecutionContext *context) {
@@ -288,6 +319,10 @@ void Heating::exitAction(ExecutionContext *context){
  */
 StateEnum Overheated::id() {
   return STATE_OVERHEATED;
+}
+
+UserCommands Overheated::userCommands(ExecutionContext *context) {
+  return AbstractState::eval(context) | CMD_RESET;
 }
 
 EventCandidates Overheated::eval(ExecutionContext *context) {
@@ -342,6 +377,10 @@ BoilerStateAutomaton::BoilerStateAutomaton(ExecutionContext *context) {
  
 AbstractState *BoilerStateAutomaton::state() {
   return currentState;
+}
+  
+UserCommands BoilerStateAutomaton::userCommands() {
+  return currentState->userCommands(context);
 }
   
 EventCandidates BoilerStateAutomaton::evaluate() {

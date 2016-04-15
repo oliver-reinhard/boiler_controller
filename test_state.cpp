@@ -175,6 +175,7 @@
     BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
 
     assertEqual(automaton.state()->id(), STATE_INIT);
+    assertEqual(int(automaton.userCommands()), int(CMD_NONE));
     assertEqual(control.totalInvocations(), 0);
 
     // water sensor NOT OK YET => evaluate => no event
@@ -220,8 +221,9 @@
     storage.resetCounters();
 
     //
-    // user command SET_CONFIG
+    // user command SET_CONFIG in state IDLE
     //
+    assertEqual(int(automaton.userCommands()), int(CMD_SET_CONFIG | CMD_REC_ON));
     op.userCommands = CMD_SET_CONFIG;
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_SET_CONFIG));
@@ -235,7 +237,7 @@
     control.resetCounters();
 
     //
-    // user command REC ON
+    // user command REC ON in state IDLE
     //
     op.userCommands = CMD_REC_ON;
     cand = automaton.evaluate();
@@ -252,8 +254,9 @@
     control.resetCounters();
 
     //
-    // user command REC OFF
+    // user command REC OFF in state STANDBY
     //
+    assertEqual(int(automaton.userCommands()), int(CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_REC_OFF | CMD_HEAT_ON));
     op.userCommands = CMD_REC_OFF;
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_REC_OFF));
@@ -273,7 +276,7 @@
     control.resetCounters();
     
     //
-    // user command HEAT ON
+    // user command HEAT ON in state STANDBY
     //
     op.userCommands = CMD_HEAT_ON;
     cand = automaton.evaluate();
@@ -333,7 +336,7 @@
     control.resetCounters();
     
     //
-    // user command HEAT OFF
+    // user command HEAT OFF in state HEATING
     //
     op.userCommands = CMD_HEAT_OFF;
     cand = automaton.evaluate();

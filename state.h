@@ -21,20 +21,40 @@
   
   typedef enum { 
     EVENT_NONE = 0,
-    EVENT_READY = 0x1, 
-    EVENT_SET_CONFIG = 0x2, 
-    EVENT_REC_ON = 0x4, 
-    EVENT_REC_OFF = 0x8,
-    EVENT_GET_CONFIG = 0x10,
-    EVENT_GET_LOG = 0x20,
-    EVENT_GET_STAT = 0x40,
-    EVENT_HEAT_ON = 0x80,
-    EVENT_HEAT_OFF = 0x100,
-    EVENT_TEMP_OVER = 0x200,
-    EVENT_TEMP_OK = 0x400,
-    EVENT_RESET = 0x800
+    EVENT_READY = 0x1,       // 1
+    EVENT_SET_CONFIG = 0x2,  // 2, user command
+    EVENT_REC_ON = 0x4,      // 3, user command
+    EVENT_REC_OFF = 0x8,     // 4, user command
+    EVENT_GET_CONFIG = 0x10, // 5, user command
+    EVENT_GET_LOG = 0x20,    // 6, user command
+    EVENT_GET_STAT = 0x40,   // 7, user command
+    EVENT_HEAT_ON = 0x80,    // 8, user command
+    EVENT_HEAT_OFF = 0x100,  // 9, user command
+    EVENT_TEMP_OVER = 0x200, // 10
+    EVENT_TEMP_OK = 0x400,   // 11
+    EVENT_RESET = 0x800      // 12, user command
   } EventEnum;
 
+  const unsigned int NUM_EVENTS = 12;
+  
+  /*
+   * All events (except EVENT_NONE) ordered by descending priority, i.e. most urgent first.
+   */
+  const EventEnum EVENT_PRIORITIES[NUM_EVENTS] = {
+    EVENT_TEMP_OVER,  // 1
+    EVENT_TEMP_OK,    // 2
+    EVENT_READY,      // 3
+    EVENT_HEAT_OFF,   // 4
+    EVENT_HEAT_ON,    // 5
+    EVENT_REC_OFF,    // 6
+    EVENT_REC_ON,     // 7
+    EVENT_RESET,      // 8
+    EVENT_GET_STAT,   // 9
+    EVENT_SET_CONFIG, // 10
+    EVENT_GET_CONFIG, // 11
+    EVENT_GET_LOG     // 12
+  };
+    
   /**
    * The result of the evaluation of the operational parameters by a state.
    * Denotes all possible events that result from the evaluation by a state as or'ed ("|") together.
@@ -73,7 +93,16 @@
        */
       virtual StateEnum id() = 0;
 
-      /**
+      /*
+       * Calculates and returns the set of user commands supported by the current state at the time of invocation of this method.
+       * 
+       * The default implementation invokes the containing state's userCommands() method first, then adds its own commands to the result.
+       * 
+       * Returns CMD_NONE if there should be no user commands available at the time.
+       */
+      virtual UserCommands userCommands(ExecutionContext *context);
+
+      /*
        * Enters a state by invoking its entryAction() method, then triggers the enter() method of its initial substate (if any).
        * Note: enter methods are always invoked *down* the containment chain, i.e. containing state first, then its substates until a simple state is reached.
        * 
@@ -82,8 +111,11 @@
       virtual StateEnum enter(ExecutionContext *context) = 0;
       
       /*
-       * Invokes the containing state's eval() method first, then adds its own evaluation to the result.
-       * Note: this method does not actually perform a transition, it merely calculates the options for transitioning.
+       * Checks every event condition and returns those events ready for transitioning at the time of invocation of this method. 
+       * Note: this method does not actually perform a transition, it merely calculates the options for transitioning. It is  left to the caller
+       * to pick the event with the highest priority by his own definition and trigger the transition.
+       * 
+       * The default implementation invokes the containing state's eval() method first, then adds its own evaluation to the result.
        * 
        * Returns TRANS_NONE if there should not be a state change.
        */
@@ -167,6 +199,7 @@
   class Init : public AbstractSimpleState {
     public:
       StateEnum id();
+      // No user commands for this state.
       EventCandidates eval(ExecutionContext *context);
       
     protected:
@@ -179,6 +212,7 @@
       Ready(AbstractState **substates, unsigned short numSubstates) : AbstractCompositeState(substates, numSubstates) { };
       
       StateEnum id();
+      UserCommands userCommands(ExecutionContext *context);
       EventCandidates eval(ExecutionContext *context);
       
     protected:
@@ -189,6 +223,7 @@
   class Idle : public AbstractSimpleState {
     public:
       StateEnum id();
+      UserCommands userCommands(ExecutionContext *context);
       EventCandidates eval(ExecutionContext *context);
       
     protected:
@@ -201,6 +236,7 @@
       Recording(AbstractState **substates, unsigned short numSubstates) : AbstractCompositeState(substates, numSubstates) { };
       
       StateEnum id();
+      UserCommands userCommands(ExecutionContext *context);
       EventCandidates eval(ExecutionContext *context);
       
     protected:
@@ -217,6 +253,7 @@
   class Standby : public AbstractSimpleState {
     public:
       StateEnum id();
+      UserCommands userCommands(ExecutionContext *context);
       EventCandidates eval(ExecutionContext *context);
       
     protected:
@@ -227,6 +264,7 @@
   class Heating : public AbstractSimpleState {
     public:
       StateEnum id();
+      UserCommands userCommands(ExecutionContext *context);
       EventCandidates eval(ExecutionContext *context);
       
     protected:
@@ -243,6 +281,7 @@
   class Overheated : public AbstractSimpleState {
     public:
       StateEnum id();
+      UserCommands userCommands(ExecutionContext *context);
       EventCandidates eval(ExecutionContext *context);
       
     protected:
@@ -262,6 +301,11 @@
        * Returns the current state.
        */
       AbstractState *state();
+
+      /*
+       * Returns the set of user commands supported by the current state of the automaton.
+       */
+      UserCommands userCommands();
     
       /*
        * Returns all possible transitions from the current state, or EVENT_NONE if there is none. 
