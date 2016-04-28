@@ -2,13 +2,13 @@
 #include "message.h"
 
  void ControlActions::readSensors(ControlContext *context) {
-   if (context->op->water.sensorStatus == SENSOR_INITIALISING && memcmp(context->config->waterTempSensor, &UNDEFINED_SENSOR_ID, TEMP_SENSOR_ID_BYTES)) {
+   if (context->op->water.sensorStatus == SENSOR_INITIALISING && ! memcmp(context->config->waterTempSensor, &UNDEFINED_SENSOR_ID, TEMP_SENSOR_ID_BYTES)) {
      context->op->water.sensorStatus = SENSOR_ID_UNDEFINED;
      context->storage->logMessage(MSG_WATER_TEMP_SENSOR_ID_UNDEF, 0, 0);
    }
 
    
-   if (context->op->ambient.sensorStatus == SENSOR_INITIALISING && memcmp(context->config->ambientTempSensor, &UNDEFINED_SENSOR_ID, TEMP_SENSOR_ID_BYTES)) {
+   if (context->op->ambient.sensorStatus == SENSOR_INITIALISING && ! memcmp(context->config->ambientTempSensor, &UNDEFINED_SENSOR_ID, TEMP_SENSOR_ID_BYTES)) {
      context->op->ambient.sensorStatus = SENSOR_ID_UNDEFINED;
      context->storage->logMessage(MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF, 0, 0);
    }
