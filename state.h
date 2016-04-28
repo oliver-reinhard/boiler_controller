@@ -61,11 +61,9 @@
    */
   typedef unsigned short EventCandidates;
 
-  struct ExecutionContext {
-    Storage *storage;
-    const ConfigParams *config;
-    OperationalParams *op;
-    ControlActions *control;
+  class ExecutionContext : public ControlContext {
+    public:
+      ControlActions *control;
   };
 
 
@@ -292,7 +290,6 @@
   /*
    * STATE AUTOMATON
    */
-
   class BoilerStateAutomaton {
     public:
       BoilerStateAutomaton(ExecutionContext *context);

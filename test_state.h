@@ -1,4 +1,3 @@
-#include "unit_test.h"
 #ifdef TEST_STATE
 
   #ifndef TEST_STATE_H_INCLUDED
@@ -10,12 +9,12 @@
     class MockControlActions : public ControlActions {
       public:
         // Mocked methods:
-        void readSensors(OperationalParams *op);
-        void readUserCommands(OperationalParams *op);
+        void readSensors(ControlContext *context);
+        void readUserCommands(ControlContext *context);
     
-        void heat(boolean on, OperationalParams *op);
+        void heat(boolean on, ControlContext *context);
     
-        void logValues(boolean on, OperationalParams *op);
+        void logValues(boolean on, ControlContext *context);
     
         void setConfigParam();
         void getLog();

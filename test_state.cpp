@@ -34,19 +34,19 @@
     getStatCount = 0;
   }
       
-  void MockControlActions::readSensors(OperationalParams *op) {
-    if (op == NULL) { } // prevent warning "unused parameter ..."
+  void MockControlActions::readSensors(ControlContext *context) {
+    if (context == NULL) { } // prevent warning "unused parameter ..."
   }
   
-  void MockControlActions::readUserCommands(OperationalParams *op) {
-    if (op == NULL) { } // prevent warning "unused parameter ..."
+  void MockControlActions::readUserCommands(ControlContext *context) {
+    if (context == NULL) { } // prevent warning "unused parameter ..."
   }
 
-  void MockControlActions::heat(boolean on, OperationalParams *op) {
+  void MockControlActions::heat(boolean on, ControlContext *context) {
     #ifdef DEBUG_TEST_STATE
       Serial.println("DEBUG_TEST_STATE: heat(on/off)");
     #endif
-    op->heating = on;
+    context->op->heating = on;
     if (on) {
       heatTrueCount++;
     } else {
@@ -54,11 +54,11 @@
     }
   }
 
-  void MockControlActions::logValues(boolean on, OperationalParams *op) {
+  void MockControlActions::logValues(boolean on, ControlContext *context) {
     #ifdef DEBUG_TEST_STATE
       Serial.println("DEBUG_TEST_STATE: logValues(on/off)");
     #endif
-    op->loggingValues = on;
+    context->op->loggingValues = on;
     if (on) {
       logValuesTrueCount++;
     } else {

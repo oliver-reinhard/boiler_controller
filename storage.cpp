@@ -94,6 +94,8 @@ void Storage::initConfigParams(ConfigParams *configParams, boolean *updated) {
     *updated = true;
   }
 
+  // Temp Sensor IDs do not have a default value => need to be set as part of the installation .
+
   if (configParams->heaterCutOutWaterTemp == 0) {
     configParams->heaterCutOutWaterTemp = DEFAULT_HEATER_CUT_OUT_WATER_TEMP;
     *updated = true;

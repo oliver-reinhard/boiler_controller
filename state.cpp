@@ -242,11 +242,11 @@ StateEnum Recording::transAction(EventEnum event, ExecutionContext *context) {
 }
 
 void Recording::entryAction(ExecutionContext *context) {
-  context->control->logValues(true, context->op);
+  context->control->logValues(true, context);
 }
 
 void Recording::exitAction(ExecutionContext *context){
-  context->control->logValues(false, context->op);
+  context->control->logValues(false, context);
 }
 
 /*
@@ -307,11 +307,11 @@ StateEnum Heating::transAction(EventEnum event, ExecutionContext *context) {
 }
 
 void Heating::entryAction(ExecutionContext *context) {
-  context->control->heat(true, context->op);
+  context->control->heat(true, context);
 }
 
 void Heating::exitAction(ExecutionContext *context){
-  context->control->heat(false, context->op);
+  context->control->heat(false, context);
 }
 
 /*

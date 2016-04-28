@@ -36,6 +36,16 @@ void setup() {
     context.config = &configParams;
     context.op = &opParams;
     context.control = &controlActions;
+
+    //
+    // REMOVE AGAIN
+    //
+    TempSensorID water = {1,1,1,1,1,1,1,1};
+    memcpy(&configParams.waterTempSensor, &water, TEMP_SENSOR_ID_BYTES);
+    TempSensorID ambient = {2,2,2,2,2,2,2,2};
+    memcpy(&configParams.ambientTempSensor, &ambient, TEMP_SENSOR_ID_BYTES);
+    storage.updateConfigParams(&configParams);
+    
   #endif
  
 }
@@ -46,8 +56,8 @@ void loop() {
   #endif
   
   #ifndef UNIT_TEST
-    context.control->readSensors(&opParams);
-    context.control->readUserCommands(&opParams);
+    context.control->readSensors(&context);
+    context.control->readUserCommands(&context);
     
     EventCandidates cand = automaton.evaluate();
     if (cand != EVENT_NONE) {

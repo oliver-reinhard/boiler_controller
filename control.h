@@ -2,7 +2,7 @@
   #define BOILER_CONTROL_H_INCLUDED
   
   #include "config.h"
-  #include "log.h"
+  #include "storage.h"
 
   typedef enum {
     CMD_NONE = 0,
@@ -23,7 +23,8 @@
   typedef enum {
     SENSOR_INITIALISING = 0,
     SENSOR_OK = 1,
-    SENSOR_NOK = 2
+    SENSOR_NOK = 2,
+    SENSOR_ID_UNDEFINED = 3
   } SensorStatusEnum;
 
   struct TemperatureSensor {
@@ -41,20 +42,26 @@
     boolean loggingValues = false;
   };
 
+  class ControlContext {
+    public:
+      Storage *storage;
+      const ConfigParams *config;
+      OperationalParams *op;
+  };
 
   /*
-   * This class is stateless; all effects of actions are either immediate (to port of the Arduino chip, including serial com port), or 
+   * This class is stateless; all effects of actions are either immediate (to a port of the Arduino chip, including serial com port), or 
    * they change operational parameter values.
    * Note: it is implemented as a class instead of normal functions for unit-testing purposes (mocking).
    */
   class ControlActions {
     public:
-      virtual void readSensors(OperationalParams *op);
-      virtual void readUserCommands(OperationalParams *op);
+      virtual void readSensors(ControlContext *context);
+      virtual void readUserCommands(ControlContext *context);
   
-      virtual void heat(boolean on, OperationalParams *op);
+      virtual void heat(boolean on, ControlContext *context);
   
-      virtual void logValues(boolean on, OperationalParams *op);
+      virtual void logValues(boolean on, ControlContext *context);
   
       virtual void setConfigParam();
       virtual void getLog();
