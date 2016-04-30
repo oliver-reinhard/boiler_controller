@@ -223,7 +223,7 @@
     //
     // user command SET_CONFIG in state IDLE
     //
-    assertEqual(int(automaton.userCommands()), int(CMD_SET_CONFIG | CMD_REC_ON));
+    assertEqual(int(automaton.userCommands()), int(CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_SET_CONFIG | CMD_REC_ON));
     op.userCommands = CMD_SET_CONFIG;
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_SET_CONFIG));

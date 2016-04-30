@@ -148,7 +148,7 @@ StateEnum Ready::id() {
 }
 
 UserCommands Ready::userCommands(ExecutionContext *context) {
-  return AbstractState::eval(context) | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
+  return AbstractState::userCommands(context) | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
 }
 
 EventCandidates Ready::eval(ExecutionContext *context) {
@@ -189,7 +189,7 @@ StateEnum Idle::id() {
 }
 
 UserCommands Idle::userCommands(ExecutionContext *context) {
-  return AbstractState::eval(context) | CMD_SET_CONFIG | CMD_REC_ON;
+  return AbstractState::userCommands(context) | CMD_SET_CONFIG | CMD_REC_ON;
 }
 
 EventCandidates Idle::eval(ExecutionContext *context) {
@@ -222,7 +222,7 @@ StateEnum Recording::id() {
 }
 
 UserCommands Recording::userCommands(ExecutionContext *context) {
-  return AbstractState::eval(context) | CMD_REC_OFF;
+  return AbstractState::userCommands(context) | CMD_REC_OFF;
 }
 
 
@@ -257,7 +257,7 @@ StateEnum Standby::id() {
 }
 
 UserCommands Standby::userCommands(ExecutionContext *context) {
-  return AbstractState::eval(context) | CMD_HEAT_ON;
+  return AbstractState::userCommands(context) | CMD_HEAT_ON;
 }
 
 EventCandidates Standby::eval(ExecutionContext *context) {
@@ -283,7 +283,7 @@ StateEnum Heating::id() {
 }
 
 UserCommands Heating::userCommands(ExecutionContext *context) {
-  return AbstractState::eval(context) | CMD_HEAT_OFF;
+  return AbstractState::userCommands(context) | CMD_HEAT_OFF;
 }
 
 EventCandidates Heating::eval(ExecutionContext *context) {
@@ -322,7 +322,7 @@ StateEnum Overheated::id() {
 }
 
 UserCommands Overheated::userCommands(ExecutionContext *context) {
-  return AbstractState::eval(context) | CMD_RESET;
+  return AbstractState::userCommands(context) | CMD_RESET;
 }
 
 EventCandidates Overheated::eval(ExecutionContext *context) {

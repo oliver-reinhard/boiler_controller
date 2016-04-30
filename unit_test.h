@@ -11,6 +11,6 @@
       #define UNIT_TEST_LOG_ENTRIES 5
 
     // Comment the following line to prevent execution of STATE tests:
-    #define TEST_STATE
+    //#define TEST_STATE
   #endif
 #endif
