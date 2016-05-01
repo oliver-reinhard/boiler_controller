@@ -9,12 +9,12 @@
     class MockControlActions : public ControlActions {
       public:
         // Mocked methods:
-        void readSensors(ControlContext *context);
+        void setupSensors(ControlContext *context);
+        void initSensorReadout(ControlContext *context);
+        void completeSensorReadout(ControlContext *context);
         void readUserCommands(ControlContext *context);
     
         void heat(boolean on, ControlContext *context);
-    
-        void logValues(boolean on, ControlContext *context);
     
         void setConfigParam();
         void getLog();
@@ -24,8 +24,6 @@
         // Mock counters:
         unsigned short heatTrueCount = 0;
         unsigned short heatFalseCount = 0;
-        unsigned short logValuesTrueCount = 0;
-        unsigned short logValuesFalseCount = 0;
         unsigned short setConfigParamCount = 0;
         unsigned short getLogCount = 0;
         unsigned short getConfigCount = 0;

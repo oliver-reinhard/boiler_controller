@@ -9,12 +9,13 @@
     STATE_SAME = -1,
     //
     STATE_INIT = 0,
-    STATE_READY = 1, 
-    STATE_IDLE = 2, 
-    STATE_RECORDING = 3,
-    STATE_STANDBY = 4, 
-    STATE_HEATING = 5, 
-    STATE_OVERHEATED = 6
+    STATE_SENSORS_NOK = 1,
+    STATE_READY = 2, 
+    STATE_IDLE = 3, 
+    STATE_RECORDING = 4,
+    STATE_STANDBY = 5, 
+    STATE_HEATING = 6, 
+    STATE_OVERHEATED = 7
   } StateEnum;
 
   const unsigned short NUM_STATES = STATE_OVERHEATED + 1;
@@ -22,37 +23,39 @@
   typedef enum { 
     EVENT_NONE = 0,
     EVENT_READY = 0x1,       // 1
-    EVENT_SET_CONFIG = 0x2,  // 2, user command
-    EVENT_REC_ON = 0x4,      // 3, user command
-    EVENT_REC_OFF = 0x8,     // 4, user command
-    EVENT_GET_CONFIG = 0x10, // 5, user command
-    EVENT_GET_LOG = 0x20,    // 6, user command
-    EVENT_GET_STAT = 0x40,   // 7, user command
-    EVENT_HEAT_ON = 0x80,    // 8, user command
-    EVENT_HEAT_OFF = 0x100,  // 9, user command
-    EVENT_TEMP_OVER = 0x200, // 10
-    EVENT_TEMP_OK = 0x400,   // 11
-    EVENT_RESET = 0x800      // 12, user command
+    EVENT_SENSORS_NOK = 0x2, // 2
+    EVENT_SET_CONFIG = 0x4,  // 3, user command
+    EVENT_REC_ON = 0x8,      // 4, user command
+    EVENT_REC_OFF = 0x10,    // 5, user command
+    EVENT_GET_CONFIG = 0x20, // 6, user command
+    EVENT_GET_LOG = 0x40,    // 7, user command
+    EVENT_GET_STAT = 0x80,   // 8, user command
+    EVENT_HEAT_ON = 0x100,   // 9, user command
+    EVENT_HEAT_OFF = 0x200,  // 10, user command
+    EVENT_TEMP_OVER = 0x400, // 11
+    EVENT_TEMP_OK = 0x800,   // 12
+    EVENT_RESET = 0x1000     // 13, user command
   } EventEnum;
 
-  const unsigned int NUM_EVENTS = 12;
+  const unsigned int NUM_EVENTS = 13;
   
   /*
    * All events (except EVENT_NONE) ordered by descending priority, i.e. most urgent first.
    */
   const EventEnum EVENT_PRIORITIES[NUM_EVENTS] = {
-    EVENT_TEMP_OVER,  // 1
-    EVENT_TEMP_OK,    // 2
-    EVENT_READY,      // 3
-    EVENT_HEAT_OFF,   // 4
-    EVENT_HEAT_ON,    // 5
-    EVENT_REC_OFF,    // 6
-    EVENT_REC_ON,     // 7
-    EVENT_RESET,      // 8
-    EVENT_GET_STAT,   // 9
-    EVENT_SET_CONFIG, // 10
-    EVENT_GET_CONFIG, // 11
-    EVENT_GET_LOG     // 12
+    EVENT_TEMP_OVER,   // 1
+    EVENT_TEMP_OK,     // 2
+    EVENT_READY,       // 3
+    EVENT_SENSORS_NOK, // 4
+    EVENT_HEAT_OFF,    // 5
+    EVENT_HEAT_ON,     // 6
+    EVENT_REC_OFF,     // 7
+    EVENT_REC_ON,      // 8
+    EVENT_RESET,       // 9
+    EVENT_GET_STAT,    // 10
+    EVENT_SET_CONFIG,  // 11
+    EVENT_GET_CONFIG,  // 12
+    EVENT_GET_LOG      // 13
   };
     
   /**
@@ -203,6 +206,13 @@
     protected:
       StateEnum transAction(EventEnum event, ExecutionContext *context);
   };
+  
+  
+  class SensorsNOK : public AbstractSimpleState {
+    public:
+      StateEnum id();
+      // Terminal state: No user or events available commands available.
+  };
 
   
   class Ready : public AbstractCompositeState {
@@ -306,6 +316,9 @@
     
       /*
        * Returns all possible transitions from the current state, or EVENT_NONE if there is none. 
+       * 
+       * PREREQUISITE: the ExecutionContext has been updated very recently, including sensor readout
+       * 
        * Note: The result EVENT_NONE may imply that a user command is not supported at the given state.
        */
       EventCandidates evaluate();

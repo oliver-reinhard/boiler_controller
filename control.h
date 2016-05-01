@@ -1,9 +1,21 @@
 #ifndef BOILER_CONTROL_H_INCLUDED
   #define BOILER_CONTROL_H_INCLUDED
   
+  #include <OneWire.h>
   #include "config.h"
   #include "storage.h"
 
+  #define HEATER_PIN 9
+  #define ONE_WIRE_PIN 10 // Temperature sensors
+
+  // Water min and max values used to check that sensor-temperature readout is plausible:
+  #define WATER_MIN_TEMP -2000 // [°C * 100]
+  #define WATER_MAX_TEMP 10000 // [°C * 100]
+  
+  // Water min and max values used to check that ambient-temperature readout is plausible:
+  #define AMBIENT_MIN_TEMP -3000 // [°C * 100]
+  #define AMBIENT_MAX_TEMP 5000 // [°C * 100]
+  
   typedef enum {
     CMD_NONE = 0,
     CMD_SET_CONFIG = 0x1, 
@@ -17,7 +29,7 @@
     CMD_RESET = 0x100
   } UserCommandEnum;
 
-  // OR combination ("|") of UserCommandEnum(s):
+  // bitwise OR combination ("|") of UserCommandEnum(s):
   typedef unsigned short UserCommands;
 
   typedef enum {
@@ -27,11 +39,12 @@
     SENSOR_ID_UNDEFINED = 3
   } SensorStatusEnum;
 
+  
   struct TemperatureSensor {
     SensorStatusEnum sensorStatus = SENSOR_INITIALISING;
     Temperature currentTemp = UNDEFINED_TEMPERATURE;
     Temperature lastLoggedTemp = UNDEFINED_TEMPERATURE;
-    Timestamp lastLoggedTime = UNDEFINED_TIMESTAMP;
+    unsigned long lastLoggedTime = 0L;
   };
   
   struct OperationalParams {
@@ -45,8 +58,13 @@
   class ControlContext {
     public:
       Storage *storage;
-      const ConfigParams *config;
+      ConfigParams *config;
       OperationalParams *op;
+  };
+  
+  struct TemperatureReadout {
+    byte resolution;     // number of bits (= 9..12)
+    Temperature celcius; // [°C * 100]
   };
 
   /*
@@ -56,17 +74,32 @@
    */
   class ControlActions {
     public:
-      virtual void readSensors(ControlContext *context);
+      virtual void setupSensors(ControlContext *context);
+      virtual void initSensorReadout(ControlContext *context);
+      virtual void completeSensorReadout(ControlContext *context);
       virtual void readUserCommands(ControlContext *context);
-  
+
+      /*
+       * Physically turns the water heater on or off.
+       */
       virtual void heat(boolean on, ControlContext *context);
-  
-      virtual void logValues(boolean on, ControlContext *context);
+
+      /*
+       * Checks whether
+       * - logging is turned on or off
+       * - values have changed sufficiently to warrant logging (context->config->logTempDelta)
+       * - enough time has elapsed for a new logging record (context->config->logTimeDelta)
+       */
+      virtual void logTemperatureValues(ControlContext *context);
   
       virtual void setConfigParam();
       virtual void getLog();
       virtual void getConfig();
       virtual void getStat();
+    protected:
+      OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor to 5V is necessary)
+      boolean readScratchpad(byte addr[], byte *data);
+      TemperatureReadout getCelcius(byte data[]);
   };
   
 #endif

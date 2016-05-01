@@ -8,6 +8,9 @@
 #include "state.h"
 #include "test_state.h"
 
+#define CONTROL_CYCLE_DURATION   5000L  // [ms]
+#define TEMP_SENSOR_READOUT_WAIT 1600L  // [ms] = 2 * 750 ms + safety margin
+
 /*
  * GLOBALS
  */
@@ -18,6 +21,8 @@ ControlActions controlActions = ControlActions();
 ExecutionContext context;
 
 BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
+
+unsigned long controlCycleStart = 0L;
 
 void setup() {
   Serial.begin(9600);
@@ -38,38 +43,51 @@ void setup() {
     context.control = &controlActions;
 
     //
-    // REMOVE AGAIN
+    // REMOVE THIS
     //
-    TempSensorID water = {1,1,1,1,1,1,1,1};
-    memcpy(&configParams.waterTempSensor, &water, TEMP_SENSOR_ID_BYTES);
-    TempSensorID ambient = {2,2,2,2,2,2,2,2};
-    memcpy(&configParams.ambientTempSensor, &ambient, TEMP_SENSOR_ID_BYTES);
+    TempSensorID water   = {0x28, 0x8C, 0x8C, 0x79, 0x06, 0x00, 0x00, 0x89};
+    memcpy(&configParams.waterTempSensorId, &water, TEMP_SENSOR_ID_BYTES);
+    TempSensorID ambient = {0x28, 0x7C, 0x28, 0x79, 0x06, 0x00, 0x00, 0xD7};
+    memcpy(&configParams.ambientTempSensorId, &ambient, TEMP_SENSOR_ID_BYTES);
     storage.updateConfigParams(&configParams);
-    
+    //
+    // END REMOVE
+    //
+
+    pinMode(HEATER_PIN, OUTPUT);
+    controlActions.setupSensors(&context);
   #endif
  
 }
 
 void loop() {
+  unsigned long elapsed = millis() - controlCycleStart;
+  if (controlCycleStart == 0L || elapsed > CONTROL_CYCLE_DURATION) {
+    controlCycleStart = millis();
+    elapsed = 0L;
+  }
+  
   #ifdef UNIT_TEST
     Test::run();
   #endif
   
   #ifndef UNIT_TEST
-    context.control->readSensors(&context);
-    context.control->readUserCommands(&context);
+    if (elapsed == 0L) {
+      context.control->initSensorReadout(&context);
+    } else if (elapsed >= TEMP_SENSOR_READOUT_WAIT) {
+      context.control->completeSensorReadout(&context);
+      context.control->readUserCommands(&context);
     
-    EventCandidates cand = automaton.evaluate();
-    if (cand != EVENT_NONE) {
-      EventEnum event = processEventCandidates(cand);
-      automaton.transition(event);
-    }
+      EventCandidates cand = automaton.evaluate();
+      if (cand != EVENT_NONE) {
+        EventEnum event = processEventCandidates(cand);
+        automaton.transition(event);
+      }
+  
+      controlActions.logValues(&context);
 
-    if (context.op->loggingValues) {
-      logValues(&context);
+      delay(CONTROL_CYCLE_DURATION - elapsed + 1);
     }
-
-    delay(1000);
   #endif
 }
 
@@ -82,34 +100,4 @@ EventEnum processEventCandidates(EventCandidates cand) {
   return EVENT_NONE;
 }
 
-void logValues(ExecutionContext *context) {
-  boolean logValues = false;
-  Temperature water = UNDEFINED_TEMPERATURE;
-  Temperature ambient = UNDEFINED_TEMPERATURE;
-  
-  if (context->op->water.sensorStatus == SENSOR_OK && abs(context->op->water.currentTemp - context->op->water.lastLoggedTemp) >= context->config->logTempDelta) {
-    logValues = true;
-    water = context->op->water.currentTemp;
-    
-  } else if (context->op->water.sensorStatus == SENSOR_NOK && context->op->water.lastLoggedTemp != UNDEFINED_TEMPERATURE) {
-    logValues = true;;
-  }
-  
-  if (context->op->ambient.sensorStatus == SENSOR_OK && abs(context->op->ambient.currentTemp - context->op->ambient.lastLoggedTemp) >= context->config->logTempDelta) {
-    logValues = true;
-    ambient = context->op->ambient.currentTemp;
-    
-  } else if (context->op->ambient.sensorStatus == SENSOR_NOK && context->op->ambient.lastLoggedTemp != UNDEFINED_TEMPERATURE) {
-    logValues = true;
-  }
-  
-  if (logValues) {
-    Flags flags = context->op->water.sensorStatus<<4 | context->op->ambient.sensorStatus;
-    Timestamp stamp = context->storage->logValues(context->op->water.currentTemp, context->op->ambient.currentTemp, flags);
-    context->op->water.lastLoggedTemp = water;
-    context->op->water.lastLoggedTime = stamp;
-    context->op->ambient.lastLoggedTemp = ambient;
-    context->op->ambient.lastLoggedTime = stamp;
-  }
-}
 

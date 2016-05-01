@@ -110,6 +110,11 @@ void Storage::initConfigParams(ConfigParams *configParams, boolean *updated) {
     configParams->logTempDelta = DEFAULT_LOG_TEMP_DELTA;
     *updated = true;
   }
+
+  if (configParams->logTimeDelta == 0L) {
+    configParams->logTimeDelta = DEFAULT_LOG_TIME_DELTA;
+    *updated = true;
+  }
   
   if (configParams->tankCapacity == 0.0) {
     configParams->tankCapacity = DEFAULT_TANK_CAPACITY;

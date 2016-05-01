@@ -15,8 +15,6 @@
     return 
       heatTrueCount +
       heatFalseCount +
-      logValuesTrueCount +
-      logValuesFalseCount +
       setConfigParamCount +
       getLogCount +
       getConfigCount +
@@ -26,18 +24,24 @@
   void MockControlActions::resetCounters() {
     heatTrueCount = 0;
     heatFalseCount = 0;
-    logValuesTrueCount = 0;
-    logValuesFalseCount = 0;
     setConfigParamCount = 0;
     getLogCount = 0;
     getConfigCount = 0;
     getStatCount = 0;
   }
       
-  void MockControlActions::readSensors(ControlContext *context) {
+  void MockControlActions::setupSensors(ControlContext *context) {
     if (context == NULL) { } // prevent warning "unused parameter ..."
   }
   
+  void MockControlActions::initSensorReadout(ControlContext *context) {
+    if (context == NULL) { } // prevent warning "unused parameter ..."
+  }
+  
+  void MockControlActions::completeSensorReadout(ControlContext *context) {
+    if (context == NULL) { } // prevent warning "unused parameter ..."
+  }
+
   void MockControlActions::readUserCommands(ControlContext *context) {
     if (context == NULL) { } // prevent warning "unused parameter ..."
   }
@@ -51,18 +55,6 @@
       heatTrueCount++;
     } else {
       heatFalseCount++;
-    }
-  }
-
-  void MockControlActions::logValues(boolean on, ControlContext *context) {
-    #ifdef DEBUG_TEST_STATE
-      Serial.println("DEBUG_TEST_STATE: logValues(on/off)");
-    #endif
-    context->op->loggingValues = on;
-    if (on) {
-      logValuesTrueCount++;
-    } else {
-      logValuesFalseCount++;
     }
   }
 
@@ -245,10 +237,9 @@
     op.userCommands = CMD_NONE;
     
     // transition state IDLE => event REC_ON => state STANDBY
+    assertEqual(int(op.loggingValues), int(false));
     automaton.transition(EVENT_REC_ON); 
     assertEqual(automaton.state()->id(), STATE_STANDBY);
-    assertEqual(control.logValuesTrueCount, 1);
-    assertEqual(control.totalInvocations(), 1);
     assertEqual(int(op.loggingValues), int(true));
     assertEqual(int(op.heating), int(false));
     control.resetCounters();
@@ -265,8 +256,6 @@
     // transition state STANDBY => event REC_OFF => state IDLE
     automaton.transition(EVENT_REC_OFF); 
     assertEqual(automaton.state()->id(), STATE_IDLE);
-    assertEqual(control.logValuesFalseCount, 1);
-    assertEqual(control.totalInvocations(), 1);
     assertEqual(int(op.loggingValues), int(false));
     assertEqual(int(op.heating), int(false));
     control.resetCounters();

@@ -124,11 +124,12 @@ StateEnum Init::id() {
 
 EventCandidates Init::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
-  //
-  // TODO: check that sensor value is plausible !!
-  //
-  if (context->op->water.sensorStatus == SENSOR_OK) {
+  if (context->op->water.sensorStatus == SENSOR_OK && context->op->ambient.sensorStatus != SENSOR_ID_UNDEFINED) {
     result |= EVENT_READY;
+  } else if (context->op->water.sensorStatus == SENSOR_NOK 
+    || context->op->water.sensorStatus == SENSOR_ID_UNDEFINED
+    || context->op->ambient.sensorStatus == SENSOR_ID_UNDEFINED) {
+    result |= EVENT_SENSORS_NOK;
   }
   return result;
 }
@@ -136,9 +137,20 @@ EventCandidates Init::eval(ExecutionContext *context) {
 StateEnum Init::transAction(EventEnum event, ExecutionContext *context) {
   if (event == EVENT_READY) {
     return STATE_READY;
+  } else if (event == EVENT_SENSORS_NOK) {
+    return STATE_SENSORS_NOK;
   }
   return AbstractState::transAction(event, context);
 }
+
+/*
+ * SENSORS NOK
+ */
+StateEnum SensorsNOK::id() {
+  return STATE_SENSORS_NOK;
+}
+
+// Terminal state: No user or events available commands available.
 
 /*
  * READY
@@ -153,6 +165,9 @@ UserCommands Ready::userCommands(ExecutionContext *context) {
 
 EventCandidates Ready::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
+  if (context->op->water.sensorStatus == SENSOR_NOK) {
+    result |= EVENT_SENSORS_NOK;
+  }
   if (context->op->userCommands & CMD_GET_CONFIG) {
     result |= EVENT_GET_CONFIG;
   }
@@ -166,7 +181,10 @@ EventCandidates Ready::eval(ExecutionContext *context) {
 }
 
 StateEnum Ready::transAction(EventEnum event, ExecutionContext *context) {
-  if (event == EVENT_GET_CONFIG) {
+  if (event == EVENT_SENSORS_NOK) {
+    return STATE_SENSORS_NOK;
+    
+  } else if (event == EVENT_GET_CONFIG) {
     context->control->getConfig();
     return STATE_SAME;
     
@@ -242,11 +260,11 @@ StateEnum Recording::transAction(EventEnum event, ExecutionContext *context) {
 }
 
 void Recording::entryAction(ExecutionContext *context) {
-  context->control->logValues(true, context);
+  context->op->loggingValues = true;
 }
 
 void Recording::exitAction(ExecutionContext *context){
-  context->control->logValues(false, context);
+  context->op->loggingValues = false;
 }
 
 /*
@@ -354,6 +372,7 @@ BoilerStateAutomaton::BoilerStateAutomaton(ExecutionContext *context) {
   
   static Init INIT;
   static Idle IDLE;
+  static SensorsNOK SENSORS_NOK;
   static Standby STANDBY;
   static Heating HEATING;
   static Overheated OVERHEATED;
@@ -365,6 +384,7 @@ BoilerStateAutomaton::BoilerStateAutomaton(ExecutionContext *context) {
   static Ready READY(READY_SUBSTATES, 2);
 
   ALL_STATES[STATE_INIT] = &INIT;
+  ALL_STATES[STATE_SENSORS_NOK] = &SENSORS_NOK;
   ALL_STATES[STATE_READY] = &READY;
   ALL_STATES[STATE_IDLE] = &IDLE;
   ALL_STATES[STATE_RECORDING] = &RECORDING;
