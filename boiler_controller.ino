@@ -1,15 +1,14 @@
 #include "unit_test.h"
 #ifdef UNIT_TEST
   #include <ArduinoUnit.h>
+  #include "test_state.h"
 #endif
 #include "math.h"
-//#include "storage.h"
 #include "control.h"
 #include "state.h"
-#include "test_state.h"
 
 #define CONTROL_CYCLE_DURATION   5000L  // [ms]
-#define TEMP_SENSOR_READOUT_WAIT 1600L  // [ms] = 2 * 750 ms + safety margin
+#define TEMP_SENSOR_READOUT_WAIT 800L   // [ms] = 750 ms + safety margin
 
 /*
  * GLOBALS

@@ -204,7 +204,7 @@ void ControlActions::setConfigParam() {
 }
 
 void ControlActions::getLog() {
-  // TODO
+  
 }
 
 void ControlActions::getConfig() {
@@ -212,6 +212,7 @@ void ControlActions::getConfig() {
 }
 
 void ControlActions::getStat() {
-  // TODO
+  Serial.print("State = ");
+  Serial.println();
 }
 
