@@ -12,22 +12,23 @@
         void setupSensors(ControlContext *context);
         void initSensorReadout(ControlContext *context);
         void completeSensorReadout(ControlContext *context);
-        void readUserCommands(ControlContext *context);
     
         void heat(boolean on, ControlContext *context);
     
         void setConfigParam();
-        void getLog();
-        void getConfig();
-        void getStat();
+        void requestHelp();
+        void requestLog();
+        void requestConfig();
+        void requestStat();
         
         // Mock counters:
         unsigned short heatTrueCount = 0;
         unsigned short heatFalseCount = 0;
         unsigned short setConfigParamCount = 0;
-        unsigned short getLogCount = 0;
-        unsigned short getConfigCount = 0;
-        unsigned short getStatCount = 0;
+        unsigned short requestHelpCount = 0;
+        unsigned short requestLogCount = 0;
+        unsigned short requestConfigCount = 0;
+        unsigned short requestStatCount = 0;
         
         unsigned short totalInvocations();
         void resetCounters();

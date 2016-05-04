@@ -27,17 +27,18 @@
     EVENT_SET_CONFIG = 0x4,  // 3, user command
     EVENT_REC_ON = 0x8,      // 4, user command
     EVENT_REC_OFF = 0x10,    // 5, user command
-    EVENT_GET_CONFIG = 0x20, // 6, user command
-    EVENT_GET_LOG = 0x40,    // 7, user command
-    EVENT_GET_STAT = 0x80,   // 8, user command
-    EVENT_HEAT_ON = 0x100,   // 9, user command
-    EVENT_HEAT_OFF = 0x200,  // 10, user command
-    EVENT_TEMP_OVER = 0x400, // 11
-    EVENT_TEMP_OK = 0x800,   // 12
-    EVENT_RESET = 0x1000     // 13, user command
+    EVENT_HELP = 0x20,       // 6, user command
+    EVENT_GET_CONFIG = 0x40, // 7, user command
+    EVENT_GET_LOG = 0x80,    // 8, user command
+    EVENT_GET_STAT = 0x100,  // 8, user command
+    EVENT_HEAT_ON = 0x200,   // 10, user command
+    EVENT_HEAT_OFF = 0x400,  // 11, user command
+    EVENT_TEMP_OVER = 0x800, // 12
+    EVENT_TEMP_OK = 0x1000,  // 13
+    EVENT_RESET = 0x2000     // 14, user command
   } EventEnum;
 
-  const unsigned int NUM_EVENTS = 13;
+  const unsigned int NUM_EVENTS = 14;
   
   /*
    * All events (except EVENT_NONE) ordered by descending priority, i.e. most urgent first.
@@ -53,9 +54,10 @@
     EVENT_REC_ON,      // 8
     EVENT_RESET,       // 9
     EVENT_GET_STAT,    // 10
-    EVENT_SET_CONFIG,  // 11
-    EVENT_GET_CONFIG,  // 12
-    EVENT_GET_LOG      // 13
+    EVENT_HELP,        // 11
+    EVENT_SET_CONFIG,  // 12
+    EVENT_GET_CONFIG,  // 13
+    EVENT_GET_LOG      // 14
   };
     
   /**

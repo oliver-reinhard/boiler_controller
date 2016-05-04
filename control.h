@@ -18,19 +18,33 @@
   
   typedef enum {
     CMD_NONE = 0,
-    CMD_SET_CONFIG = 0x1, 
-    CMD_REC_ON = 0x2,
-    CMD_REC_OFF = 0x4,
-    CMD_GET_LOG = 0x8, 
-    CMD_GET_CONFIG = 0x10,
-    CMD_GET_STAT = 0x20,
-    CMD_HEAT_ON = 0x40,
-    CMD_HEAT_OFF = 0x80,
-    CMD_RESET = 0x100
+    CMD_HELP = 0x1,
+    CMD_SET_CONFIG = 0x2, 
+    CMD_REC_ON = 0x4,
+    CMD_REC_OFF = 0x8,
+    CMD_GET_LOG = 0x10, 
+    CMD_GET_CONFIG = 0x20,
+    CMD_GET_STAT = 0x40,
+    CMD_HEAT_ON = 0x80,
+    CMD_HEAT_OFF = 0x100,
+    CMD_RESET = 0x200,
   } UserCommandEnum;
+  
+  const unsigned short NUM_USER_COMMANDS = 10;
 
   // bitwise OR combination ("|") of UserCommandEnum(s):
   typedef unsigned short UserCommands;
+
+  typedef enum {
+    SEND_NONE = 0,
+    SEND_HELP = 0x1,
+    SEND_LOG = 0x2,
+    SEND_CONFIG = 0x4,
+    SEND_STAT = 0x8
+  } InfoRequestEnum;
+
+  // bitwise OR combination ("|") of InfoRequestEnum(s)
+  typedef byte InfoRequests;
 
   typedef enum {
     SENSOR_INITIALISING = 0,
@@ -77,7 +91,6 @@
       virtual void setupSensors(ControlContext *context);
       virtual void initSensorReadout(ControlContext *context);
       virtual void completeSensorReadout(ControlContext *context);
-      virtual void readUserCommands(ControlContext *context);
 
       /*
        * Physically turns the water heater on or off.
@@ -93,13 +106,18 @@
       virtual void logTemperatureValues(ControlContext *context);
   
       virtual void setConfigParam();
-      virtual void getLog();
-      virtual void getConfig();
-      virtual void getStat();
+      virtual void requestHelp();
+      virtual void requestLog();
+      virtual void requestConfig();
+      virtual void requestStat();
+      InfoRequests getPendingInfoRequests();
+      void clearPendingInfoRequests();
+      
     protected:
       OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor to 5V is necessary)
       boolean readScratchpad(byte addr[], byte *data);
       TemperatureReadout getCelcius(byte data[]);
+      InfoRequests pendingRequests = SEND_NONE;
   };
   
 #endif

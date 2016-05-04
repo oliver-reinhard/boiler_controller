@@ -6,6 +6,7 @@
 #include "math.h"
 #include "control.h"
 #include "state.h"
+#include "ui.h"
 
 #define CONTROL_CYCLE_DURATION   5000L  // [ms]
 #define TEMP_SENSOR_READOUT_WAIT 800L   // [ms] = 750 ms + safety margin
@@ -75,12 +76,15 @@ void loop() {
       context.control->initSensorReadout(&context);
     } else if (elapsed >= TEMP_SENSOR_READOUT_WAIT) {
       context.control->completeSensorReadout(&context);
-      context.control->readUserCommands(&context);
+      readUserCommands(&context);
     
       EventCandidates cand = automaton.evaluate();
       if (cand != EVENT_NONE) {
         EventEnum event = processEventCandidates(cand);
         automaton.transition(event);
+        
+        processInforRequests(context.control->getPendingInfoRequests(), &context, &automaton);
+        context.control->clearPendingInfoRequests();
       }
   
       controlActions.logValues(&context);

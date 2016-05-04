@@ -16,18 +16,20 @@
       heatTrueCount +
       heatFalseCount +
       setConfigParamCount +
-      getLogCount +
-      getConfigCount +
-      getStatCount;
+      requestHelpCount +
+      requestLogCount +
+      requestConfigCount +
+      requestStatCount;
   }
    
   void MockControlActions::resetCounters() {
     heatTrueCount = 0;
     heatFalseCount = 0;
     setConfigParamCount = 0;
-    getLogCount = 0;
-    getConfigCount = 0;
-    getStatCount = 0;
+    requestHelpCount = 0;
+    requestLogCount = 0;
+    requestConfigCount = 0;
+    requestStatCount = 0;
   }
       
   void MockControlActions::setupSensors(ControlContext *context) {
@@ -42,9 +44,6 @@
     if (context == NULL) { } // prevent warning "unused parameter ..."
   }
 
-  void MockControlActions::readUserCommands(ControlContext *context) {
-    if (context == NULL) { } // prevent warning "unused parameter ..."
-  }
 
   void MockControlActions::heat(boolean on, ControlContext *context) {
     #ifdef DEBUG_TEST_STATE
@@ -59,19 +58,28 @@
   }
 
   void MockControlActions::setConfigParam() {
+    ControlActions::setConfigParam();
     setConfigParamCount++;
   }
   
-  void MockControlActions::getLog() {
-    getLogCount++;
+  void MockControlActions::requestHelp() {
+    ControlActions::requestHelp();
+    requestHelpCount++;
   }
   
-  void MockControlActions::getConfig() {
-    getConfigCount++;
+  void MockControlActions::requestLog() {
+    ControlActions::requestLog();
+    requestLogCount++;
   }
   
-  void MockControlActions::getStat() {
-    getStatCount++;
+  void MockControlActions::requestConfig() {
+    ControlActions::requestConfig();
+    requestConfigCount++;
+  }
+  
+  void MockControlActions::requestStat() {
+    ControlActions::requestStat();
+    requestStatCount++;
   }
 
   /*

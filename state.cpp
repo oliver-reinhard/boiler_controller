@@ -168,6 +168,9 @@ EventCandidates Ready::eval(ExecutionContext *context) {
   if (context->op->water.sensorStatus == SENSOR_NOK) {
     result |= EVENT_SENSORS_NOK;
   }
+  if (context->op->userCommands & CMD_HELP) {
+    result |= EVENT_HELP;
+  }
   if (context->op->userCommands & CMD_GET_CONFIG) {
     result |= EVENT_GET_CONFIG;
   }
@@ -184,16 +187,20 @@ StateEnum Ready::transAction(EventEnum event, ExecutionContext *context) {
   if (event == EVENT_SENSORS_NOK) {
     return STATE_SENSORS_NOK;
     
+  } else if (event == EVENT_HELP) {
+    context->control->requestHelp();
+    return STATE_SAME;
+    
   } else if (event == EVENT_GET_CONFIG) {
-    context->control->getConfig();
+    context->control->requestConfig();
     return STATE_SAME;
     
   } else if (event == EVENT_GET_LOG) {
-    context->control->getLog();
+    context->control->requestLog();
     return STATE_SAME;
     
   } else if (event == EVENT_GET_STAT) {
-    context->control->getStat();
+    context->control->requestStat();
     return STATE_SAME;
   }
   return AbstractState::transAction(event, context);

@@ -148,10 +148,6 @@ void ControlActions::completeSensorReadout(ControlContext *context) {
   oneWire.reset_search();
 }
 
-void ControlActions::readUserCommands(ControlContext *context) {
-  if (context == NULL) { } // prevent warning "unused parameter ..."
-}
-
 void ControlActions::heat(boolean on, ControlContext *context) {
   context->op->heating = on;
   if (on) {
@@ -203,16 +199,27 @@ void ControlActions::setConfigParam() {
   // TODO
 }
 
-void ControlActions::getLog() {
-  
+void ControlActions::requestHelp() {
+  pendingRequests |= SEND_HELP;
 }
 
-void ControlActions::getConfig() {
-  // TODO
+void ControlActions::requestLog() {
+  pendingRequests |= SEND_LOG;
 }
 
-void ControlActions::getStat() {
-  Serial.print("State = ");
-  Serial.println();
+void ControlActions::requestConfig() {
+  pendingRequests |= SEND_CONFIG;
+}
+
+void ControlActions::requestStat() {
+  pendingRequests |= SEND_STAT;
+}
+
+InfoRequests ControlActions::getPendingInfoRequests() {
+  return pendingRequests;
+}
+
+void ControlActions::clearPendingInfoRequests() {
+  pendingRequests = SEND_NONE;
 }
 
