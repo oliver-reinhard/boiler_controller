@@ -2,7 +2,7 @@
 #include "storage.h"
 #include <assert.h>
 
-//#define DEBUG_STATE
+#define DEBUG_STATE
 
 /*
  * ABSTRACT STATE
@@ -124,13 +124,13 @@ StateEnum Init::id() {
 
 EventCandidates Init::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
-  if (context->op->water.sensorStatus == SENSOR_OK && context->op->ambient.sensorStatus != SENSOR_ID_UNDEFINED) {
-    result |= EVENT_READY;
-  } else if (context->op->water.sensorStatus == SENSOR_NOK 
+  if (context->op->water.sensorStatus == SENSOR_NOK 
     || context->op->water.sensorStatus == SENSOR_ID_UNDEFINED
     || context->op->ambient.sensorStatus == SENSOR_ID_UNDEFINED) {
     result |= EVENT_SENSORS_NOK;
-  }
+  } else if (context->op->water.sensorStatus == SENSOR_OK) {
+    result |= EVENT_READY;
+  } 
   return result;
 }
 
@@ -415,6 +415,12 @@ EventCandidates BoilerStateAutomaton::evaluate() {
 }
 
 void BoilerStateAutomaton::transition(EventEnum event) {
+  #ifdef DEBUG_STATE
+    Serial.print("DEBUG_STATE: State ");
+    Serial.print(currentState->id());
+    Serial.print(": process event ");
+    Serial.println(event);
+  #endif
   StateEnum oldState = currentState->id();
   StateEnum newState = currentState->trans(event, context);
   if (newState == STATE_UNDEFINED) {
@@ -439,6 +445,10 @@ void BoilerStateAutomaton::transition(EventEnum event) {
     
     context->storage->logState(oldState, newState, event);
   }
+  #ifdef DEBUG_STATE
+    Serial.print("DEBUG_STATE: New state: ");
+    Serial.println(currentState->id());
+  #endif
 }
 
 AbstractState *BoilerStateAutomaton::getState(StateEnum id) {

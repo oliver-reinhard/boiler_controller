@@ -4,127 +4,240 @@
 
 #define CMD_BUF_SIZE 128   // Size of the read buffer for incoming data
 
-String getConfigParamName(ConfigParamEnum literal) {
+#define DEBUG_UI
+
+const char STR_PARAM_TARGET_TEMP[] PROGMEM = "Target Temperature";
+const char STR_PARAM_WATER_TEMP_SENSOR_ID[] PROGMEM = "Water Temp. Sensor ID";
+const char STR_PARAM_AMBIENT_TEMP_SENSOR_ID[] PROGMEM = "Ambient Temp. Sensor ID";
+const char STR_PARAM_HEATER_CUT_OUT_WATER_TEMP[] PROGMEM = "Heater Cut-out Temp.";
+const char STR_PARAM_HEATER_BACK_OK_WATER_TEMP[] PROGMEM = "Heater Back-ok Temp.";
+const char STR_PARAM_LOG_TEMP_DELTA[] PROGMEM = "Log Temp. Delta";
+const char STR_PARAM_LOG_TIME_DELTA[] PROGMEM = "Log Time Delta";
+const char STR_PARAM_TANK_CAPACITY[] PROGMEM = "Tank Capacity";
+const char STR_PARAM_HEATER_POWER[] PROGMEM = "Heater Power";
+const char STR_PARAM_INSULATION_FACTOR[] PROGMEM = "Insulation Factor";
+const char STR_PARAM_UNDEF[] PROGMEM = "Undefined Config Param";
+
+PGM_P getConfigParamNamePtr(ConfigParamEnum literal) {
   switch(literal) {
-    case PARAM_TARGET_TEMP: return "Target Temperature";
-    case PARAM_WATER_TEMP_SENSOR_ID: return "Water Temp. Sensor ID";
-    case PARAM_AMBIENT_TEMP_SENSOR_ID: return "Ambient Temp. Sensor ID";
-    case PARAM_HEATER_CUT_OUT_WATER_TEMP: return "Heater Cut-out Temp.";
-    case PARAM_HEATER_BACK_OK_WATER_TEMP: return "Heater Back-ok Temp.";
-    case PARAM_LOG_TEMP_DELTA: return "Log Temp. Delta";
-    case PARAM_LOG_TIME_DELTA: return "Log Time Delta";
-    case PARAM_TANK_CAPACITY: return "Tank Capacity";
-    case PARAM_HEATER_POWER: return "Heater Power";
-    case PARAM_INSULATION_FACTOR: return "Insulation Factor";
-    default: return "Undefined Config Param";
+    case PARAM_TARGET_TEMP: return STR_PARAM_TARGET_TEMP;
+    case PARAM_WATER_TEMP_SENSOR_ID: return STR_PARAM_WATER_TEMP_SENSOR_ID;
+    case PARAM_AMBIENT_TEMP_SENSOR_ID: return STR_PARAM_AMBIENT_TEMP_SENSOR_ID;
+    case PARAM_HEATER_CUT_OUT_WATER_TEMP: return STR_PARAM_HEATER_CUT_OUT_WATER_TEMP;
+    case PARAM_HEATER_BACK_OK_WATER_TEMP: return STR_PARAM_HEATER_BACK_OK_WATER_TEMP;
+    case PARAM_LOG_TEMP_DELTA: return STR_PARAM_LOG_TEMP_DELTA;
+    case PARAM_LOG_TIME_DELTA: return STR_PARAM_LOG_TIME_DELTA;
+    case PARAM_TANK_CAPACITY: return STR_PARAM_TANK_CAPACITY;
+    case PARAM_HEATER_POWER: return STR_PARAM_HEATER_POWER;
+    case PARAM_INSULATION_FACTOR: return STR_PARAM_INSULATION_FACTOR;
+    default: return STR_PARAM_UNDEF;
+  }
+}
+
+String getConfigParamName(ConfigParamEnum literal) {
+  char buf[20];
+  strcpy_P(buf, getConfigParamNamePtr(literal));
+  return buf;
+}
+
+const char STR_STATE_UNDEFINED[] PROGMEM = "Undefined";
+const char STR_STATE_SAME[] PROGMEM = "Same";
+const char STR_STATE_INIT[] PROGMEM = "Init";
+const char STR_STATE_SENSORS_NOK[] PROGMEM = "Sensors NOK";
+const char STR_STATE_READY[] PROGMEM = "Ready";
+const char STR_STATE_IDLE[] PROGMEM = "Idle";
+const char STR_STATE_RECORDING[] PROGMEM = "Recording";
+const char STR_STATE_STANDBY[] PROGMEM = "Standby";
+const char STR_STATE_HEATING[] PROGMEM = "Heating";
+const char STR_STATE_OVERHEATED[] PROGMEM = "Overheated";
+const char STR_STATE_UNDEF[] PROGMEM = "Undefined State";
+
+/*
+String getStateName(StateEnum literal) {
+  char buf[20];
+  switch(literal) {
+    case STATE_UNDEFINED: strcpy_P(buf, STR_STATE_UNDEFINED); break;
+    case STATE_SAME: strcpy_P(buf, STR_STATE_SAME); break;
+    case STATE_INIT: strcpy_P(buf, STR_STATE_INIT); break;
+    case STATE_SENSORS_NOK: strcpy_P(buf, STR_STATE_SENSORS_NOK); break;
+    case STATE_READY: strcpy_P(buf, STR_STATE_READY); break;
+    case STATE_IDLE: strcpy_P(buf, STR_STATE_IDLE); break;
+    case STATE_RECORDING: strcpy_P(buf, STR_STATE_RECORDING); break;
+    case STATE_STANDBY: strcpy_P(buf, STR_STATE_STANDBY); break;
+    case STATE_HEATING: strcpy_P(buf, STR_STATE_HEATING); break;
+    case STATE_OVERHEATED: strcpy_P(buf, STR_STATE_OVERHEATED); break;
+    default: strcpy_P(buf, STR_STATE_UNDEF); break;
+  }
+  return buf;
+}
+*/
+
+PGM_P getStateNamePtr(StateEnum literal) {
+  switch(literal) {
+    case STATE_UNDEFINED: return STR_STATE_UNDEFINED;
+    case STATE_SAME: return STR_STATE_SAME;
+    case STATE_INIT: return STR_STATE_INIT;
+    case STATE_SENSORS_NOK: return STR_STATE_SENSORS_NOK;
+    case STATE_READY: return STR_STATE_READY;
+    case STATE_IDLE: return STR_STATE_IDLE;
+    case STATE_RECORDING: return STR_STATE_RECORDING;
+    case STATE_STANDBY: return STR_STATE_STANDBY;
+    case STATE_HEATING: return STR_STATE_HEATING;
+    case STATE_OVERHEATED: return STR_STATE_OVERHEATED;
+    default: return STR_STATE_UNDEF;
   }
 }
 
 String getStateName(StateEnum literal) {
-  switch(literal) {
-    case STATE_UNDEFINED: return "Undefined";
-    case STATE_SAME: return "Same";
-    case STATE_INIT: return "Init";
-    case STATE_SENSORS_NOK: return "Sensors NOK";
-    case STATE_READY: return "Ready";
-    case STATE_IDLE: return "Idle";
-    case STATE_RECORDING: return "Recording";
-    case STATE_STANDBY: return "Standby";
-    case STATE_HEATING: return "Heating";
-    case STATE_OVERHEATED: return "Overheated";
-    default: return "Undefined State";
-  }
+  char buf[20];
+  strcpy_P(buf, getStateNamePtr(literal));
+  return buf;
 }
 
-String getEventName(EventEnum literal) {
+
+const char STR_EVENT_NONE[] PROGMEM = "None";
+const char STR_EVENT_READY[] PROGMEM = "Ready";
+const char STR_EVENT_SENSORS_NOK[] PROGMEM = "Sensors NOK";
+const char STR_EVENT_SET_CONFIG[] PROGMEM = "Set Config";
+const char STR_EVENT_REC_ON[] PROGMEM = "Rec On";
+const char STR_EVENT_REC_OFF[] PROGMEM = "Rec Off";
+const char STR_EVENT_GET_CONFIG[] PROGMEM = "Get Config";
+const char STR_EVENT_GET_LOG[] PROGMEM = "Get Log";
+const char STR_EVENT_GET_STAT[] PROGMEM = "Get Stat";
+const char STR_EVENT_HEAT_ON[] PROGMEM = "Heat On";
+const char STR_EVENT_HEAT_OFF[] PROGMEM = "Heat Off";
+const char STR_EVENT_TEMP_OVER[] PROGMEM = "Temp Over";
+const char STR_EVENT_TEMP_OK[] PROGMEM = "Temp OK";
+const char STR_EVENT_RESET[] PROGMEM = "Reset";
+const char STR_EVENT_UNDEF[] PROGMEM = "Undefined Event";
+    
+PGM_P getEventNamePtr(EventEnum literal) {
   switch(literal) {
-    case EVENT_NONE: return "None";
-    case EVENT_READY: return "Ready";
-    case EVENT_SENSORS_NOK: return "Sensors NOK";
-    case EVENT_SET_CONFIG: return "Set Config";
-    case EVENT_REC_ON: return "Rec On";
-    case EVENT_REC_OFF: return "Rec Off";
-    case EVENT_GET_CONFIG: return "Get Config";
-    case EVENT_GET_LOG: return "Get Log";
-    case EVENT_GET_STAT: return "Get Stat";
-    case EVENT_HEAT_ON: return "Heat On";
-    case EVENT_HEAT_OFF: return "Heat Off";
-    case EVENT_TEMP_OVER: return "Temp Over";
-    case EVENT_TEMP_OK: return "Temp OK";
-    case EVENT_RESET: return "Reset";
-    default: return "Undefined Event";
+    case EVENT_NONE: return STR_EVENT_NONE;
+    case EVENT_READY: return STR_EVENT_READY;
+    case EVENT_SENSORS_NOK: return STR_EVENT_SENSORS_NOK;
+    case EVENT_SET_CONFIG: return STR_EVENT_SET_CONFIG;
+    case EVENT_REC_ON: return STR_EVENT_REC_ON;
+    case EVENT_REC_OFF: return STR_EVENT_REC_OFF;
+    case EVENT_GET_CONFIG: return STR_EVENT_GET_CONFIG;
+    case EVENT_GET_LOG: return STR_EVENT_GET_LOG;
+    case EVENT_GET_STAT: return STR_EVENT_GET_STAT;
+    case EVENT_HEAT_ON: return STR_EVENT_HEAT_ON;
+    case EVENT_HEAT_OFF: return STR_EVENT_HEAT_OFF;
+    case EVENT_TEMP_OVER: return STR_EVENT_TEMP_OVER;
+    case EVENT_TEMP_OK: return STR_EVENT_TEMP_OK;
+    case EVENT_RESET: return STR_EVENT_RESET;
+    default: return STR_EVENT_UNDEF;
   } 
 }
 
-String getUserCommandName(UserCommandEnum literal) {
+String getEventName(EventEnum literal) {
+  char buf[20];
+  strcpy_P(buf, getEventNamePtr(literal));
+  return buf;
+}
+
+
+const char STR_CMD_NONE[] PROGMEM = "None";
+const char STR_CMD_SET_CONFIG[] PROGMEM = "set config";
+const char STR_CMD_REC_ON[] PROGMEM = "rec on";
+const char STR_CMD_REC_OFF[] PROGMEM = "rec off";
+const char STR_CMD_HELP[] PROGMEM = "help";
+const char STR_CMD_GET_LOG[] PROGMEM = "get log";
+const char STR_CMD_GET_CONFIG[] PROGMEM = "get config";
+const char STR_CMD_GET_STAT[] PROGMEM = "get stat";
+const char STR_CMD_HEAT_ON[] PROGMEM = "heat on";
+const char STR_CMD_HEAT_OFF[] PROGMEM = "heat off";
+const char STR_CMD_RESET[] PROGMEM = "reset";
+const char STR_CMD_UNDEF[] PROGMEM = "Undefined User Command";
+    
+PGM_P getUserCommandNamePtr(UserCommandEnum literal) {
   switch(literal) {
-    case CMD_NONE: return "None";
-    case CMD_SET_CONFIG: return "set config";
-    case CMD_REC_ON: return "rec on";
-    case CMD_REC_OFF: return "rec off";
-    case CMD_HELP: return "help";
-    case CMD_GET_LOG: return "get log";
-    case CMD_GET_CONFIG: return "get config";
-    case CMD_GET_STAT: return "get stat";
-    case CMD_HEAT_ON: return "heat on";
-    case CMD_HEAT_OFF: return "heat off";
-    case CMD_RESET: return "reset";
-    default: return "Undefined User Command";
+    case CMD_NONE: return STR_CMD_NONE;
+    case CMD_SET_CONFIG: return STR_CMD_SET_CONFIG;
+    case CMD_REC_ON: return STR_CMD_REC_ON;
+    case CMD_REC_OFF: return STR_CMD_REC_OFF;
+    case CMD_HELP: return STR_CMD_HELP;
+    case CMD_GET_LOG: return STR_CMD_GET_LOG;
+    case CMD_GET_CONFIG: return STR_CMD_GET_CONFIG;
+    case CMD_GET_STAT: return STR_CMD_GET_STAT;
+    case CMD_HEAT_ON: return STR_CMD_HEAT_ON;
+    case CMD_HEAT_OFF: return STR_CMD_HEAT_OFF;
+    case CMD_RESET: return STR_CMD_RESET;
+    default: return STR_CMD_UNDEF;
+  }
+}
+
+String getUserCommandName(UserCommandEnum literal) {
+  char buf[20];
+  strcpy_P(buf, getUserCommandNamePtr(literal));
+  return buf;
+}
+
+const char STR_SENSOR_INITIALISING[] PROGMEM = "Init";
+const char STR_SENSOR_OK[] PROGMEM = "OK";
+const char STR_SENSOR_NOK[] PROGMEM = "NOK";
+const char STR_SENSOR_ID_UNDEFINED[] PROGMEM = "No ID";
+const char STR_SENSOR_UNDEF[] PROGMEM = "Undefined Sensor Status";
+    
+PGM_P getSensorStatusNamePtr(SensorStatusEnum literal) {
+  switch(literal) {
+    case SENSOR_INITIALISING: return STR_SENSOR_INITIALISING;
+    case SENSOR_OK: return STR_SENSOR_OK;
+    case SENSOR_NOK: return STR_SENSOR_NOK;
+    case SENSOR_ID_UNDEFINED: return STR_SENSOR_ID_UNDEFINED;
+    default: return STR_SENSOR_UNDEF;
   }
 }
 
 String getSensorStatusName(SensorStatusEnum literal) {
-  switch(literal) {
-    case SENSOR_INITIALISING: return "Init";
-    case SENSOR_OK: return "OK";
-    case SENSOR_NOK: return "NOK";
-    case SENSOR_ID_UNDEFINED: return "No ID";
-    default: return "Undefined Sensor Status";
-  }
+  char buf[20];
+  strcpy_P(buf, getSensorStatusNamePtr(literal));
+  return buf;
 }
 
 UserCommandEnum parseUserCommand(char buf[], byte size) {
   switch (size) {
-    case 2:
-      if (!strcmp(buf, "?")) {
+    case 1:
+      if (!strcmp_P(buf, "?")) {
+        return CMD_HELP;
+      } 
+      break;
+    case 4:
+      if (!strcmp_P(buf, STR_CMD_HELP)) {
         return CMD_HELP;
       } 
       break;
     case 5:
-      if (!strcmp(buf, "help")) {
-        return CMD_HELP;
-      } 
-      break;
-    case 6:
-      if (!strcmp(buf, "reset")) {
+      if (!strcmp_P(buf, STR_CMD_RESET)) {
         return CMD_RESET;
       } 
       break;
-    case 7:
-      if (!strcmp(buf, "rec on")) {
+    case 6:
+      if (!strcmp_P(buf, STR_CMD_REC_ON)) {
         return CMD_REC_ON;
       } 
       break;
-    case 8:
-      if (!strcmp(buf, "rec off")) {
+    case 7:
+      if (!strcmp_P(buf, STR_CMD_REC_OFF)) {
         return CMD_REC_OFF;
-      } else if (!strcmp(buf, "heat on")) {
+      } else if (!strcmp_P(buf, STR_CMD_HEAT_ON)) {
         return CMD_HEAT_ON;
-      } else if (!strcmp(buf, "get log")) {
+      } else if (!strcmp_P(buf, STR_CMD_GET_LOG)) {
         return CMD_GET_LOG;
       }
       break;
-    case 9:
-      if (!strcmp(buf, "heat off")) {
+    case 8:      
+      if (!strcmp_P(buf, STR_CMD_HEAT_OFF)) {
         return CMD_HEAT_OFF;
-      } else if (!strcmp(buf, "get stat")) {
+      } else if (!strcmp_P(buf, STR_CMD_GET_STAT)) {
         return CMD_GET_STAT;
       } 
       break;
-    case 10:
-      if (!strcmp(buf, "set gonfig")) {
+    case 9:
+      if (!strcmp_P(buf, STR_CMD_SET_CONFIG)) {
         return CMD_SET_CONFIG;
-      } if (!strcmp(buf, "get config")) {
+      } if (!strcmp_P(buf, STR_CMD_GET_CONFIG)) {
         return CMD_GET_CONFIG;
       }
       break;
@@ -144,13 +257,27 @@ void readUserCommands(ControlContext *context) {
   delay(2);
 
   byte count = 0;
-
   do {
     count += Serial.readBytes(&command[count], CMD_BUF_SIZE);
+    #ifdef DEBUG_UI
+      Serial.print("DEBUG_UI: read bytes: ");
+      Serial.println(count);
+    #endif
     delay(2);
   } while( (count < CMD_BUF_SIZE) && !(Serial.peek() < 0) );
+  #ifdef DEBUG_UI
+    Serial.print("DEBUG_UI: read cmd string: '");
+    Serial.print(command);
+    Serial.println("'");
+  #endif
   
   context->op->userCommands = parseUserCommand(command, count);
+  #ifdef DEBUG_UI
+    Serial.print("DEBUG_UI: parsed cmd: ");
+    Serial.print(context->op->userCommands, HEX);
+    Serial.print(": ");
+    Serial.println(getUserCommandName((UserCommandEnum) context->op->userCommands));
+  #endif
 }
 
 void processInfoRequests(InfoRequests requests, ControlContext *context, BoilerStateAutomaton *automaton) {
@@ -183,7 +310,7 @@ void processInfoRequests(InfoRequests requests, ControlContext *context, BoilerS
     Serial.print(getSensorStatusName(context->op->water.sensorStatus));
     if (context->op->water.sensorStatus == SENSOR_OK) {
       Serial.print(", ");
-      Serial.println(context->op->water.currentTemp / 100);
+      Serial.print(context->op->water.currentTemp / 100);
       Serial.print("°C");
     }
     Serial.println();
@@ -192,7 +319,7 @@ void processInfoRequests(InfoRequests requests, ControlContext *context, BoilerS
     Serial.print(getSensorStatusName(context->op->ambient.sensorStatus));
     if (context->op->ambient.sensorStatus == SENSOR_OK) {
       Serial.print(", ");
-      Serial.println(context->op->ambient.currentTemp / 100);
+      Serial.print(context->op->ambient.currentTemp / 100);
       Serial.print("°C");
     }
     Serial.println();

@@ -8,6 +8,8 @@
 #include "state.h"
 #include "ui.h"
 
+//#define DEBUG_MAIN
+
 #define CONTROL_CYCLE_DURATION   5000L  // [ms]
 #define TEMP_SENSOR_READOUT_WAIT 800L   // [ms] = 750 ms + safety margin
 
@@ -81,13 +83,15 @@ void loop() {
       EventCandidates cand = automaton.evaluate();
       if (cand != EVENT_NONE) {
         EventEnum event = processEventCandidates(cand);
-        automaton.transition(event);
-        
-        processInforRequests(context.control->getPendingInfoRequests(), &context, &automaton);
-        context.control->clearPendingInfoRequests();
+        if (event != EVENT_NONE) {
+          automaton.transition(event);
+          
+          processInfoRequests(context.control->getPendingInfoRequests(), &context, &automaton);
+          context.control->clearPendingInfoRequests();
+        }
       }
   
-      controlActions.logValues(&context);
+      controlActions.logTemperatureValues(&context);
 
       delay(CONTROL_CYCLE_DURATION - elapsed + 1);
     }
@@ -95,7 +99,15 @@ void loop() {
 }
 
 EventEnum processEventCandidates(EventCandidates cand) {
-  for(unsigned int i; i< NUM_EVENTS; i++) {
+  #ifdef DEBUG_MAIN
+    Serial.print("DEBUG_MAIN: cand: 0x");
+    Serial.println(cand, HEX);
+  #endif
+  for(unsigned int i=0; i< NUM_EVENTS; i++) {
+    #ifdef DEBUG_MAIN
+      Serial.print("DEBUG_MAIN: event(i): 0x");
+      Serial.println(EVENT_PRIORITIES[i], HEX);
+    #endif
     if (cand & EVENT_PRIORITIES[i]) {
       return EVENT_PRIORITIES[i];
     }

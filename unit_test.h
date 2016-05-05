@@ -2,7 +2,7 @@
   #define BOILER_UNIT_TEST_H_INCLUDED
   
   // Comment the following line to prevent ALL unit tests:
-  #define UNIT_TEST
+  //#define UNIT_TEST
   
   #ifdef UNIT_TEST
   

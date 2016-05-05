@@ -1,6 +1,8 @@
 #include "control.h"
 #include "message.h"
 
+#define DEBUG_CONTROL
+
 /*
  * Digital Temperature Sensor DS18B20 commands (see sensor data sheet)
  */
@@ -45,6 +47,7 @@ boolean ControlActions::readScratchpad(byte addr[], byte *data) {
   for (byte i = 0; i < TEMP_SENSOR_READOUT_BYTES; i++) {           
     data[i] = oneWire.read();
   }
+  oneWire.reset();
   return OneWire::crc8(data, TEMP_SENSOR_READOUT_BYTES-1) == data[TEMP_SENSOR_READOUT_BYTES-1];
 }
 
@@ -71,23 +74,29 @@ TemperatureReadout ControlActions::getCelcius(byte data[]) {
     temp.resolution = 12;
     // default is 12 bit resolution, 750 ms conversion time
   }
-  temp.celcius = (short)(raw / 16.0) * 100;  // [°C * 100]
+  temp.celcius = (short)(raw * 100.0 / 16.0);  // [°C * 100]
   return temp;
 }
 
 void ControlActions::setupSensors(ControlContext *context) {
   if (undefinedSensorId(context->config->waterTempSensorId)) {
    context->op->water.sensorStatus = SENSOR_ID_UNDEFINED;
-   context->storage->logMessage(MSG_WATER_TEMP_SENSOR_ID_UNDEF, 0, 0);
+   context->storage->logMessage(MSG_WATER_TEMP_SENSOR_ID_UNDEF, 0, 0); 
+   #ifdef DEBUG_CONTROL
+     Serial.println("DEBUG_CONTROL: Water temp sensor ID undefined");
+   #endif
   }
   
   if (undefinedSensorId(context->config->ambientTempSensorId)) {
    context->op->ambient.sensorStatus = SENSOR_ID_UNDEFINED;
    context->storage->logMessage(MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF, 0, 0);
+   #ifdef DEBUG_CONTROL
+     Serial.println("DEBUG_CONTROL: Ambient temp sensor ID undefined");
+   #endif
   } 
 
   //
-  // CONSIDER: set sensor resoluition
+  // CONSIDER: set sensor resolution
   // CONSIDER: detect sensors and store IDs for user to choose which sensor is which
 }
 
@@ -104,9 +113,10 @@ void ControlActions::initSensorReadout(ControlContext *context) {
       oneWire.select(addr);
       // Start temp readout and conversion to scratchpad, with parasite power on at the end
       oneWire.write(CMD_CONVERT_TEMP, 1);
+    delay(800);     // 12 bit resolution reauires 750ms  
+      oneWire.reset();
     }
   }
-  oneWire.reset();
   oneWire.reset_search();
 }
 
@@ -135,16 +145,33 @@ void ControlActions::completeSensorReadout(ControlContext *context) {
       if( readout.celcius >= WATER_MIN_TEMP && readout.celcius <= WATER_MAX_TEMP) {
          context->op->water.sensorStatus = SENSOR_OK;
          context->op->water.currentTemp  = readout.celcius;
-      }
+         #ifdef DEBUG_CONTROL
+           Serial.print("DEBUG_CONTROL: Water: Sensor OK, temp: ");
+           Serial.println(readout.celcius);
+         #endif
+      } 
+      #ifdef DEBUG_CONTROL
+        else {
+          Serial.println("DEBUG_CONTROL: Water: Sensor NOK");
+        }
+      #endif
     } else if (isAmbientSensor(addr, context->config)) {
       // Ensure temperature is plausible:
       if( readout.celcius >= AMBIENT_MIN_TEMP && readout.celcius <= AMBIENT_MAX_TEMP) {
          context->op->ambient.sensorStatus = SENSOR_OK;
          context->op->ambient.currentTemp  = readout.celcius;
+         #ifdef DEBUG_CONTROL
+           Serial.print("DEBUG_CONTROL: Ambient: Sensor OK, temp: ");
+           Serial.println(readout.celcius);
+         #endif
       }
+      #ifdef DEBUG_CONTROL
+        else {
+          Serial.println("DEBUG_CONTROL: Ambient: Sensor NOK");
+        }
+      #endif
     }
   }
-  oneWire.reset();
   oneWire.reset_search();
 }
 
