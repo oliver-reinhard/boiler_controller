@@ -213,7 +213,11 @@
   class SensorsNOK : public AbstractSimpleState {
     public:
       StateEnum id();
-      // Terminal state: No user or events available commands available.
+      UserCommands userCommands(ExecutionContext *context);
+      EventCandidates eval(ExecutionContext *context);
+      
+    protected:
+      StateEnum transAction(EventEnum event, ExecutionContext *context);
   };
 
   

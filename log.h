@@ -14,7 +14,7 @@
    * The timestamp() function creates ascending values in strong monotony, even across board resets.
    */
   typedef unsigned long Timestamp;
-  #define ID_BITS 4
+  #define TIMESTAMP_ID_BITS 4
   #define UNDEFINED_TIMESTAMP 0L;
   
   struct LogTimeRaw {
@@ -22,13 +22,14 @@
     unsigned short ms; // milliseconds [0 .. 999]
   };
   
-  typedef byte LogType;
-  
-  const LogType LOG_VALUES = 0;
-  const LogType LOG_STATE = 1;
-  const LogType LOG_MESSAGE = 2;
-  const LogType LOG_CONFIG = 3;
+  typedef enum {
+    LOG_VALUES = 0,
+    LOG_STATE = 1,
+    LOG_MESSAGE = 2,
+    LOG_CONFIG = 3,
+  } LogTypeEnum;
 
+  typedef byte LogTypeID;
   typedef byte StateID;
   typedef unsigned short EventID;
   
@@ -79,7 +80,7 @@
    */
   struct LogEntry {
     Timestamp timestamp;
-    LogType type;
+    LogTypeID type;
     LogData data; // generic
   };
   

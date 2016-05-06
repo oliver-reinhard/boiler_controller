@@ -1,12 +1,12 @@
 #include <assert.h>
 #include "log.h"
 
-//#define DEBUG_LOG
+// #define DEBUG_LOG
 
 unsigned long timeBase_sec = 0L;
 
 void adjustLogTime(Timestamp mostRecent) {
-  unsigned long mostRecent_sec = mostRecent >> ID_BITS;
+  unsigned long mostRecent_sec = mostRecent >> TIMESTAMP_ID_BITS;
   unsigned long current_sec = millis() / 1000L;
   if (mostRecent_sec >= current_sec) {
     timeBase_sec = mostRecent_sec;
@@ -51,14 +51,20 @@ Timestamp timestamp() {
     Serial.print(".");
     Serial.println(count);
   #endif
-  return t.sec << ID_BITS | count;
+  return t.sec << TIMESTAMP_ID_BITS | count;
 }
 
 
-LogEntry createLogEntry(LogType type, LogData data) {
+LogEntry createLogEntry(LogTypeID type, LogData data) {
   LogEntry entry;
   entry.timestamp = timestamp();
   entry.type = type;
+  #ifdef DEBUG_LOG
+    Serial.print("DEBUG_LOG: createLogEntry: type ");
+    Serial.print(entry.type);
+    Serial.print(" => timestamp: ");
+    Serial.println(entry.timestamp);
+  #endif
   memcpy(&(entry.data), &data, sizeof(LogData));
   return entry;
 }

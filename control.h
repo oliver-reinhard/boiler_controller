@@ -62,10 +62,16 @@
   };
   
   struct OperationalParams {
+    // time [ms] of most recent transition to current state:
+    unsigned long currentStateStartMillis = 0L;
     TemperatureSensor water;
     TemperatureSensor ambient;
     UserCommands userCommands = CMD_NONE;
     boolean heating = false;
+    // time [ms] of most recent transition to state HEATING:
+    unsigned long heatingStartMillis = 0L;
+    // accumulated time in state HEATING except period since last start (if heatingStartMillis != 0L)
+    unsigned long heatingTotalMillis = 0L;
     boolean loggingValues = false;
   };
 

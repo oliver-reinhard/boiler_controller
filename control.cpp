@@ -1,7 +1,7 @@
 #include "control.h"
 #include "message.h"
 
-#define DEBUG_CONTROL
+// #define DEBUG_CONTROL
 
 /*
  * Digital Temperature Sensor DS18B20 commands (see sensor data sheet)
@@ -101,23 +101,15 @@ void ControlActions::setupSensors(ControlContext *context) {
 }
 
 void ControlActions::initSensorReadout(ControlContext *context) {
-  byte addr[TEMP_SENSOR_ID_BYTES];
-  
-  while(oneWire.search(addr)) {  
-    if (OneWire::crc8(addr, TEMP_SENSOR_ID_BYTES-1) != addr[TEMP_SENSOR_ID_BYTES-1]) {
-      continue;
-    }
-    if (isWaterSensor(addr, context->config) || isAmbientSensor(addr, context->config)) {
-      oneWire.reset();
-      // Talk only to sensor with 'addr':
-      oneWire.select(addr);
-      // Start temp readout and conversion to scratchpad, with parasite power on at the end
-      oneWire.write(CMD_CONVERT_TEMP, 1);
-    delay(800);     // 12 bit resolution reauires 750ms  
-      oneWire.reset();
-    }
-  }
-  oneWire.reset_search();
+  if (context == NULL) { } // prevent warning "unused parameter ..."
+  oneWire.reset();
+  // Talk to all slaves on bus:
+  oneWire.skip();
+  // Start temp readout and conversion to scratchpad, with parasite power on at the end
+  oneWire.write(CMD_CONVERT_TEMP, 1);
+  //
+  // Important: do not oneWire.reset() now for at least 750 ms (for 12-bit temperature resolution)
+  //
 }
 
 

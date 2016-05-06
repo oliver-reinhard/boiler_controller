@@ -2,7 +2,7 @@
 #include "storage.h"
 #include <assert.h>
 
-#define DEBUG_STATE
+// #define DEBUG_STATE
 
 /*
  * ABSTRACT STATE
@@ -150,7 +150,50 @@ StateEnum SensorsNOK::id() {
   return STATE_SENSORS_NOK;
 }
 
-// Terminal state: No user or events available commands available.
+UserCommands SensorsNOK::userCommands(ExecutionContext *context) {
+  return AbstractState::userCommands(context) | CMD_HELP | CMD_SET_CONFIG | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
+}
+
+EventCandidates SensorsNOK::eval(ExecutionContext *context) {
+  EventCandidates result = AbstractState::eval(context);
+  if (context->op->userCommands & CMD_HELP) {
+    result |= EVENT_HELP;
+  }
+  if (context->op->userCommands & CMD_GET_CONFIG) {
+    result |= EVENT_GET_CONFIG;
+  }
+  if (context->op->userCommands & CMD_GET_LOG) {
+    result |= EVENT_GET_LOG;
+  }
+  if (context->op->userCommands & CMD_GET_STAT) {
+    result |= EVENT_GET_STAT;
+  }
+  return result;
+}
+
+StateEnum SensorsNOK::transAction(EventEnum event, ExecutionContext *context) {
+  if (event == EVENT_HELP) {
+    context->control->requestHelp();
+    return STATE_SAME;
+    
+  } else if (event == EVENT_SET_CONFIG) {
+    context->control->setConfigParam();
+    return STATE_SAME;
+    
+  } else if (event == EVENT_GET_CONFIG) {
+    context->control->requestConfig();
+    return STATE_SAME;
+    
+  } else if (event == EVENT_GET_LOG) {
+    context->control->requestLog();
+    return STATE_SAME;
+    
+  } else if (event == EVENT_GET_STAT) {
+    context->control->requestStat();
+    return STATE_SAME;
+  }
+  return AbstractState::transAction(event, context);
+}
 
 /*
  * READY
@@ -160,7 +203,7 @@ StateEnum Ready::id() {
 }
 
 UserCommands Ready::userCommands(ExecutionContext *context) {
-  return AbstractState::userCommands(context) | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
+  return AbstractState::userCommands(context) | CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
 }
 
 EventCandidates Ready::eval(ExecutionContext *context) {
@@ -170,6 +213,9 @@ EventCandidates Ready::eval(ExecutionContext *context) {
   }
   if (context->op->userCommands & CMD_HELP) {
     result |= EVENT_HELP;
+  }
+  if (context->op->userCommands & CMD_SET_CONFIG) {
+    result |= EVENT_SET_CONFIG;
   }
   if (context->op->userCommands & CMD_GET_CONFIG) {
     result |= EVENT_GET_CONFIG;
@@ -333,10 +379,13 @@ StateEnum Heating::transAction(EventEnum event, ExecutionContext *context) {
 
 void Heating::entryAction(ExecutionContext *context) {
   context->control->heat(true, context);
+  context->op->heatingStartMillis = millis();
 }
 
 void Heating::exitAction(ExecutionContext *context){
   context->control->heat(false, context);
+  context->op->heatingTotalMillis += millis() - context->op->heatingStartMillis;
+  context->op->heatingStartMillis = 0L;
 }
 
 /*
@@ -418,8 +467,8 @@ void BoilerStateAutomaton::transition(EventEnum event) {
   #ifdef DEBUG_STATE
     Serial.print("DEBUG_STATE: State ");
     Serial.print(currentState->id());
-    Serial.print(": process event ");
-    Serial.println(event);
+    Serial.print(": process event 0x");
+    Serial.println(event, HEX);
   #endif
   StateEnum oldState = currentState->id();
   StateEnum newState = currentState->trans(event, context);
@@ -428,8 +477,8 @@ void BoilerStateAutomaton::transition(EventEnum event) {
       #ifdef DEBUG_STATE
         Serial.print("DEBUG_STATE: State ");
         Serial.print(currentState->id());
-        Serial.print(": log invalid event ");
-        Serial.println(event);
+        Serial.print(": log invalid event 0x");
+        Serial.println(event, HEX);
       #endif
 
       context->storage->logMessage(MSG_ILLEGAL_TRANS, currentState->id(), event);
@@ -442,6 +491,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
     // Enter the new state (which can be a composite state but will always end up in a simple state):
     newState = currentState->enter(context);
     currentState = getState(newState);
+    context->op->currentStateStartMillis = millis();
     
     context->storage->logState(oldState, newState, event);
   }

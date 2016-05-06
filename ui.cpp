@@ -295,7 +295,52 @@ void processInfoRequests(InfoRequests requests, ControlContext *context, BoilerS
   }
   
   if (requests & SEND_LOG) {
-    // TODO
+    LogReader r = context->storage->getReader(0);
+    LogEntry e;
+    while (context->storage->getLogEntry(&r, &e)) {
+      Serial.print(e.timestamp>>TIMESTAMP_ID_BITS);
+      Serial.print(" ");
+      LogTypeEnum type = (LogTypeEnum)e.type;
+      switch (type) {
+        case LOG_VALUES:
+          LogValuesData lvd;
+          memcpy(&lvd, &(e.data), sizeof(LogValuesData));
+          Serial.print("V water:");
+          Serial.print(getSensorStatusName((SensorStatusEnum)(lvd.flags>>4)));
+          Serial.print(" ");
+          Serial.print(lvd.water);
+          Serial.print(", ambient:");
+          Serial.print(getSensorStatusName((SensorStatusEnum)(lvd.flags&0x0F)));
+          Serial.print(" ");
+          Serial.println(lvd.ambient);
+          break;
+        case LOG_STATE:
+          LogStateData lsd;
+          memcpy(&lsd, &e.data, sizeof(LogStateData));
+          Serial.print("S prev:");
+          Serial.print(getStateName((StateEnum)lsd.previous));
+          Serial.print(", curr:");
+          Serial.print(getStateName((StateEnum)lsd.current));
+          Serial.print(", event:");
+          Serial.println(getEventName((EventEnum)lsd.event));
+          break;
+        case LOG_MESSAGE:
+          LogMessageData lmd;
+          memcpy(&lmd, &e.data, sizeof(LogMessageData));
+          Serial.print("M msg:");
+          Serial.print(lmd.id);
+          Serial.print(", p1:");
+          Serial.print(lmd.params[0]);
+          Serial.print(", p2:");
+          Serial.println(lmd.params[1]);
+          break;
+        case LOG_CONFIG:
+          Serial.println("--- LogConfigData ---");
+          break;
+        default:
+          Serial.println("--- Unknown ---");
+      }
+    }
   }
   
   if (requests & SEND_CONFIG) {
@@ -303,8 +348,10 @@ void processInfoRequests(InfoRequests requests, ControlContext *context, BoilerS
   }
   
   if (requests & SEND_STAT) {
-    Serial.print("State:   ");
-    Serial.println(getStateName(automaton->state()->id()));
+    Serial.print("State: ");
+    Serial.print(getStateName(automaton->state()->id()));
+    Serial.print(", Time in state [s]: ");
+    Serial.println((millis() - context->op->currentStateStartMillis) / 1000L);
     
     Serial.print("Water: ");
     Serial.print(getSensorStatusName(context->op->water.sensorStatus));
@@ -323,6 +370,15 @@ void processInfoRequests(InfoRequests requests, ControlContext *context, BoilerS
       Serial.print("°C");
     }
     Serial.println();
+
+    if (context->op->heatingStartMillis != 0L || context->op->heatingTotalMillis != 0L) {
+      unsigned long duration = context->op->heatingTotalMillis;
+      if (context->op->heatingStartMillis != 0L) {
+        duration += millis() - context->op->heatingStartMillis;
+      }
+      Serial.print("Accumulated heating time [s]: ");
+      Serial.println(duration / 1000L);
+    }
   }
 }
 

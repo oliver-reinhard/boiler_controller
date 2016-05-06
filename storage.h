@@ -9,6 +9,12 @@
   
   #define EEPROM_LAYOUT_VERSION 1
 
+  struct LogReader {
+    unsigned short toRead;
+    unsigned short read = 0;
+    unsigned short nextIndex;
+  };
+
   /*
    * The EEPROM storage structure is as follows:
    * - Version number
@@ -51,6 +57,7 @@
        * Updates changed parameter values on the EEPROM. Does not change values of the ConfigParams structure.
        */
       virtual void updateConfigParams(const ConfigParams *configParams);
+      
 
       /*
        * LOGGING
@@ -93,6 +100,12 @@
        * Log a message.
        */
       virtual Timestamp logMessage(MessageID id, short param1, short param2);
+
+      LogReader getReader(unsigned short maxEntries);
+
+      boolean getLogEntry(LogReader *reader, LogEntry *entry);
+
+      
 
     protected:
         
