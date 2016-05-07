@@ -34,6 +34,7 @@
 
   // bitwise OR combination ("|") of UserCommandEnum(s):
   typedef unsigned short UserCommands;
+  #define NO_CMD_ARGUMENT INT32_MIN
 
   typedef enum {
     SEND_NONE = 0,
@@ -66,7 +67,8 @@
     unsigned long currentStateStartMillis = 0L;
     TemperatureSensor water;
     TemperatureSensor ambient;
-    UserCommands userCommands = CMD_NONE;
+    UserCommandEnum userCommand = CMD_NONE;
+    long userCommandArgument = NO_CMD_ARGUMENT;
     boolean heating = false;
     // time [ms] of most recent transition to state HEATING:
     unsigned long heatingStartMillis = 0L;

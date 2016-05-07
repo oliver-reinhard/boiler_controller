@@ -3,13 +3,15 @@
 
 // #define DEBUG_LOG
 
+#define ASCII_0 48  // char(48)
+
 unsigned long timeBase_sec = 0L;
 
 void adjustLogTime(Timestamp mostRecent) {
   unsigned long mostRecent_sec = mostRecent >> TIMESTAMP_ID_BITS;
   unsigned long current_sec = millis() / 1000L;
   if (mostRecent_sec >= current_sec) {
-    timeBase_sec = mostRecent_sec;
+    timeBase_sec = mostRecent_sec + 1; // continue at the "next" second
   } else {
     resetLogTime();
   }
@@ -55,6 +57,39 @@ Timestamp timestamp() {
 }
 
 
+String formatTimestamp(Timestamp t) {
+  char s[13];
+  unsigned long sec = t >> TIMESTAMP_ID_BITS;
+  byte count = t % 16;
+  s[12] = '\0';
+  s[11] = ASCII_0 + count % 10;
+  s[10] = ASCII_0 + count / 10;
+  s[9] = '.';
+  for(short i = 8; i >= 0; i--) {
+    s[i] = ASCII_0 + sec % 10;
+    sec /= 10;
+  }
+  return s;
+}
+
+
+ String formatTemperature(Temperature t) {
+  char s[9];
+  byte deg = t / 100;
+  byte frac = t % 100;
+  s[8] = '\0';
+  s[7] = 'C';
+  s[6] = '\'';
+  s[5] = ASCII_0 + frac % 10;
+  s[4] = ASCII_0 + frac / 10;
+  s[3] = '.';
+  s[2] = ASCII_0 + deg % 10;
+  s[1] = ASCII_0 + deg / 10;
+  s[0] = t > 0 ? ' ' : '-';
+  return s;
+ }
+ 
+  
 LogEntry createLogEntry(LogTypeID type, LogData data) {
   LogEntry entry;
   entry.timestamp = timestamp();

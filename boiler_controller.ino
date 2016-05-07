@@ -13,6 +13,14 @@
 #define CONTROL_CYCLE_DURATION   5000L  // [ms]
 #define TEMP_SENSOR_READOUT_WAIT 800L   // [ms] = 750 ms + safety margin
 
+typedef enum {
+  CYCLE_STAGE_0 = 0,
+  CYCLE_STAGE_1 = 1,
+  CYCLE_STAGE_2 = 2,
+  CYCLE_STAGE_3 = 3
+} CycleStageEnum;
+
+
 /*
  * GLOBALS
  */
@@ -25,6 +33,7 @@ ExecutionContext context;
 BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
 
 unsigned long controlCycleStart = 0L;
+CycleStageEnum cycleStage = CYCLE_STAGE_0;
 
 void setup() {
   Serial.begin(9600);
@@ -67,6 +76,7 @@ void loop() {
   if (controlCycleStart == 0L || elapsed > CONTROL_CYCLE_DURATION) {
     controlCycleStart = millis();
     elapsed = 0L;
+    cycleStage = CYCLE_STAGE_0;
   }
   
   #ifdef UNIT_TEST
@@ -74,27 +84,33 @@ void loop() {
   #endif
   
   #ifndef UNIT_TEST
-    if (elapsed == 0L) {
+    if (cycleStage == CYCLE_STAGE_0 && elapsed == 0L) {
+      cycleStage = CYCLE_STAGE_1;
       context.control->initSensorReadout(&context);
-    } else if (elapsed >= TEMP_SENSOR_READOUT_WAIT) {
+      
+    } else if (cycleStage == CYCLE_STAGE_1 && elapsed >= TEMP_SENSOR_READOUT_WAIT) {
+      cycleStage = CYCLE_STAGE_2;
       context.control->completeSensorReadout(&context);
-      readUserCommands(&context);
-    
-      EventCandidates cand = automaton.evaluate();
-      if (cand != EVENT_NONE) {
-        EventEnum event = processEventCandidates(cand);
-        if (event != EVENT_NONE) {
-          automaton.transition(event);
-          
-          processInfoRequests(context.control->getPendingInfoRequests(), &context, &automaton);
-          context.control->clearPendingInfoRequests();
-        }
-      }
-  
+      
+    } else if (cycleStage == CYCLE_STAGE_2) {
+      cycleStage = CYCLE_STAGE_3;
       controlActions.logTemperatureValues(&context);
-
-      delay(CONTROL_CYCLE_DURATION - elapsed + 1);
     }
+      
+    readUserCommands(&context);
+  
+    EventCandidates cand = automaton.evaluate();
+    if (cand != EVENT_NONE) {
+      EventEnum event = processEventCandidates(cand);
+      if (event != EVENT_NONE) {
+        automaton.transition(event);
+        
+        processInfoRequests(context.control->getPendingInfoRequests(), &context, &automaton);
+        context.control->clearPendingInfoRequests();
+      }
+    }
+    
+    delay(100);
   #endif
 }
 

@@ -107,6 +107,16 @@
    * maximum of 16 timestamps in a given second is exceeded.
    */
   Timestamp timestamp();
+
+  /**
+   * Returns the timestamp in a dotted notation, terminated by '\0': sssssssss.cc  (s = seconds: 2^28 = 268435456 (9 digits), cc = count: 0..15 (2 digits))
+   */
+ String formatTimestamp(Timestamp t);
+
+  /**
+   * Returns the temperature in a dotted notation, 8 chars + terminal '\0': ["-"]dd.ff"°C" (optional "-", d = degrees Celsius (2 digits), f = fraction (1 digit))
+   */
+ String formatTemperature(Temperature t);
   
   /**
    * Returns a LogEntry with a data field of "type" LogValuesData.

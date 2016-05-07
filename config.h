@@ -38,8 +38,8 @@
     Temperature heaterBackOkWaterTemp;
     Temperature logTempDelta; // [°C * 100]
     unsigned long logTimeDelta; // [ms]
-    float tankCapacity;  // Litres
-    float heaterPower;  // Watts
+    float tankCapacity;  // [litre]
+    float heaterPower;  // [Watts]
     float insulationFactor; // correction factor to model tank insulation charactericstis
     byte  reserved[32];  // for future use
   };
@@ -51,7 +51,7 @@
   #define DEFAULT_HEATER_BACK_OK_WATER_TEMP   6000 // [°C * 100]
   #define DEFAULT_LOG_TEMP_DELTA              50 // [°C * 100]
   #define DEFAULT_LOG_TIME_DELTA              60000 // [ms]
-  #define DEFAULT_TANK_CAPACITY               10.0 // [l]
+  #define DEFAULT_TANK_CAPACITY               10.0 // [litre]
   #define DEFAULT_HEATER_POWER                210 // [W]
   #define DEFAULT_INSULATION_FACTOR           2.0 // [???]
 
