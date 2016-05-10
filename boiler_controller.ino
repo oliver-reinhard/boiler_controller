@@ -41,9 +41,7 @@ void setup() {
     ; // wait for serial port to connect. Needed for native USB port only
   }
 
-  #ifndef UNIT_TEST
-    Serial.println("Boiler setup MAIN");
-    
+  #ifndef UNIT_TEST    
     storage.getConfigParams(&configParams);
     storage.initLog();
     storage.logMessage(MSG_SYSTEM_INIT, 0, 0);
@@ -53,20 +51,10 @@ void setup() {
     context.op = &opParams;
     context.control = &controlActions;
 
-    //
-    // REMOVE THIS
-    //
-    TempSensorID water   = {0x28, 0x8C, 0x8C, 0x79, 0x06, 0x00, 0x00, 0x89};
-    memcpy(&configParams.waterTempSensorId, &water, TEMP_SENSOR_ID_BYTES);
-    TempSensorID ambient = {0x28, 0x7C, 0x28, 0x79, 0x06, 0x00, 0x00, 0xD7};
-    memcpy(&configParams.ambientTempSensorId, &ambient, TEMP_SENSOR_ID_BYTES);
-    storage.updateConfigParams(&configParams);
-    //
-    // END REMOVE
-    //
-
     pinMode(HEATER_PIN, OUTPUT);
     controlActions.setupSensors(&context);
+    
+    Serial.println("Ready.");
   #endif
  
 }
