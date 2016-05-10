@@ -1,20 +1,25 @@
 #include <string.h>
 #include "ui.h"
 #include "config.h"
+#include "storage.h"
 
-#define CMD_BUF_SIZE 40   // Size of the read buffer for incoming data
-const char COMMAND_ARG_CHARS[] = "-0123456789"; // number
-const char COMMAND_CHARS[] = " abcdefghijklmnopqrstuvwxyz";
+#define COMMAND_BUF_SIZE 50   // Size of the read buffer for incoming data
+const char COMMAND_CHARS[] = " abcdefghijklmnopqrstuvwxyz"; // includes blank (first char)
+const char INT_CHARS[] = "0123456789"; 
+const char SENSOR_ID_CHARS[] = "0123456789abcdef-"; // includes dash
 
-#define DEBUG_UI
+//#define DEBUG_UI
 
+/*
+ * CONFIG PARAMS
+ */
 const char STR_PARAM_TARGET_TEMP[] PROGMEM = "Target Temperature";
 const char STR_PARAM_WATER_TEMP_SENSOR_ID[] PROGMEM = "Water Temp. Sensor ID";
 const char STR_PARAM_AMBIENT_TEMP_SENSOR_ID[] PROGMEM = "Ambient Temp. Sensor ID";
 const char STR_PARAM_HEATER_CUT_OUT_WATER_TEMP[] PROGMEM = "Heater Cut-out Temp.";
 const char STR_PARAM_HEATER_BACK_OK_WATER_TEMP[] PROGMEM = "Heater Back-ok Temp.";
 const char STR_PARAM_LOG_TEMP_DELTA[] PROGMEM = "Log Temp. Delta";
-const char STR_PARAM_LOG_TIME_DELTA[] PROGMEM = "Log Time Delta [ms]";
+const char STR_PARAM_LOG_TIME_DELTA[] PROGMEM = "Log Time Delta [s]";
 const char STR_PARAM_TANK_CAPACITY[] PROGMEM = "Tank Capacity [ml]";
 const char STR_PARAM_HEATER_POWER[] PROGMEM = "Heater Power [W]";
 const char STR_PARAM_INSULATION_FACTOR[] PROGMEM = "Insulation Factor";
@@ -42,6 +47,110 @@ String getConfigParamName(ConfigParamEnum literal) {
   return buf;
 }
 
+String formatFloat(float f) {
+  char s[20];
+  dtostrf((double)f, 6, 2, &s[0]); 
+  return s;
+}
+
+String formatInt(unsigned short i) {
+  char s[20];
+  utoa(i, &s[0], 10);
+  return s;
+}
+
+String getConfigParamValue(ConfigParams *all, ConfigParamEnum p) {
+  switch(p) {
+    case PARAM_TARGET_TEMP: 
+      return formatTemperature(all->targetTemp);
+    case PARAM_WATER_TEMP_SENSOR_ID: 
+      return formatTempSensorID(all->waterTempSensorId);
+    case PARAM_AMBIENT_TEMP_SENSOR_ID: 
+      return formatTempSensorID(all->ambientTempSensorId);
+    case PARAM_HEATER_CUT_OUT_WATER_TEMP: 
+      return formatTemperature(all->heaterCutOutWaterTemp);
+    case PARAM_HEATER_BACK_OK_WATER_TEMP: 
+      return formatTemperature(all->heaterBackOkWaterTemp);
+    case PARAM_LOG_TEMP_DELTA: 
+      return formatTemperature(all->logTempDelta);
+    case PARAM_LOG_TIME_DELTA:
+      return formatInt(all->logTimeDelta);
+    case PARAM_TANK_CAPACITY:
+      return formatFloat(all->tankCapacity);
+    case PARAM_HEATER_POWER:
+      return formatFloat(all->heaterPower);
+    case PARAM_INSULATION_FACTOR:
+      return formatFloat(all->insulationFactor);
+    default: 
+      return "";
+  }
+}
+
+void parseTempSensorID(char *value, byte *id) {
+  byte len = strspn(value, SENSOR_ID_CHARS);
+  if (len == 3 * TEMP_SENSOR_ID_BYTES -1) {
+    byte pos = 0;
+    for (byte i=0; i<TEMP_SENSOR_ID_BYTES; i++) {
+      long n = strtol(&value[pos], NULL, 16);
+      id[i] = (byte) n;
+      pos += 3;
+    }
+  } else {
+    Serial.println("Invalid sensor ID");
+  }
+}
+
+void setConfigParamValue(ControlContext *context, ConfigParamEnum p, char *value) {
+  switch(p) {
+    case PARAM_TARGET_TEMP: 
+      context->config->targetTemp = atoi(value);
+      context->storage->logConfigParam(p, (float) context->config->targetTemp);
+      break;
+    case PARAM_WATER_TEMP_SENSOR_ID:
+      parseTempSensorID(value, &(context->config->waterTempSensorId[0]));
+      Serial.println(formatTempSensorID(context->config->waterTempSensorId));
+      context->storage->logConfigParam(p, 0.0);
+      break;
+    case PARAM_AMBIENT_TEMP_SENSOR_ID:
+      parseTempSensorID(value, &(context->config->ambientTempSensorId[0]));
+      context->storage->logConfigParam(p, 0.0);
+      break;
+    case PARAM_HEATER_CUT_OUT_WATER_TEMP: 
+      context->config->heaterCutOutWaterTemp = atoi(value);
+      context->storage->logConfigParam(p, (float) context->config->heaterCutOutWaterTemp);
+      break;
+    case PARAM_HEATER_BACK_OK_WATER_TEMP: 
+      context->config->heaterBackOkWaterTemp = atoi(value);
+      context->storage->logConfigParam(p, (float) context->config->heaterBackOkWaterTemp);
+      break;
+    case PARAM_LOG_TEMP_DELTA: 
+      context->config->logTempDelta = atoi(value);
+      context->storage->logConfigParam(p, (float) context->config->logTempDelta);
+      break;
+    case PARAM_LOG_TIME_DELTA:
+      context->config->logTimeDelta = atoi(value);
+      context->storage->logConfigParam(p, (float) context->config->logTimeDelta);
+      break;
+    case PARAM_TANK_CAPACITY:
+      context->config->tankCapacity = (float) atof(value);
+      context->storage->logConfigParam(p, context->config->tankCapacity);
+      break;
+    case PARAM_HEATER_POWER:
+      context->config->heaterPower = (float) atof(value);
+      context->storage->logConfigParam(p, context->config->heaterPower);
+      break;
+    case PARAM_INSULATION_FACTOR:
+      context->config->insulationFactor = (float) atof(value);
+      context->storage->logConfigParam(p, context->config->insulationFactor);
+      break;
+    default:
+      break;
+  }
+}
+
+/*
+ * STATES
+ */
 const char STR_STATE_UNDEFINED[] PROGMEM = "Undefined";
 const char STR_STATE_SAME[] PROGMEM = "Same";
 const char STR_STATE_INIT[] PROGMEM = "Init";
@@ -76,7 +185,9 @@ String getStateName(StateEnum literal) {
   return buf;
 }
 
-
+/*
+ * EVENTS
+ */
 const char STR_EVENT_NONE[] PROGMEM = "None";
 const char STR_EVENT_READY[] PROGMEM = "Ready";
 const char STR_EVENT_SENSORS_NOK[] PROGMEM = "Sensors NOK";
@@ -119,7 +230,9 @@ String getEventName(EventEnum literal) {
   return buf;
 }
 
-
+/*
+ * COMMANDS
+ */
 const char STR_CMD_NONE[] PROGMEM = "None";
 const char STR_CMD_SET_CONFIG[] PROGMEM = "set config";
 const char STR_CMD_REC_ON[] PROGMEM = "rec on";
@@ -156,6 +269,9 @@ String getUserCommandName(UserCommandEnum literal) {
   return buf;
 }
 
+/*
+ * SENSOR STATUS
+ */
 const char STR_SENSOR_INITIALISING[] PROGMEM = "Init";
 const char STR_SENSOR_OK[] PROGMEM = "OK";
 const char STR_SENSOR_NOK[] PROGMEM = "NOK";
@@ -178,6 +294,9 @@ String getSensorStatusName(SensorStatusEnum literal) {
   return buf;
 }
 
+/*
+ * USER COMMANDS
+ */
 UserCommandEnum parseUserCommand(char buf[], byte bufSize) {
   switch (bufSize) {
     case 1:
@@ -229,10 +348,10 @@ UserCommandEnum parseUserCommand(char buf[], byte bufSize) {
   return CMD_NONE;
 }
 
-void readUserCommands(ControlContext *context) {
-  context->op->userCommand = CMD_NONE;
-  char command[CMD_BUF_SIZE+1];
-  memset(command, 0, CMD_BUF_SIZE);
+void readUserCommand(ControlContext *context) {
+  char buf[COMMAND_BUF_SIZE+1];
+  // fill buffer with 0's => always \0-terminated!
+  memset(buf, 0, COMMAND_BUF_SIZE);
   if( Serial.peek() < 0 ) {
     return;
   }
@@ -240,54 +359,60 @@ void readUserCommands(ControlContext *context) {
 
   byte count = 0;
   do {
-    count += Serial.readBytes(&command[count], CMD_BUF_SIZE);
+    count += Serial.readBytes(&buf[count], COMMAND_BUF_SIZE);
     delay(2);
-  } while( (count < CMD_BUF_SIZE) && !(Serial.peek() < 0) );
+  } while( (count < COMMAND_BUF_SIZE) && !(Serial.peek() < 0) );
   #ifdef DEBUG_UI
     Serial.print("DEBUG_UI: read cmd string: '");
-    Serial.print(command);
+    Serial.print(buf);
     Serial.print("', len: ");
     Serial.println(count);
   #endif
 
-  // count the command characters up to the trailing numeric argument (if any):
-  byte commandLength = strspn(command, COMMAND_CHARS);
-  
-  // find trailing numeric argument (long):
-  long argument = NO_CMD_ARGUMENT;
-  char *number = strpbrk(command, COMMAND_ARG_CHARS);
-  if (number != NULL && number != command) {
-    argument = atol(number);
-    #ifdef DEBUG_UI
-      Serial.print("DEBUG_UI: cmd arg: ");
-      Serial.println(argument);
-    #endif
-    commandLength--;
-    command[commandLength] = '\0';
+  // remove multiple consecutive spaces
+  byte len = 0;
+  boolean prevSpace = false;
+  for (byte i = 0; i< count; i++) {
+     if (isspace(buf[i]) && prevSpace) {
+        // skip
+     } else {
+      buf[len++] = buf[i];
+     }
+     prevSpace = isspace(buf[i]);
   }
-
-  context->op->userCommand = parseUserCommand(command, commandLength);
-  context->op->userCommandArgument = argument;
+  buf[len] = '\0';
+  
+  // convert to lower case:
+  char *lower = strlwr(buf);
+  
+  // count the command characters up to the trailing numeric arguments (if any):
+  byte commandLength = strspn(lower, COMMAND_CHARS);
+  if (len > commandLength) {
+    strcpy(context->op->command->args, &lower[commandLength]);
+  }
+  
+  if (isspace(lower[commandLength - 1])) {
+    commandLength--;
+  }
+  lower[commandLength] = '\0';
+  context->op->command->command = parseUserCommand(buf, commandLength);  
   
   #ifdef DEBUG_UI
     Serial.print("DEBUG_UI: parsed cmd: ");
-    Serial.print(context->op->userCommand, HEX);
+    Serial.print(context->op->command->command, HEX);
     Serial.print(": ");
-    Serial.println(getUserCommandName((UserCommandEnum) context->op->userCommand));
+    Serial.print(getUserCommandName((UserCommandEnum) context->op->command->command));
+    Serial.print(", args: '");
+    Serial.print(context->op->command->args);
+    Serial.println("'");
   #endif
 }
 
-void printSensorId(byte addr[]) {
-  Serial.write('{');
-  for(byte i = 0; i < TEMP_SENSOR_ID_BYTES; i++) {
-    Serial.write(' ');
-    Serial.print(addr[i], HEX);
-  }
-  Serial.println(" }");
-}
-
-void processInfoRequests(InfoRequests requests, ControlContext *context, BoilerStateAutomaton *automaton) {
-  if (requests & SEND_HELP) {
+/*
+ * READ and WRITE REQUESTS
+ */
+void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton) {
+  if (requests & READ_HELP) {
     Serial.println("Commands:");
     UserCommands commands = automaton->userCommands();
     unsigned short cmd = 0x1;
@@ -300,109 +425,7 @@ void processInfoRequests(InfoRequests requests, ControlContext *context, BoilerS
     }
   }
   
-  if (requests & SEND_LOG) {
-    unsigned short entriesToReturn = 5; // default
-    if (context->op->userCommandArgument == 0) {
-      entriesToReturn = 0;
-    } else if (context->op->userCommandArgument > 0) {
-      entriesToReturn = context->op->userCommandArgument;
-    }
-    
-    LogReader r = context->storage->getReader(entriesToReturn);
-    LogEntry e;
-    while (context->storage->getLogEntry(&r, &e)) {
-      Serial.print(formatTimestamp(e.timestamp));
-      Serial.print("  ");
-      LogTypeEnum type = (LogTypeEnum)e.type;
-      switch (type) {
-        case LOG_VALUES:
-          LogValuesData lvd;
-          memcpy(&lvd, &(e.data), sizeof(LogValuesData));
-          Serial.print("V  water:");
-          Serial.print(getSensorStatusName((SensorStatusEnum)(lvd.flags>>4)));
-          Serial.print(" ");
-          Serial.print(formatTemperature(lvd.water));
-          Serial.print(", ambient:");
-          Serial.print(getSensorStatusName((SensorStatusEnum)(lvd.flags&0x0F)));
-          Serial.print(" ");
-          Serial.println(formatTemperature(lvd.ambient));
-          break;
-          
-        case LOG_STATE:
-          LogStateData lsd;
-          memcpy(&lsd, &e.data, sizeof(LogStateData));
-          Serial.print("S  ");
-          Serial.print(getStateName((StateEnum)lsd.previous));
-          Serial.print(" -> <");
-          Serial.println(getEventName((EventEnum)lsd.event));
-          Serial.print("> -> ");
-          Serial.print(getStateName((StateEnum)lsd.current));
-          break;
-          
-        case LOG_MESSAGE:
-          LogMessageData lmd;
-          memcpy(&lmd, &e.data, sizeof(LogMessageData));
-          Serial.print("M  msg:");
-          Serial.print(lmd.id);
-          Serial.print(", p1:");
-          Serial.print(lmd.params[0]);
-          Serial.print(", p2:");
-          Serial.println(lmd.params[1]);
-          break;
-          
-        case LOG_CONFIG:
-          Serial.println("--- LogConfigData ---");
-          break;
-        default:
-          Serial.println("--- Unknown ---");
-      }
-    }
-  }
-  
-  if (requests & SEND_CONFIG) {
-    char colon[] = ": ";
-    Serial.print(getConfigParamName(PARAM_TARGET_TEMP));
-    Serial.print(colon);
-    Serial.println(formatTemperature(context->config->targetTemp));
-    
-    Serial.print(getConfigParamName(PARAM_WATER_TEMP_SENSOR_ID));
-    Serial.print(colon);
-    printSensorId(context->config->waterTempSensorId);
-    
-    Serial.print(getConfigParamName(PARAM_AMBIENT_TEMP_SENSOR_ID));
-    Serial.print(colon);
-    printSensorId(context->config->ambientTempSensorId);
-    
-    Serial.print(getConfigParamName(PARAM_HEATER_CUT_OUT_WATER_TEMP));
-    Serial.print(colon);
-    Serial.println(formatTemperature(context->config->heaterCutOutWaterTemp));
-    
-    Serial.print(getConfigParamName(PARAM_HEATER_BACK_OK_WATER_TEMP));
-    Serial.print(colon);
-    Serial.println(formatTemperature(context->config->heaterBackOkWaterTemp));
-    
-    Serial.print(getConfigParamName(PARAM_LOG_TEMP_DELTA));
-    Serial.print(colon);
-    Serial.println(formatTemperature(context->config->logTempDelta));
-    
-    Serial.print(getConfigParamName(PARAM_LOG_TIME_DELTA));
-    Serial.print(colon);
-    Serial.println(context->config->logTimeDelta);
-    
-    Serial.print(getConfigParamName(PARAM_TANK_CAPACITY));
-    Serial.print(colon);
-    Serial.println(context->config->tankCapacity);
-    
-    Serial.print(getConfigParamName(PARAM_HEATER_POWER));
-    Serial.print(colon);
-    Serial.println(context->config->heaterPower);
-    
-    Serial.print(getConfigParamName(PARAM_INSULATION_FACTOR));
-    Serial.print(colon);
-    Serial.println(context->config->insulationFactor);
-  }
-  
-  if (requests & SEND_STAT) {
+  if (requests & READ_STAT) {
     Serial.print("State: ");
     Serial.print(getStateName(automaton->state()->id()));
     Serial.print(", Time in state [s]: ");
@@ -433,5 +456,108 @@ void processInfoRequests(InfoRequests requests, ControlContext *context, BoilerS
       Serial.println(duration / 1000L);
     }
   }
+  
+  if (requests & READ_LOG) {
+    unsigned short entriesToReturn = 5; // default
+    byte len = strspn(context->op->command->args, INT_CHARS);
+    if (len > 0) {
+      context->op->command->args[len] = '\0';
+      int n = atoi(context->op->command->args);
+      if (n == 0) {
+        entriesToReturn = 0;
+      } else if (n > 0) {
+        entriesToReturn = n;
+      }
+    }
+    
+    LogReader r = context->storage->getReader(entriesToReturn);
+    LogEntry e;
+    while (context->storage->getLogEntry(&r, &e)) {
+      Serial.print(formatTimestamp(e.timestamp));
+      Serial.print("  ");
+      LogTypeEnum type = (LogTypeEnum)e.type;
+      
+      switch (type) {
+        case LOG_VALUES:
+          LogValuesData lvd;
+          memcpy(&lvd, &(e.data), sizeof(LogValuesData));
+          Serial.print("V  water:");
+          Serial.print(getSensorStatusName((SensorStatusEnum)(lvd.flags>>4)));
+          Serial.print(" ");
+          Serial.print(formatTemperature(lvd.water));
+          Serial.print(", ambient:");
+          Serial.print(getSensorStatusName((SensorStatusEnum)(lvd.flags&0x0F)));
+          Serial.print(" ");
+          Serial.println(formatTemperature(lvd.ambient));
+          break;
+          
+        case LOG_STATE:
+          LogStateData lsd;
+          memcpy(&lsd, &e.data, sizeof(LogStateData));
+          Serial.print("S  ");
+          Serial.print(getStateName((StateEnum)lsd.previous));
+          Serial.print(" -> [");
+          Serial.print(getEventName((EventEnum)lsd.event));
+          Serial.print("] -> ");
+          Serial.println(getStateName((StateEnum)lsd.current));
+          break;
+          
+        case LOG_MESSAGE:
+          LogMessageData lmd;
+          memcpy(&lmd, &e.data, sizeof(LogMessageData));
+          Serial.print("M  msg:");
+          Serial.print(lmd.id);
+          Serial.print(", p1:");
+          Serial.print(lmd.params[0]);
+          Serial.print(", p2:");
+          Serial.println(lmd.params[1]);
+          break;
+          
+        case LOG_CONFIG:
+          LogConfigParamData lcpd;
+          memcpy(&lcpd, &e.data, sizeof(LogConfigParamData));
+          Serial.print("C  param:");
+          ConfigParamEnum param = (ConfigParamEnum) lcpd.id;
+          Serial.print(getConfigParamName(param));
+          Serial.print(" = ");
+          Serial.println(lcpd.newValue);
+          break;
+        /*
+         *  strangely, the default clause does not compile:
+        default:
+          Serial.println("Unknown Log Type");
+        */
+      }
+    }
+  }
+  
+  if (requests & READ_CONFIG) {
+    for(byte i=0; i<NUM_CONFIG_PARAMS; i++) {
+      Serial.print(i);
+      Serial.print(" - ");
+      ConfigParamEnum p = (ConfigParamEnum) i;
+      Serial.print(getConfigParamName(p));
+      Serial.print(": ");
+      Serial.println(getConfigParamValue(context->config, p));
+    }
+  }
+  
+  if (requests & WRITE_CONFIG) {
+    // determine length of config param id (=number):
+    byte len = strspn(context->op->command->args, INT_CHARS);
+    context->op->command->args[len] = '\0';
+    int id = atoi(context->op->command->args);
+    char *paramValue = &context->op->command->args[len+1];
+
+    if (id < NUM_CONFIG_PARAMS) {
+      ConfigParamEnum param = (ConfigParamEnum)id;
+      setConfigParamValue(context, param, paramValue);
+      context->storage->updateConfigParams(context->config);
+      
+    } else {
+      Serial.println(getConfigParamName((ConfigParamEnum)id));
+    }
+  }
+  Serial.println();
 }
 

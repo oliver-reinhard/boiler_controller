@@ -96,8 +96,11 @@ void loop() {
       cycleStage = CYCLE_STAGE_3;
       controlActions.logTemperatureValues(&context);
     }
-      
-    readUserCommands(&context);
+    
+    UserCommand command;  
+    memset(command.args, 0, CMD_ARG_BUF_SIZE);
+    context.op->command = &command;
+    readUserCommand(&context);
   
     EventCandidates cand = automaton.evaluate();
     if (cand != EVENT_NONE) {
@@ -105,8 +108,8 @@ void loop() {
       if (event != EVENT_NONE) {
         automaton.transition(event);
         
-        processInfoRequests(context.control->getPendingInfoRequests(), &context, &automaton);
-        context.control->clearPendingInfoRequests();
+        processReadWriteRequests(context.control->getPendingReadWriteRequests(), &context, &automaton);
+        context.control->clearPendingReadWriteRequests();
       }
     }
     

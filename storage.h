@@ -56,7 +56,7 @@
       /**
        * Updates changed parameter values on the EEPROM. Does not change values of the ConfigParams structure.
        */
-      virtual void updateConfigParams(const ConfigParams *configParams);
+      virtual void updateConfigParams(ConfigParams *configParams);
       
 
       /*
@@ -100,6 +100,12 @@
        * Log a message.
        */
       virtual Timestamp logMessage(MessageID id, short param1, short param2);
+
+      /*
+       * Log a config-param change.
+       */
+      virtual Timestamp logConfigParam(ConfigParamID id, float newValue);
+      
 
       LogReader getReader(unsigned short maxEntries);
 

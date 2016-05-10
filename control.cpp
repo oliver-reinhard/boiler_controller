@@ -181,7 +181,7 @@ void ControlActions::logTemperatureValues(ControlContext *context) {
   if (context->op->loggingValues) {
     unsigned long time = millis();
 
-    if (time - context->op->water.lastLoggedTime > context->config->logTimeDelta || time - context->op->ambient.lastLoggedTime > context->config->logTimeDelta) {
+    if (time - context->op->water.lastLoggedTime > context->config->logTimeDelta * 1000L || time - context->op->ambient.lastLoggedTime > context->config->logTimeDelta * 1000L) {
       boolean logValuesNow = false;
       Temperature water = UNDEFINED_TEMPERATURE;
       Temperature ambient = UNDEFINED_TEMPERATURE;
@@ -215,30 +215,30 @@ void ControlActions::logTemperatureValues(ControlContext *context) {
 }
 
 void ControlActions::setConfigParam() {
-  // TODO
+  pendingRequests |= WRITE_CONFIG;
 }
 
 void ControlActions::requestHelp() {
-  pendingRequests |= SEND_HELP;
+  pendingRequests |= READ_HELP;
 }
 
 void ControlActions::requestLog() {
-  pendingRequests |= SEND_LOG;
+  pendingRequests |= READ_LOG;
 }
 
 void ControlActions::requestConfig() {
-  pendingRequests |= SEND_CONFIG;
+  pendingRequests |= READ_CONFIG;
 }
 
 void ControlActions::requestStat() {
-  pendingRequests |= SEND_STAT;
+  pendingRequests |= READ_STAT;
 }
 
-InfoRequests ControlActions::getPendingInfoRequests() {
+ReadWriteRequests ControlActions::getPendingReadWriteRequests() {
   return pendingRequests;
 }
 
-void ControlActions::clearPendingInfoRequests() {
-  pendingRequests = SEND_NONE;
+void ControlActions::clearPendingReadWriteRequests() {
+  pendingRequests = READ_WRITE_NONE;
 }
 

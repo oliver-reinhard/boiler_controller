@@ -71,23 +71,6 @@ String formatTimestamp(Timestamp t) {
   }
   return s;
 }
-
-
- String formatTemperature(Temperature t) {
-  char s[9];
-  byte deg = t / 100;
-  byte frac = t % 100;
-  s[8] = '\0';
-  s[7] = 'C';
-  s[6] = '\'';
-  s[5] = ASCII_0 + frac % 10;
-  s[4] = ASCII_0 + frac / 10;
-  s[3] = '.';
-  s[2] = ASCII_0 + deg % 10;
-  s[1] = ASCII_0 + deg / 10;
-  s[0] = t > 0 ? ' ' : '-';
-  return s;
- }
  
   
 LogEntry createLogEntry(LogTypeID type, LogData data) {
@@ -145,5 +128,18 @@ LogEntry createLogMessageEntry(MessageID id, short param1, short param2) {
   memcpy(&generic, &data, sizeof(LogMessageData));
   
   return createLogEntry(LOG_MESSAGE, generic);
+}
+
+LogEntry createConfigParamEntry(ConfigParamID id, float newValue) {
+  LogConfigParamData data;
+  data.id = id;
+  data.newValue = newValue;
+
+  // copy data to generic log-data type:
+  LogData generic;
+  assert(sizeof(LogConfigParamData) == sizeof(LogData));
+  memcpy(&generic, &data, sizeof(LogConfigParamData));
+  
+  return createLogEntry(LOG_CONFIG, generic);
 }
 

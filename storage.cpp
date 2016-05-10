@@ -78,7 +78,7 @@ void Storage::getConfigParams(ConfigParams *configParams) {
   }
 }
 
-void Storage::updateConfigParams(const ConfigParams *configParams) {
+void Storage::updateConfigParams(ConfigParams *configParams) {
     EEPROM.put(EEPROM_CONFIG_OFFSET, *configParams);
 }
 
@@ -231,6 +231,12 @@ Timestamp Storage::logState(StateID previous, StateID current, EventID event) {
 
 Timestamp Storage::logMessage(MessageID id, short param1, short param2) {
   LogEntry entry = createLogMessageEntry(id, param1, param2);
+  writeLogEntry(&entry);
+  return entry.timestamp;
+}
+
+Timestamp Storage::logConfigParam(ConfigParamID id, float newValue) {
+  LogEntry entry = createConfigParamEntry(id, newValue);
   writeLogEntry(&entry);
   return entry.timestamp;
 }

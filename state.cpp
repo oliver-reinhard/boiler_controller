@@ -156,13 +156,13 @@ UserCommands SensorsNOK::userCommands(ExecutionContext *context) {
 
 EventCandidates SensorsNOK::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
-  if (context->op->userCommand == CMD_HELP) {
+  if (context->op->command->command == CMD_HELP) {
     result |= EVENT_HELP;
-  } else if (context->op->userCommand == CMD_GET_CONFIG) {
+  } else if (context->op->command->command == CMD_GET_CONFIG) {
     result |= EVENT_GET_CONFIG;
-  } else if (context->op->userCommand == CMD_GET_LOG) {
+  } else if (context->op->command->command == CMD_GET_LOG) {
     result |= EVENT_GET_LOG;
-  } else if (context->op->userCommand == CMD_GET_STAT) {
+  } else if (context->op->command->command == CMD_GET_STAT) {
     result |= EVENT_GET_STAT;
   }
   return result;
@@ -208,15 +208,15 @@ EventCandidates Ready::eval(ExecutionContext *context) {
   if (context->op->water.sensorStatus == SENSOR_NOK) {
     result |= EVENT_SENSORS_NOK;
   } 
-  if (context->op->userCommand == CMD_HELP) {
+  if (context->op->command->command == CMD_HELP) {
     result |= EVENT_HELP;
-  } else if (context->op->userCommand == CMD_SET_CONFIG) {
+  } else if (context->op->command->command == CMD_SET_CONFIG) {
     result |= EVENT_SET_CONFIG;
-  } else if (context->op->userCommand == CMD_GET_CONFIG) {
+  } else if (context->op->command->command == CMD_GET_CONFIG) {
     result |= EVENT_GET_CONFIG;
-  } else if (context->op->userCommand == CMD_GET_LOG) {
+  } else if (context->op->command->command == CMD_GET_LOG) {
     result |= EVENT_GET_LOG;
-  } else if (context->op->userCommand == CMD_GET_STAT) {
+  } else if (context->op->command->command == CMD_GET_STAT) {
     result |= EVENT_GET_STAT;
   }
   return result;
@@ -258,10 +258,10 @@ UserCommands Idle::userCommands(ExecutionContext *context) {
 
 EventCandidates Idle::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
-  if (context->op->userCommand == CMD_SET_CONFIG) {
+  if (context->op->command->command == CMD_SET_CONFIG) {
     result |= EVENT_SET_CONFIG;
   }
-  if (context->op->userCommand == CMD_REC_ON) {
+  if (context->op->command->command == CMD_REC_ON) {
     result |= EVENT_REC_ON;
   }
   return result;
@@ -292,7 +292,7 @@ UserCommands Recording::userCommands(ExecutionContext *context) {
 
 EventCandidates Recording::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
-  if (context->op->userCommand == CMD_REC_OFF) {
+  if (context->op->command->command == CMD_REC_OFF) {
     result |= EVENT_REC_OFF;
   }
   return result;
@@ -326,7 +326,7 @@ UserCommands Standby::userCommands(ExecutionContext *context) {
 
 EventCandidates Standby::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
-  if (context->op->userCommand == CMD_HEAT_ON) {
+  if (context->op->command->command == CMD_HEAT_ON) {
     result |= EVENT_HEAT_ON;
   }
   return result;
@@ -352,7 +352,7 @@ UserCommands Heating::userCommands(ExecutionContext *context) {
 
 EventCandidates Heating::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
-  if (context->op->userCommand == CMD_HEAT_OFF) {
+  if (context->op->command->command == CMD_HEAT_OFF) {
     result |= EVENT_HEAT_OFF;
   }
   if (context->op->water.currentTemp >= context->config->heaterCutOutWaterTemp) {
@@ -394,7 +394,7 @@ UserCommands Overheated::userCommands(ExecutionContext *context) {
 
 EventCandidates Overheated::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
-  if (context->op->userCommand == CMD_RESET) {
+  if (context->op->command->command == CMD_RESET) {
     result |= EVENT_RESET;
   }
   if (context->op->water.currentTemp <= context->config->heaterBackOkWaterTemp) {

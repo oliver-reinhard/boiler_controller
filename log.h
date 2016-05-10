@@ -112,11 +112,6 @@
    * Returns the timestamp in a dotted notation, terminated by '\0': sssssssss.cc  (s = seconds: 2^28 = 268435456 (9 digits), cc = count: 0..15 (2 digits))
    */
  String formatTimestamp(Timestamp t);
-
-  /**
-   * Returns the temperature in a dotted notation, 8 chars + terminal '\0': ["-"]dd.ff"°C" (optional "-", d = degrees Celsius (2 digits), f = fraction (1 digit))
-   */
- String formatTemperature(Temperature t);
   
   /**
    * Returns a LogEntry with a data field of "type" LogValuesData.
@@ -132,5 +127,10 @@
    * Returns a LogEntry with a data field of "type" LogMessageData.
    */
   LogEntry createLogMessageEntry(MessageID id, short param1, short param2);
+
+  /**
+   * Returns a LogEntry with a data field of "type" LogConfigParamData.
+   */
+  LogEntry createConfigParamEntry(ConfigParamID id, float newValue);
 
 #endif

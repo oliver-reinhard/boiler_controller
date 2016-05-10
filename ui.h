@@ -5,9 +5,9 @@
   #include "state.h"
 
   /*
-   * Reads user commands and stores them in context->op.userCommands.
+   * Reads one user command and stores them in context->op.userCommand.
    */
-  void readUserCommands(ControlContext *context);
-  void processInfoRequests(InfoRequests requests, ControlContext *context, BoilerStateAutomaton *automaton);
+  void readUserCommand(ControlContext *context);
+  void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton);
 
 #endif
