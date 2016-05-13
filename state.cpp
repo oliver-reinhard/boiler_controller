@@ -377,7 +377,7 @@ void Heating::entryAction(ExecutionContext *context) {
 
 void Heating::exitAction(ExecutionContext *context){
   context->control->heat(false, context);
-  context->op->heatingTotalMillis += millis() - context->op->heatingStartMillis;
+  context->op->heatingAccumulatedMillis += millis() - context->op->heatingStartMillis;
   context->op->heatingStartMillis = 0L;
 }
 

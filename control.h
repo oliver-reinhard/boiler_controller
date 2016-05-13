@@ -48,6 +48,7 @@
     SENSOR_ID_UNDEFINED = 3
   } SensorStatusEnum;
 
+  typedef byte SensorStatusID;
   
   struct TemperatureSensor {
     SensorStatusEnum sensorStatus = SENSOR_INITIALISING;
@@ -62,7 +63,7 @@
   };
   
   struct OperationalParams {
-    // time [ms] of most recent transition to current state:
+    // timepoint [ms] of most recent transition to current state:
     unsigned long currentStateStartMillis = 0L;
     TemperatureSensor water;
     TemperatureSensor ambient;
@@ -70,10 +71,15 @@
     boolean heating = false;
     // time [ms] of most recent transition to state HEATING:
     unsigned long heatingStartMillis = 0L;
-    // accumulated time in state HEATING except period since last start (if heatingStartMillis != 0L)
-    unsigned long heatingTotalMillis = 0L;
+    // accumulated time in state HEATING, not including the period since last start (if heatingStartMillis != 0L)
+    unsigned long heatingAccumulatedMillis = 0L;
     boolean loggingValues = false;
   };
+
+  /*
+   * Calculates current heating time.
+   */
+  unsigned long heatingTotalMillis(OperationalParams *op);
 
   class ControlContext {
     public:
@@ -102,14 +108,6 @@
        * Physically turns the water heater on or off.
        */
       virtual void heat(boolean on, ControlContext *context);
-
-      /*
-       * Checks whether
-       * - logging is turned on or off
-       * - values have changed sufficiently to warrant logging (context->config->logTempDelta)
-       * - enough time has elapsed for a new logging record (context->config->logTimeDelta)
-       */
-      virtual void logTemperatureValues(ControlContext *context);
   
       virtual void setConfigParam();
       virtual void requestHelp();

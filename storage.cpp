@@ -9,8 +9,8 @@
 
 // #define DEBUG_STORAGE
 
-const unsigned short VERSION_SIZE = sizeof(Version);
-const unsigned short CONFIG_SIZE = sizeof(ConfigParams);
+const unsigned short VERSION_SIZE   = sizeof(Version);
+const unsigned short CONFIG_SIZE    = sizeof(ConfigParams);
 const unsigned short LOG_ENTRY_SIZE = sizeof(LogEntry);
 
 const unsigned short EEPROM_VERSION_OFFSET     = 0;
@@ -26,12 +26,6 @@ const unsigned short EEPROM_LOG_ENTRIES_OFFSET = EEPROM_LOG_OFFSET + sizeof(unsi
 #endif
 const unsigned short MAX_LOG_ENTRIES = (STORAGE_SIZE - EEPROM_LOG_ENTRIES_OFFSET) / LOG_ENTRY_SIZE;
 
-/*
- * AUXILIARY FUNCTIONS
- */
-unsigned short eepromLogOffset(unsigned short index) {
-  return EEPROM_LOG_ENTRIES_OFFSET + index * LOG_ENTRY_SIZE;
-}
 
 /*
  * EXPORTED FUNCTIONS
@@ -138,14 +132,21 @@ void Storage::initConfigParams(ConfigParams *configParams, boolean *updated) {
  * LOGGING
  */
 
+/*
+ * Auxiliary function
+ */
+unsigned short eepromLogOffset(unsigned short index) {
+  return EEPROM_LOG_ENTRIES_OFFSET + index * LOG_ENTRY_SIZE;
+}
+
 unsigned short Storage::maxLogEntries() {
-  return MAX_LOG_ENTRIES;
+  return MAX_LOG_ENTRIES - 1;
 }
 
 unsigned short Storage::currentLogEntries() {
   if (logHead == logTail) return 0;
   if (logHead > logTail) return logHead - logTail;
-  return MAX_LOG_ENTRIES - (logTail - logHead);
+  return MAX_LOG_ENTRIES - (logTail - logHead);  // (logTail - logHead) always differs by at least 1
 }
 
 void Storage::resetLog() {
@@ -229,7 +230,7 @@ Timestamp Storage::logState(StateID previous, StateID current, EventID event) {
   return entry.timestamp;
 }
 
-Timestamp Storage::logMessage(MessageID id, short param1, short param2) {
+Timestamp Storage::logMessage(MessageEnum id, short param1, short param2) {
   LogEntry entry = createLogMessageEntry(id, param1, param2);
   writeLogEntry(&entry);
   return entry.timestamp;
@@ -241,36 +242,35 @@ Timestamp Storage::logConfigParam(ConfigParamID id, float newValue) {
   return entry.timestamp;
 }
 
-LogReader Storage::getReader(unsigned short maxEntries) {
-  LogReader r;
+void Storage::initLogEntryReader(unsigned short maxResults) {
   unsigned short n = currentLogEntries();
-  if (maxEntries == 0) {
-      r.toRead = n;
+  if (maxResults == 0) {
+      reader.toRead = n;
   } else {
-    r.toRead = maxEntries < n ? maxEntries : n;
+    reader.toRead = maxResults < n ? maxResults : n;
   }
   if (logHead == 0) {
-    r.nextIndex = MAX_LOG_ENTRIES-1;
+    reader.nextIndex = MAX_LOG_ENTRIES - 1;
   } else {
-    r.nextIndex = logHead - 1;
+    reader.nextIndex = logHead - 1;
   }
-  return r;
+  reader.valid = true;
 }
 
-boolean Storage::getLogEntry(LogReader *reader, LogEntry *entry) {
-  if (reader->read < reader->toRead) {
-    EEPROM.get(eepromLogOffset(reader->nextIndex), *entry); 
+boolean Storage::nextLogEntry(LogEntry *entry) {
+  if (reader.valid && reader.read < reader.toRead) {
+    EEPROM.get(eepromLogOffset(reader.nextIndex), *entry); 
     #ifdef DEBUG_STORAGE
       Serial.print("DEBUG_STORAGE: getLogEntry: timestamp: ");
       Serial.print(entry->timestamp);
       Serial.print(", type: ");
       Serial.println(entry->type);
     #endif
-    reader->read++;
-    if (reader->nextIndex == 0) {
-      reader->nextIndex = MAX_LOG_ENTRIES-1;
+    reader.read++;
+    if (reader.nextIndex == 0) {
+      reader.nextIndex = MAX_LOG_ENTRIES-1;
     } else {
-      reader->nextIndex--;
+      reader.nextIndex--;
     }
     return true;
   }
@@ -278,6 +278,7 @@ boolean Storage::getLogEntry(LogReader *reader, LogEntry *entry) {
 }
 
 void Storage::clearLogEntry(unsigned short index) {
+  reader.valid = false;
   unsigned short offset = eepromLogOffset(index);
   for (unsigned short i = 0; i < LOG_ENTRY_SIZE ; i++) {
     EEPROM.update(offset + i, 0);
@@ -304,6 +305,10 @@ unsigned short Storage::logHeadIndex() {
 }
 unsigned short Storage::logTailIndex() {
   return logTail;
+}
+
+LogReader *Storage::getLogReader() {
+  return &reader;
 }
 
 

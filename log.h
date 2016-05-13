@@ -14,8 +14,8 @@
    * The timestamp() function creates ascending values in strong monotony, even across board resets.
    */
   typedef unsigned long Timestamp;
-  #define TIMESTAMP_ID_BITS 4
-  #define UNDEFINED_TIMESTAMP 0L;
+  #define TIMESTAMP_ID_BITS   4
+  #define UNDEFINED_TIMESTAMP 0L
   
   struct LogTimeRaw {
     unsigned long sec; // seconds since log was last reset or since last board reset, which ever happened earlier
@@ -29,7 +29,11 @@
     LOG_CONFIG = 3,
   } LogTypeEnum;
 
+  /*
+   * IDs for enum types, some defined in higher-level modules.
+   */
   typedef byte LogTypeID;
+  typedef byte MessageID;
   typedef byte StateID;
   typedef unsigned short EventID;
   
@@ -109,7 +113,7 @@
   Timestamp timestamp();
 
   /**
-   * Returns the timestamp in a dotted notation, terminated by '\0': sssssssss.cc  (s = seconds: 2^28 = 268435456 (9 digits), cc = count: 0..15 (2 digits))
+   * Returns the timestamp in a 13-character dotted notation, terminated by '\0': sssssssss.cc  (s = seconds: 2^28 = 268435456 (9 digits), cc = count: 0..15 (2 digits))
    */
  String formatTimestamp(Timestamp t);
   
@@ -126,7 +130,7 @@
   /**
    * Returns a LogEntry with a data field of "type" LogMessageData.
    */
-  LogEntry createLogMessageEntry(MessageID id, short param1, short param2);
+  LogEntry createLogMessageEntry(MessageEnum id, short param1, short param2);
 
   /**
    * Returns a LogEntry with a data field of "type" LogConfigParamData.

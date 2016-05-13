@@ -9,9 +9,25 @@
   
   #define EEPROM_LAYOUT_VERSION 1
 
+  /*
+   * Simple, non-concurrent reader for log entries.
+   */
   struct LogReader {
+    /*
+     * The values in this struct are defined only if valid == true.
+     */
+   boolean valid;
+    /*
+     * Number of entries to be returned through this reader (remains constant).
+     */
     unsigned short toRead;
+    /*
+     * Number of entries alreday returned by this reader (increases with each entry read);
+     */
     unsigned short read = 0;
+    /*
+     * Index of next entry that will be returned.
+     */
     unsigned short nextIndex;
   };
 
@@ -65,6 +81,7 @@
        
       /*
        * Returns maximum number of log entries.
+       * Note: this is always 1 less than the number of slots because the next available slot is always cleared ahead of time).
        */
       unsigned short maxLogEntries();
       
@@ -99,19 +116,28 @@
       /*
        * Log a message.
        */
-      virtual Timestamp logMessage(MessageID id, short param1, short param2);
+      virtual Timestamp logMessage(MessageEnum id, short param1, short param2);
 
       /*
        * Log a config-param change.
        */
       virtual Timestamp logConfigParam(ConfigParamID id, float newValue);
       
+      /*
+       * Initialises the LogEntry reader to return at most maxEntries.
+       * 
+       * @param maxResults indicates how many log entries to return as a maximum; the special value 0 means to return all log entries
+       * @return the reader is only valid until while the log is not being modified.
+       */
+      void initLogEntryReader(unsigned short maxResults);
 
-      LogReader getReader(unsigned short maxEntries);
-
-      boolean getLogEntry(LogReader *reader, LogEntry *entry);
-
-      
+      /*
+       * Retuns the next entry of the log.
+       * Precondition: initLogEntryReader() was called and the log has not been modified since.
+       * 
+       * @return true means the parameter 'entry' contains the next log entry, false means 'entry' has no defined semantics (i.e. after the last entry has been returned or if the log has been modified)
+       */
+      boolean nextLogEntry(LogEntry *entry);
 
     protected:
         
@@ -124,8 +150,19 @@
        * Index of the oldest log entry (there is always one!)
        */
       unsigned short logTail = 0;
+
+      /*
+       * Non-concurrent reader (=cursor) to iterate over log entries.
+       */
+      LogReader reader;
+      
+      /*
+       * Timestamp (= ID) of last log entry that was notified to user.
+       */
+      Timestamp lastNotifiedLogEntry = UNDEFINED_TIMESTAMP;
     
     #ifdef UNIT_TEST
+    // public for testing purposes only:
     public:
     #endif
       /*
@@ -150,10 +187,15 @@
       void writeLogEntry(const LogEntry *entry);
 
       /*
-       * Public accessor to indices of log head and log tail.
+       * Accessors to indices of log head and log tail.
        */
       unsigned short logHeadIndex();
       unsigned short logTailIndex();
+
+      /*
+       * Accessor to LogReader.
+       */
+      LogReader *getLogReader();
   };
 
 #endif // BOILER_STORAGE_H_INCLUDED

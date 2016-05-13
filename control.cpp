@@ -19,6 +19,13 @@ const byte TEMP_SENSOR_READOUT_BYTES = 9;
  */
 const byte DATA_CONFIG_BYTE = 4;
 
+unsigned long heatingTotalMillis(OperationalParams *op) {
+  unsigned long duration = op->heatingAccumulatedMillis;
+  if (op->heatingAccumulatedMillis != 0L) {
+    duration += millis() - op->heatingStartMillis;
+  }
+  return duration;
+}
 
 boolean undefinedSensorId(TempSensorID addr) {
   return ! memcmp(addr, UNDEFINED_SENSOR_ID, TEMP_SENSOR_ID_BYTES);
@@ -176,43 +183,6 @@ void ControlActions::heat(boolean on, ControlContext *context) {
   }
 }
 
-
-void ControlActions::logTemperatureValues(ControlContext *context) {
-  if (context->op->loggingValues) {
-    unsigned long time = millis();
-
-    if (time - context->op->water.lastLoggedTime > context->config->logTimeDelta * 1000L || time - context->op->ambient.lastLoggedTime > context->config->logTimeDelta * 1000L) {
-      boolean logValuesNow = false;
-      Temperature water = UNDEFINED_TEMPERATURE;
-      Temperature ambient = UNDEFINED_TEMPERATURE;
-      
-      if (context->op->water.sensorStatus == SENSOR_OK && abs(context->op->water.currentTemp - context->op->water.lastLoggedTemp) >= context->config->logTempDelta) {
-        logValuesNow = true;
-        water = context->op->water.currentTemp;
-        
-      } else if (context->op->water.sensorStatus == SENSOR_NOK && context->op->water.lastLoggedTemp != UNDEFINED_TEMPERATURE) {
-        logValuesNow = true;;
-      }
-      
-      if (context->op->ambient.sensorStatus == SENSOR_OK && abs(context->op->ambient.currentTemp - context->op->ambient.lastLoggedTemp) >= context->config->logTempDelta) {
-        logValuesNow = true;
-        ambient = context->op->ambient.currentTemp;
-        
-      } else if (context->op->ambient.sensorStatus == SENSOR_NOK && context->op->ambient.lastLoggedTemp != UNDEFINED_TEMPERATURE) {
-        logValuesNow = true;
-      }
-      
-      if (logValuesNow) {
-        Flags flags = context->op->water.sensorStatus<<4 | context->op->ambient.sensorStatus;
-        context->storage->logValues(context->op->water.currentTemp, context->op->ambient.currentTemp, flags);
-        context->op->water.lastLoggedTemp = water;
-        context->op->water.lastLoggedTime = time;
-        context->op->ambient.lastLoggedTemp = ambient;
-        context->op->ambient.lastLoggedTime = time;
-      }
-    }
-  }
-}
 
 void ControlActions::setConfigParam() {
   pendingRequests |= WRITE_CONFIG;

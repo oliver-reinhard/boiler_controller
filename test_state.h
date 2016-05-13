@@ -1,3 +1,4 @@
+#include "b_setup.h"
 #ifdef TEST_STATE
 
   #ifndef TEST_STATE_H_INCLUDED

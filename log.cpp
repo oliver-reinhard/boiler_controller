@@ -5,6 +5,9 @@
 
 #define ASCII_0 48  // char(48)
 
+/*
+ * The value (in seconds) added to Arduino board millis().
+ */
 unsigned long timeBase_sec = 0L;
 
 void adjustLogTime(Timestamp mostRecent) {
@@ -72,7 +75,9 @@ String formatTimestamp(Timestamp t) {
   return s;
 }
  
-  
+/*
+ * Generic log-entry creation.
+ */
 LogEntry createLogEntry(LogTypeID type, LogData data) {
   LogEntry entry;
   entry.timestamp = timestamp();
@@ -116,7 +121,7 @@ LogEntry createLogStateEntry(StateID previous, StateID current, EventID event) {
   return createLogEntry(LOG_STATE, generic);
 }
 
-LogEntry createLogMessageEntry(MessageID id, short param1, short param2) {
+LogEntry createLogMessageEntry(MessageEnum id, short param1, short param2) {
   LogMessageData data;
   data.id = id;
   data.params[0] = param1;

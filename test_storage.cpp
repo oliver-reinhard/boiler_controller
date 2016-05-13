@@ -1,10 +1,8 @@
-#include "unit_test.h"
+#include "b_setup.h"
 #ifdef TEST_STORAGE
   #line 4 "test_storage.cpp"
   #include <ArduinoUnit.h>
   #include "storage.h"
-
-  
   
   test(storage_timestamp) {
     // ensure this test is not run within the first second of Arduino board time:
@@ -154,35 +152,36 @@
     storage.logValues(3100, 2000, 0);
     storage.logValues(3200, 2000, 0);
 
-    LogReader r = storage.getReader(0);
-    assertEqual(r.toRead, 4);
+    storage.initLogEntryReader(0);
+    LogReader *r = storage.getLogReader();
+    assertEqual(r->toRead, 4);
     LogEntry e;
     //
-    assertTrue(storage.getLogEntry(&r, &e));
+    assertTrue(storage.nextLogEntry(&e));
     assertEqual(int(e.type), int(LOG_VALUES));
     LogValuesData lvd1;
     memcpy(&lvd1, &(e.data), sizeof(LogValuesData));
     assertEqual(lvd1.water, 3200);
     //
-    assertTrue(storage.getLogEntry(&r, &e));
+    assertTrue(storage.nextLogEntry(&e));
     assertEqual(int(e.type), int(LOG_VALUES));
     LogValuesData lvd2;
     memcpy(&lvd2, &(e.data), sizeof(LogValuesData));
     assertEqual(lvd2.water, 3100);
     //
-    assertTrue(storage.getLogEntry(&r, &e));
+    assertTrue(storage.nextLogEntry(&e));
     assertEqual(int(e.type), int(LOG_VALUES));
     LogValuesData lvd3;
     memcpy(&lvd3, &(e.data), sizeof(LogValuesData));
     assertEqual(lvd3.water, 3000);
     //
-    assertTrue(storage.getLogEntry(&r, &e));
+    assertTrue(storage.nextLogEntry(&e));
     assertEqual(int(e.type), int(LOG_MESSAGE));
     LogMessageData lmd;
     memcpy(&lmd, &(e.data), sizeof(LogMessageData));
     assertEqual(lmd.id, 1); // MSG_LOG_INIT
     //
-    assertFalse(storage.getLogEntry(&r, &e));
+    assertFalse(storage.nextLogEntry(&e));
   }
     
 #endif

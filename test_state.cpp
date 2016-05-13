@@ -1,4 +1,4 @@
-#include "unit_test.h"
+#include "b_setup.h"
 #ifdef TEST_STATE
   #line 4 "test_state.cpp"
   #include <ArduinoUnit.h>
@@ -164,6 +164,10 @@
     storage.initConfigParams(&config, &updated);
     
     OperationalParams op;
+    UserCommand cmd;
+    memset(cmd.args, 0, CMD_ARG_BUF_SIZE);
+    op.command = &cmd;
+    
     MockControlActions control;
 
     ExecutionContext context;
@@ -224,10 +228,10 @@
     // user command SET_CONFIG in state IDLE
     //
     assertEqual(int(automaton.userCommands()), int(CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_SET_CONFIG | CMD_REC_ON));
-    op.userCommands = CMD_SET_CONFIG;
+    op.command->command = CMD_SET_CONFIG;
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_SET_CONFIG));
-    op.userCommands = CMD_NONE;
+    op.command->command = CMD_NONE;
     
     // transition state IDLE => event SET_CONFIG => stay in state IDLE
     automaton.transition(EVENT_SET_CONFIG); 
@@ -239,10 +243,10 @@
     //
     // user command REC ON in state IDLE
     //
-    op.userCommands = CMD_REC_ON;
+    op.command->command = CMD_REC_ON;
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_REC_ON));
-    op.userCommands = CMD_NONE;
+    op.command->command = CMD_NONE;
     
     // transition state IDLE => event REC_ON => state STANDBY
     assertEqual(int(op.loggingValues), int(false));
@@ -256,10 +260,10 @@
     // user command REC OFF in state STANDBY
     //
     assertEqual(int(automaton.userCommands()), int(CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_REC_OFF | CMD_HEAT_ON));
-    op.userCommands = CMD_REC_OFF;
+    op.command->command = CMD_REC_OFF;
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_REC_OFF));
-    op.userCommands = CMD_NONE;
+    op.command->command = CMD_NONE;
     
     // transition state STANDBY => event REC_OFF => state IDLE
     automaton.transition(EVENT_REC_OFF); 
@@ -275,10 +279,10 @@
     //
     // user command HEAT ON in state STANDBY
     //
-    op.userCommands = CMD_HEAT_ON;
+    op.command->command = CMD_HEAT_ON;
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_HEAT_ON));
-    op.userCommands = CMD_NONE;
+    op.command->command = CMD_NONE;
     
     // transition state STANDBY => event HEAT_ON => state HEATING
     automaton.transition(EVENT_HEAT_ON); 
@@ -335,10 +339,10 @@
     //
     // user command HEAT OFF in state HEATING
     //
-    op.userCommands = CMD_HEAT_OFF;
+    op.command->command = CMD_HEAT_OFF;
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_HEAT_OFF));
-    op.userCommands = CMD_NONE;
+    op.command->command = CMD_NONE;
     
     // transition state HEATING => event HEAT_OFF => state STANDBY
     automaton.transition(EVENT_HEAT_OFF); 

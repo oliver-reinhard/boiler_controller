@@ -86,65 +86,70 @@ String getConfigParamValue(ConfigParams *all, ConfigParamEnum p) {
   }
 }
 
-void parseTempSensorID(char *value, byte *id) {
+boolean parseTempSensorID(char *value, byte *id) {
   byte len = strspn(value, SENSOR_ID_CHARS);
-  if (len == 3 * TEMP_SENSOR_ID_BYTES -1) {
+  if (len == 3 * TEMP_SENSOR_ID_BYTES - 1) {
     byte pos = 0;
     for (byte i=0; i<TEMP_SENSOR_ID_BYTES; i++) {
       long n = strtol(&value[pos], NULL, 16);
       id[i] = (byte) n;
       pos += 3;
     }
+    return true;
   } else {
     Serial.println("Invalid sensor ID");
+    return false;
   }
 }
 
-void setConfigParamValue(ControlContext *context, ConfigParamEnum p, char *value) {
+boolean setConfigParamValue(ControlContext *context, ConfigParamEnum p, char *value) {
   switch(p) {
     case PARAM_TARGET_TEMP: 
       context->config->targetTemp = atoi(value);
       context->storage->logConfigParam(p, (float) context->config->targetTemp);
-      break;
+      return true;
     case PARAM_WATER_TEMP_SENSOR_ID:
-      parseTempSensorID(value, &(context->config->waterTempSensorId[0]));
-      Serial.println(formatTempSensorID(context->config->waterTempSensorId));
-      context->storage->logConfigParam(p, 0.0);
-      break;
+      if (parseTempSensorID(value, &(context->config->waterTempSensorId[0]))) {
+        context->storage->logConfigParam(p, 0.0);
+        return true;
+      }
+      return false;
     case PARAM_AMBIENT_TEMP_SENSOR_ID:
-      parseTempSensorID(value, &(context->config->ambientTempSensorId[0]));
-      context->storage->logConfigParam(p, 0.0);
-      break;
+      if (parseTempSensorID(value, &(context->config->ambientTempSensorId[0]))) {
+        context->storage->logConfigParam(p, 0.0);
+        return true;
+      }
+      return false;
     case PARAM_HEATER_CUT_OUT_WATER_TEMP: 
       context->config->heaterCutOutWaterTemp = atoi(value);
       context->storage->logConfigParam(p, (float) context->config->heaterCutOutWaterTemp);
-      break;
+      return true;
     case PARAM_HEATER_BACK_OK_WATER_TEMP: 
       context->config->heaterBackOkWaterTemp = atoi(value);
       context->storage->logConfigParam(p, (float) context->config->heaterBackOkWaterTemp);
-      break;
+      return true;
     case PARAM_LOG_TEMP_DELTA: 
       context->config->logTempDelta = atoi(value);
       context->storage->logConfigParam(p, (float) context->config->logTempDelta);
-      break;
+      return true;
     case PARAM_LOG_TIME_DELTA:
       context->config->logTimeDelta = atoi(value);
       context->storage->logConfigParam(p, (float) context->config->logTimeDelta);
-      break;
+      return true;
     case PARAM_TANK_CAPACITY:
       context->config->tankCapacity = (float) atof(value);
       context->storage->logConfigParam(p, context->config->tankCapacity);
-      break;
+      return true;
     case PARAM_HEATER_POWER:
       context->config->heaterPower = (float) atof(value);
       context->storage->logConfigParam(p, context->config->heaterPower);
-      break;
+      return true;
     case PARAM_INSULATION_FACTOR:
       context->config->insulationFactor = (float) atof(value);
       context->storage->logConfigParam(p, context->config->insulationFactor);
-      break;
+      return true;
     default:
-      break;
+      return false;
   }
 }
 
@@ -348,7 +353,13 @@ UserCommandEnum parseUserCommand(char buf[], byte bufSize) {
   return CMD_NONE;
 }
 
-void readUserCommand(ControlContext *context) {
+void printError(String msg) {
+  Serial.print("Error: ");
+  Serial.print(msg);
+  Serial.println(".");
+}
+
+void SerialUI::readUserCommand(ControlContext *context) {
   char buf[COMMAND_BUF_SIZE+1];
   // fill buffer with 0's => always \0-terminated!
   memset(buf, 0, COMMAND_BUF_SIZE);
@@ -406,14 +417,81 @@ void readUserCommand(ControlContext *context) {
     Serial.print(context->op->command->args);
     Serial.println("'");
   #endif
+  if (context->op->command->command == CMD_NONE) {
+    printError("Illegal command (try: help or ?)");
+  }
+}
+
+void printLogEntry(LogEntry *e) {
+  Serial.print(formatTimestamp(e->timestamp));
+  Serial.print("  ");
+  LogTypeEnum type = (LogTypeEnum)e->type;
+  switch (type) {
+    case LOG_VALUES:
+      {
+        LogValuesData data;
+        memcpy(&data, &(e->data), sizeof(LogValuesData));
+        Serial.print("V  water:");
+        Serial.print(getSensorStatusName((SensorStatusEnum)(data.flags>>4)));
+        Serial.print(" ");
+        Serial.print(formatTemperature(data.water));
+        Serial.print(", ambient:");
+        Serial.print(getSensorStatusName((SensorStatusEnum)(data.flags&0x0F)));
+        Serial.print(" ");
+        Serial.println(formatTemperature(data.ambient));
+      }
+      break;
+      
+    case LOG_STATE:
+      {
+        LogStateData data;
+        memcpy(&data, &e->data, sizeof(LogStateData));
+        Serial.print("S  ");
+        Serial.print(getStateName((StateEnum)data.previous));
+        Serial.print(" -> [");
+        Serial.print(getEventName((EventEnum)data.event));
+        Serial.print("] -> ");
+        Serial.println(getStateName((StateEnum)data.current));
+      }
+      break;
+      
+    case LOG_MESSAGE:
+      {
+        LogMessageData data;
+        memcpy(&data, &e->data, sizeof(LogMessageData));
+        Serial.print("M  msg:");
+        Serial.print(data.id);
+        Serial.print(", p1:");
+        Serial.print(data.params[0]);
+        Serial.print(", p2:");
+        Serial.println(data.params[1]);
+      }
+      break;
+      
+    case LOG_CONFIG:
+      {
+        LogConfigParamData data;
+        memcpy(&data, &e->data, sizeof(LogConfigParamData));
+        Serial.print("C  param:"); 
+          ConfigParamEnum param = (ConfigParamEnum) data.id;
+          Serial.print(getConfigParamName(param));
+        Serial.print(" = ");
+        Serial.println(data.newValue);
+      }
+      break;
+      
+    default:
+      Serial.println(e->type);
+      printError("Unsupported LogTypeID");
+  }
 }
 
 /*
  * READ and WRITE REQUESTS
  */
-void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton) {
+void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton) {
   if (requests & READ_HELP) {
-    Serial.println("Commands:");
+    Serial.println("Accepted Commands:");
     UserCommands commands = automaton->userCommands();
     unsigned short cmd = 0x1;
     for(byte i=0; i< NUM_USER_COMMANDS; i++) {
@@ -447,11 +525,8 @@ void processReadWriteRequests(ReadWriteRequests requests, ControlContext *contex
     }
     Serial.println();
 
-    if (context->op->heatingStartMillis != 0L || context->op->heatingTotalMillis != 0L) {
-      unsigned long duration = context->op->heatingTotalMillis;
-      if (context->op->heatingStartMillis != 0L) {
-        duration += millis() - context->op->heatingStartMillis;
-      }
+    unsigned long duration = heatingTotalMillis(context->op);
+    if (duration != 0L) {
       Serial.print("Accumulated heating time [s]: ");
       Serial.println(duration / 1000L);
     }
@@ -470,64 +545,17 @@ void processReadWriteRequests(ReadWriteRequests requests, ControlContext *contex
       }
     }
     
-    LogReader r = context->storage->getReader(entriesToReturn);
+    Serial.print("Log contains ");
+    Serial.print(context->storage->currentLogEntries());
+    Serial.print(" entries (=");
+    Serial.print((short) (context->storage->currentLogEntries() / context->storage->maxLogEntries()));
+    Serial.print("% full), showing ");
+    Serial.println(entriesToReturn);
+    
+    context->storage->initLogEntryReader(entriesToReturn);
     LogEntry e;
-    while (context->storage->getLogEntry(&r, &e)) {
-      Serial.print(formatTimestamp(e.timestamp));
-      Serial.print("  ");
-      LogTypeEnum type = (LogTypeEnum)e.type;
-      
-      switch (type) {
-        case LOG_VALUES:
-          LogValuesData lvd;
-          memcpy(&lvd, &(e.data), sizeof(LogValuesData));
-          Serial.print("V  water:");
-          Serial.print(getSensorStatusName((SensorStatusEnum)(lvd.flags>>4)));
-          Serial.print(" ");
-          Serial.print(formatTemperature(lvd.water));
-          Serial.print(", ambient:");
-          Serial.print(getSensorStatusName((SensorStatusEnum)(lvd.flags&0x0F)));
-          Serial.print(" ");
-          Serial.println(formatTemperature(lvd.ambient));
-          break;
-          
-        case LOG_STATE:
-          LogStateData lsd;
-          memcpy(&lsd, &e.data, sizeof(LogStateData));
-          Serial.print("S  ");
-          Serial.print(getStateName((StateEnum)lsd.previous));
-          Serial.print(" -> [");
-          Serial.print(getEventName((EventEnum)lsd.event));
-          Serial.print("] -> ");
-          Serial.println(getStateName((StateEnum)lsd.current));
-          break;
-          
-        case LOG_MESSAGE:
-          LogMessageData lmd;
-          memcpy(&lmd, &e.data, sizeof(LogMessageData));
-          Serial.print("M  msg:");
-          Serial.print(lmd.id);
-          Serial.print(", p1:");
-          Serial.print(lmd.params[0]);
-          Serial.print(", p2:");
-          Serial.println(lmd.params[1]);
-          break;
-          
-        case LOG_CONFIG:
-          LogConfigParamData lcpd;
-          memcpy(&lcpd, &e.data, sizeof(LogConfigParamData));
-          Serial.print("C  param:");
-          ConfigParamEnum param = (ConfigParamEnum) lcpd.id;
-          Serial.print(getConfigParamName(param));
-          Serial.print(" = ");
-          Serial.println(lcpd.newValue);
-          break;
-        /*
-         *  strangely, the default clause does not compile:
-        default:
-          Serial.println("Unknown Log Type");
-        */
-      }
+    while (context->storage->nextLogEntry(&e)) {
+      printLogEntry(&e);
     }
   }
   
@@ -551,13 +579,46 @@ void processReadWriteRequests(ReadWriteRequests requests, ControlContext *contex
 
     if (id < NUM_CONFIG_PARAMS) {
       ConfigParamEnum param = (ConfigParamEnum)id;
-      setConfigParamValue(context, param, paramValue);
-      context->storage->updateConfigParams(context->config);
+      if (setConfigParamValue(context, param, paramValue)) {
+        context->storage->updateConfigParams(context->config);
+      } else {
+      printError("Illegal value");
+      }
       
     } else {
-      Serial.println(getConfigParamName((ConfigParamEnum)id));
+      // display 'invalid':
+      printError(getConfigParamName((ConfigParamEnum)NUM_CONFIG_PARAMS));
     }
   }
   Serial.println();
+}
+
+  
+void SerialUI::notifyStatusChange(StatusNotification notification) {
+  if (notification.timeInStateMillis == 0L) { } // prevent 'unused parameter' warning
+  Serial.println("* status notification");
+}
+
+void SerialUI::notifyNewLogEntry(LogEntry entry) {
+  if (entry.timestamp != UNDEFINED_TIMESTAMP) { } // prevent 'unused parameter' warning
+  Serial.println("* new log entry");
+}
+
+
+
+void BLEUI::readUserCommand(ControlContext *context) {
+  if (context != NULL) { } // prevent 'unused parameter' warning
+}
+
+void BLEUI::processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton) {
+  if (requests != READ_WRITE_NONE || context != NULL || automaton != NULL) { } // prevent 'unused parameter' warning
+}
+
+void BLEUI::notifyStatusChange(StatusNotification notification) {
+  if (notification.timeInStateMillis == 0L) { } // prevent 'unused parameter' warning
+}
+
+void BLEUI::notifyNewLogEntry(LogEntry entry) {
+  if (entry.timestamp != UNDEFINED_TIMESTAMP) { } // prevent 'unused parameter' warning
 }
 
