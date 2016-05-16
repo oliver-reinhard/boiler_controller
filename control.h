@@ -5,26 +5,26 @@
   #include "config.h"
   #include "storage.h"
 
-  #define HEATER_PIN 9
+  #define HEATER_PIN   9
   #define ONE_WIRE_PIN 10 // Temperature sensors
   
   #define CMD_ARG_BUF_SIZE 30   // Size of the read buffer for incoming data
   
   typedef enum {
-    CMD_NONE = 0,
-    CMD_HELP = 0x1,
-    CMD_SET_CONFIG = 0x2, 
-    CMD_REC_ON = 0x4,
-    CMD_REC_OFF = 0x8,
-    CMD_GET_LOG = 0x10, 
-    CMD_GET_CONFIG = 0x20,
-    CMD_GET_STAT = 0x40,
-    CMD_HEAT_ON = 0x80,
-    CMD_HEAT_OFF = 0x100,
-    CMD_RESET = 0x200,
+    CMD_NONE = 0,          // 1
+    CMD_HELP = 0x1,        // 2
+    CMD_SET_CONFIG = 0x2,  // 3
+    CMD_REC_ON = 0x4,      // 4
+    CMD_REC_OFF = 0x8,     // 5
+    CMD_GET_LOG = 0x10,    // 6
+    CMD_GET_CONFIG = 0x20, // 7
+    CMD_GET_STAT = 0x40,   // 8
+    CMD_HEAT_ON = 0x80,    // 9
+    CMD_HEAT_OFF = 0x100,  // 10
+    CMD_RESET = 0x200,     // 11
   } UserCommandEnum;
   
-  const unsigned short NUM_USER_COMMANDS = 10;
+  const unsigned short NUM_USER_COMMANDS = 11;
 
   // bitwise OR combination ("|") of UserCommandEnum(s):
   typedef unsigned short UserCommands;

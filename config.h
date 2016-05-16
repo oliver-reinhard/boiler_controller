@@ -18,8 +18,6 @@
   #define AMBIENT_MIN_TEMP -3000 // [°C * 100]
   #define AMBIENT_MAX_TEMP 5000 // [°C * 100]
   
-  typedef byte Flags; // used for logging
-
   /*
    * IDs are defined by ConfigParamEnum.
    */

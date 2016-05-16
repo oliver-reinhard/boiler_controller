@@ -21,7 +21,7 @@ const byte DATA_CONFIG_BYTE = 4;
 
 unsigned long heatingTotalMillis(OperationalParams *op) {
   unsigned long duration = op->heatingAccumulatedMillis;
-  if (op->heatingAccumulatedMillis != 0L) {
+  if (op->heatingStartMillis != 0L) {
     duration += millis() - op->heatingStartMillis;
   }
   return duration;

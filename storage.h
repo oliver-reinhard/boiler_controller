@@ -9,14 +9,23 @@
   
   #define EEPROM_LAYOUT_VERSION 1
 
+  typedef enum {
+    LOG_READER_MOST_RECENT = 0,  // reads newer to older
+    LOG_READER_UNNOTIFIED = 1    // reads older to newer
+  } LogReaderTypeEnum;
+
   /*
    * Simple, non-concurrent reader for log entries.
    */
   struct LogReader {
     /*
+     * Determines reader behaviour.
+     */
+    LogReaderTypeEnum type;
+    /*
      * The values in this struct are defined only if valid == true.
      */
-   boolean valid;
+    boolean valid;
     /*
      * Number of entries to be returned through this reader (remains constant).
      */
@@ -80,8 +89,8 @@
        */
        
       /*
-       * Returns maximum number of log entries.
-       * Note: this is always 1 less than the number of slots because the next available slot is always cleared ahead of time).
+       * Returns number of available slots for log entries.
+       * Note: this is always 1 less than the actual number of slots because the next available slot is always cleared ahead of time).
        */
       unsigned short maxLogEntries();
       
@@ -124,16 +133,24 @@
       virtual Timestamp logConfigParam(ConfigParamID id, float newValue);
       
       /*
-       * Initialises the LogEntry reader to return at most maxEntries.
+       * Initialises the LogEntry reader to return at most maxResults of the most recent entries.
+       * The entries are returned in decending order by timestamp (most recent first).
        * 
        * @param maxResults indicates how many log entries to return as a maximum; the special value 0 means to return all log entries
-       * @return the reader is only valid until while the log is not being modified.
+       * Note: the reader is only valid as long the log is not being modified.
        */
-      void initLogEntryReader(unsigned short maxResults);
+      void readMostRecentLogEntries(unsigned short maxResults);
 
       /*
-       * Retuns the next entry of the log.
-       * Precondition: initLogEntryReader() was called and the log has not been modified since.
+       * Initialises the LogEntry reader to return all the log entries that have not yet been notified to the client(s). 
+       * The entries are returned in ascending order by timestamp (oldest unnotified entry first).      
+       * Note: the reader is only valid as long the log is not being modified.
+       */
+      void readUnnotifiedLogEntries();
+
+      /*
+       * Retuns the next entry of the log. 
+       * Precondition: readMostRecentLogEntries() or readUnnotifiedLogEntries() was called and the log has not been modified since.
        * 
        * @return true means the parameter 'entry' contains the next log entry, false means 'entry' has no defined semantics (i.e. after the last entry has been returned or if the log has been modified)
        */
@@ -157,9 +174,9 @@
       LogReader reader;
       
       /*
-       * Timestamp (= ID) of last log entry that was notified to user.
+       * Index of last log entry that was notified to user.
        */
-      Timestamp lastNotifiedLogEntry = UNDEFINED_TIMESTAMP;
+      unsigned short lastNotifiedLogEntryIndex = 0;
     
     #ifdef UNIT_TEST
     // public for testing purposes only:

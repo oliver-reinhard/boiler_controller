@@ -1,4 +1,4 @@
-#include "b_setup.h"
+#include "bc_setup.h"
 #ifdef UNIT_TEST
   #include <ArduinoUnit.h>
   #include "test_state.h"
@@ -10,9 +10,11 @@
 
 //#define DEBUG_MAIN
 
-#define CONTROL_CYCLE_DURATION      5000L  // [ms]
-#define TEMP_SENSOR_READOUT_WAIT    800L   // [ms] = 750 ms + safety margin
-#define USER_NOTIFICATION_INTERVAL  1000L  // [ms] (notification only happens is relevant changes occurred)
+#define CONTROL_CYCLE_DURATION          5000L// [ms]
+#define TEMP_SENSOR_READOUT_WAIT         800L // [ms] = 750 ms + safety margin
+#define MIN_USER_NOTIFICATION_INTERVAL  1000L // [ms] (notification only happens is relevant changes occurred)
+#define MAX_USER_NOTIFICATION_INTERVAL 10000L // [ms] notify user after this period at latest
+#define NOTIFICATION_TEMP_DELTA           20  // [°C * 100]
 
 typedef enum {
   CYCLE_STAGE_0 = 0,
@@ -34,13 +36,12 @@ ExecutionContext context;
 BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
 
 #ifdef BLE_UI
-  BLEUI useUI = BLEUI();
+  BLEUI ui = BLEUI();
 #endif
 #ifndef BLE_UI
-  SerialUI useUI = SerialUI();
+  SerialUI ui = SerialUI();
 #endif
 
-AbstractUI *ui = &useUI;
 
 
 void setup() {
@@ -76,11 +77,11 @@ void loop() {
   #ifndef UNIT_TEST
     static unsigned long controlCycleStart = 0L;
     static CycleStageEnum cycleStage = CYCLE_STAGE_0;
-    static unsigned long lastUserNotification = 0L;
+    static unsigned long lastUserNotificationCheck = 0L;
     
     unsigned long now = millis();
     unsigned long elapsed = now - controlCycleStart;
-    if (controlCycleStart == 0L || elapsed > CONTROL_CYCLE_DURATION) {
+    if (controlCycleStart == 0L || elapsed >= CONTROL_CYCLE_DURATION) {
       controlCycleStart = now;
       elapsed = 0L;
       cycleStage = CYCLE_STAGE_0;
@@ -102,7 +103,7 @@ void loop() {
     UserCommand command;  
     memset(command.args, 0, CMD_ARG_BUF_SIZE);
     context.op->command = &command;
-    ui->readUserCommand(&context);
+    ui.readUserCommand(&context);
   
     EventCandidates cand = automaton.evaluate();
     if (cand != EVENT_NONE) {
@@ -110,15 +111,15 @@ void loop() {
       if (event != EVENT_NONE) {
         automaton.transition(event);
         
-        ui->processReadWriteRequests(context.control->getPendingReadWriteRequests(), &context, &automaton);
+        ui.processReadWriteRequests(context.control->getPendingReadWriteRequests(), &context, &automaton);
         context.control->clearPendingReadWriteRequests();
       }
     }
 
-    if (now - lastUserNotification >= USER_NOTIFICATION_INTERVAL) {
-      notifyStatusChange(&context, &automaton);
-      notifyNewLogEntry(&context);
-      lastUserNotification = now;
+    if (now - lastUserNotificationCheck >= MIN_USER_NOTIFICATION_INTERVAL) {
+      checkForStatusChange(&context, &automaton, now);
+      checkForNewLogEntries(&context);
+      lastUserNotificationCheck = now;
     }
     
     delay(100);
@@ -188,22 +189,27 @@ void logTemperatureValues(ControlContext *context) {
 }
 
 
-void notifyStatusChange(ControlContext *context, BoilerStateAutomaton *automaton) {
+void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automaton, unsigned long now) {
   // timepoint [ms] when this (= most recent) notification was sent to user:
   static unsigned long notificationTimeMillis;
   static StatusNotification notification;
 
-  unsigned long now = millis();
   boolean notify = false;
 
   if (now - notificationTimeMillis >= MAX_USER_NOTIFICATION_INTERVAL) {
-    notification.timeInStateMillis = now - context->op->currentStateStartMillis;
-    notification.heatingTimeMillis = heatingTotalMillis(context->op);
+    notification.timeInState = now - context->op->currentStateStartMillis / 1000L;
+    notification.heatingTime = heatingTotalMillis(context->op) / 1000L;
+    #ifdef DEBUG_MAIN
+      Serial.println("DEBUG_MAIN: notify status case 1");
+    #endif
     notify = true;
   }
   
   if (notification.state != automaton->state()->id()) {
     notification.state = automaton->state()->id();
+    #ifdef DEBUG_MAIN
+      Serial.println("DEBUG_MAIN: notify status case 2");
+    #endif
     notify = true;
   }
 
@@ -212,6 +218,9 @@ void notifyStatusChange(ControlContext *context, BoilerStateAutomaton *automaton
   ) {
     notification.waterSensorStatus = context->op->water.sensorStatus;
     notification.waterTemp = context->op->water.currentTemp;
+    #ifdef DEBUG_MAIN
+      Serial.println("DEBUG_MAIN: notify status case 3");
+    #endif
     notify = true;
   }
 
@@ -220,17 +229,23 @@ void notifyStatusChange(ControlContext *context, BoilerStateAutomaton *automaton
   ) {
     notification.ambientSensorStatus = context->op->ambient.sensorStatus;
     notification.ambientTemp = context->op->ambient.currentTemp;
+    #ifdef DEBUG_MAIN
+      Serial.println("DEBUG_MAIN: notify status case 4");
+    #endif
     notify = true;
   }
 
   if (notify) {
-    ui->notifyStatusChange(notification);
+    notificationTimeMillis = now;
+    ui.notifyStatusChange(notification);
   }
 }
 
-void notifyNewLogEntry(ControlContext *context) {
-  if (context != NULL) { } // prevent 'unused parameter' warning
+void checkForNewLogEntries(ControlContext *context) {
+  context->storage->readUnnotifiedLogEntries();
   LogEntry e;
-  ui->notifyNewLogEntry(e);
+  while (context->storage->nextLogEntry(&e)) {
+    ui.notifyNewLogEntry(e);
+  }
 }
 

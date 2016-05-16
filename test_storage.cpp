@@ -1,4 +1,4 @@
-#include "b_setup.h"
+#include "bc_setup.h"
 #ifdef TEST_STORAGE
   #line 4 "test_storage.cpp"
   #include <ArduinoUnit.h>
@@ -71,7 +71,7 @@
     Storage storage = Storage();
 
     storage.resetLog();
-    assertEqual(storage.maxLogEntries(), UNIT_TEST_LOG_ENTRIES);
+    assertEqual(storage.maxLogEntries(), UNIT_TEST_LOG_ENTRIES - 1);
     assertEqual(storage.currentLogEntries(), 1);
     assertEqual(storage.logTailIndex(), 0);
     assertEqual(storage.logHeadIndex(), 1);
@@ -152,7 +152,7 @@
     storage.logValues(3100, 2000, 0);
     storage.logValues(3200, 2000, 0);
 
-    storage.initLogEntryReader(0);
+    storage.readMostRecentLogEntries(0);
     LogReader *r = storage.getLogReader();
     assertEqual(r->toRead, 4);
     LogEntry e;

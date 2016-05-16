@@ -548,11 +548,11 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
     Serial.print("Log contains ");
     Serial.print(context->storage->currentLogEntries());
     Serial.print(" entries (=");
-    Serial.print((short) (context->storage->currentLogEntries() / context->storage->maxLogEntries()));
+    Serial.print((short) (100L * context->storage->currentLogEntries() / context->storage->maxLogEntries()));
     Serial.print("% full), showing ");
     Serial.println(entriesToReturn);
     
-    context->storage->initLogEntryReader(entriesToReturn);
+    context->storage->readMostRecentLogEntries(entriesToReturn);
     LogEntry e;
     while (context->storage->nextLogEntry(&e)) {
       printLogEntry(&e);
@@ -595,7 +595,7 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
 
   
 void SerialUI::notifyStatusChange(StatusNotification notification) {
-  if (notification.timeInStateMillis == 0L) { } // prevent 'unused parameter' warning
+  if (notification.timeInState == 0L) { } // prevent 'unused parameter' warning
   Serial.println("* status notification");
 }
 
@@ -615,7 +615,7 @@ void BLEUI::processReadWriteRequests(ReadWriteRequests requests, ControlContext 
 }
 
 void BLEUI::notifyStatusChange(StatusNotification notification) {
-  if (notification.timeInStateMillis == 0L) { } // prevent 'unused parameter' warning
+  if (notification.timeInState == 0L) { } // prevent 'unused parameter' warning
 }
 
 void BLEUI::notifyNewLogEntry(LogEntry entry) {

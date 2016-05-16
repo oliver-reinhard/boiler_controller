@@ -1,7 +1,6 @@
 #ifndef BOILER_STATE_H_INCLUDED
   #define BOILER_STATE_H_INCLUDED
   
-  #include "storage.h"
   #include "control.h"
   
   typedef enum  {

@@ -1,6 +1,5 @@
 #include "config.h"
 
-
 #define ASCII_0 48  // char(48)
 
 String formatTemperature(Temperature t) {

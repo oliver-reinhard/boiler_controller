@@ -3,19 +3,17 @@
 
   #include "control.h"
   #include "state.h"
-
-  #define MAX_USER_NOTIFICATION_INTERVAL 5000L // [ms] notify user after this period at latest
-  #define NOTIFICATION_TEMP_DELTA        5 // [°C * 100]
   
   struct StatusNotification {
     StateID state;
-    // time [ms] since most recent transition to current state:
-    unsigned long timeInStateMillis;
+    // time [s] since most recent transition to current state:
+    unsigned long timeInState = 0L;
     SensorStatusID waterSensorStatus = SENSOR_INITIALISING;
     Temperature waterTemp = UNDEFINED_TEMPERATURE;
     SensorStatusID ambientSensorStatus = SENSOR_INITIALISING;
     Temperature ambientTemp = UNDEFINED_TEMPERATURE;
-    unsigned long heatingTimeMillis;
+    // accumulated heating time [s] up to now:
+    unsigned long heatingTime = 0L;
   };
 
 

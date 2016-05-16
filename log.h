@@ -37,6 +37,9 @@
   typedef byte StateID;
   typedef unsigned short EventID;
   
+  typedef byte Flags; // value logging
+
+  
   /**
    * Generic "supertype" for log data.
    */
