@@ -52,7 +52,7 @@ void Storage::clearConfigParams() {
 void Storage::getConfigParams(ConfigParams *configParams) {
   if (version() != EEPROM_LAYOUT_VERSION) {
     #ifdef DEBUG_STORAGE
-      Serial.println("DEBUG_STORAGE: Updating EEPROM Layout Version");
+      Serial.println(F("DEBUG_STORAGE: Updating EEPROM Layout Version"));
     #endif
     EEPROM.put(EEPROM_VERSION_OFFSET, EEPROM_LAYOUT_VERSION);
   }
@@ -64,7 +64,7 @@ void Storage::getConfigParams(ConfigParams *configParams) {
   // End initialise
   if (updated) {
     #ifdef DEBUG_STORAGE
-      Serial.println("DEBUG_STORAGE: Updating EEPROM ConfigParams");
+      Serial.println(F("DEBUG_STORAGE: Updating EEPROM ConfigParams"));
     #endif
     updateConfigParams(configParams);
   }
@@ -150,7 +150,7 @@ unsigned short Storage::currentLogEntries() {
 
 void Storage::resetLog() {
   #ifdef DEBUG_STORAGE
-    Serial.print("DEBUG_STORAGE: resetLog(), [new] log size = ");
+    Serial.print(F("DEBUG_STORAGE: resetLog(), [new] log size = "));
     Serial.println(MAX_LOG_ENTRIES);
   #endif
   EEPROM.put(EEPROM_LOG_OFFSET, MAX_LOG_ENTRIES);
@@ -174,7 +174,7 @@ void Storage::initLog() {
   unsigned short oldMaxLogEntries;
   EEPROM.get(EEPROM_LOG_OFFSET, oldMaxLogEntries);
   #ifdef DEBUG_STORAGE
-    Serial.print("DEBUG_STORAGE: initlog(), stored log size = ");
+    Serial.print("F(DEBUG_STORAGE: initlog(), stored log size = "));
     Serial.println(oldMaxLogEntries);
   #endif
   if (oldMaxLogEntries != MAX_LOG_ENTRIES) {
@@ -283,9 +283,9 @@ boolean Storage::nextLogEntry(LogEntry *entry) {
   if (reader.valid && reader.read < reader.toRead) {
     EEPROM.get(eepromLogOffset(reader.nextIndex), *entry); 
     #ifdef DEBUG_STORAGE
-      Serial.print("DEBUG_STORAGE: getLogEntry: timestamp: ");
+      Serial.print(F("DEBUG_STORAGE: getLogEntry: timestamp: "));
       Serial.print(entry->timestamp);
-      Serial.print(", type: ");
+      Serial.print(F(", type: "));
       Serial.println(entry->type);
     #endif
     reader.read++;
@@ -311,7 +311,7 @@ void Storage::clearLogEntry(unsigned short index) {
 
 void Storage::writeLogEntry(const LogEntry *entry) {
   #ifdef DEBUG_STORAGE
-    Serial.print("DEBUG_STORAGE: Writing log entry, type = ");
+    Serial.print(F("DEBUG_STORAGE: Writing log entry, type = "));
     Serial.println(entry->type);
   #endif
   EEPROM.put(eepromLogOffset(logHead), *entry);

@@ -47,7 +47,7 @@
 
   void MockControlActions::heat(boolean on, ControlContext *context) {
     #ifdef DEBUG_TEST_STATE
-      Serial.println("DEBUG_TEST_STATE: heat(on/off)");
+      Serial.println(F("DEBUG_TEST_STATE: heat (on/off)"));
     #endif
     context->op->heating = on;
     if (on) {
@@ -128,7 +128,7 @@
   
   Timestamp MockStorage::logValues(Temperature water, Temperature ambient, Flags flags) {
     #ifdef DEBUG_TEST_STATE
-      Serial.println("DEBUG_TEST_STATE: logValues(...)");
+      Serial.println(F("DEBUG_TEST_STATE: logValues(...)"));
     #endif
     if (water == 0 || ambient == 0 || flags == 0) { } // prevent warning "unused parameter ..."
     logValuesCount++;
@@ -137,7 +137,7 @@
   
   Timestamp MockStorage::logState(StateID previous, StateID current, EventID event) {
     #ifdef DEBUG_TEST_STATE
-      Serial.println("DEBUG_TEST_STATE: logState(...)");
+      Serial.println(F("DEBUG_TEST_STATE: logState(...)"));
     #endif
     if (previous == 0 || current == 0 || event == 0) { } // prevent warning "unused parameter ..."
     logStateCount++;
@@ -146,7 +146,7 @@
   
   Timestamp MockStorage::logMessage(MessageID id, short param1, short param2) {    
     #ifdef DEBUG_TEST_STATE
-      Serial.println("DEBUG_TEST_STATE: logMessage(...)");
+      Serial.println(F("DEBUG_TEST_STATE: logMessage(...)"));
     #endif
     if (id == 0 || param1 == 0 || param2 == 0) { } // prevent warning "unused parameter ..."
     logMessageCount++;

@@ -63,7 +63,7 @@ void setup() {
     pinMode(HEATER_PIN, OUTPUT);
     controlActions.setupSensors(&context);
     
-    Serial.println("Ready.");
+    Serial.println(F("Ready."));
   #endif
  
 }
@@ -128,13 +128,13 @@ void loop() {
 
 EventEnum processEventCandidates(EventCandidates cand) {
   #ifdef DEBUG_MAIN
-    Serial.print("DEBUG_MAIN: cand: 0x");
+    Serial.print(F("DEBUG_MAIN: cand: 0x"));
     Serial.println(cand, HEX);
   #endif
   
   for(unsigned int i=0; i< NUM_EVENTS; i++) {
     #ifdef DEBUG_MAIN
-      Serial.print("DEBUG_MAIN: event(i): 0x");
+      Serial.print(F("DEBUG_MAIN: event(i): 0x"));
       Serial.println(EVENT_PRIORITIES[i], HEX);
     #endif
     if (cand & EVENT_PRIORITIES[i]) {
@@ -197,10 +197,8 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
   boolean notify = false;
 
   if (now - notificationTimeMillis >= MAX_USER_NOTIFICATION_INTERVAL) {
-    notification.timeInState = now - context->op->currentStateStartMillis / 1000L;
-    notification.heatingTime = heatingTotalMillis(context->op) / 1000L;
     #ifdef DEBUG_MAIN
-      Serial.println("DEBUG_MAIN: notify status case 1");
+      Serial.println(F("DEBUG_MAIN: notify status case 1"));
     #endif
     notify = true;
   }
@@ -208,7 +206,7 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
   if (notification.state != automaton->state()->id()) {
     notification.state = automaton->state()->id();
     #ifdef DEBUG_MAIN
-      Serial.println("DEBUG_MAIN: notify status case 2");
+      Serial.println(F("DEBUG_MAIN: notify status case 2"));
     #endif
     notify = true;
   }
@@ -219,7 +217,7 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
     notification.waterSensorStatus = context->op->water.sensorStatus;
     notification.waterTemp = context->op->water.currentTemp;
     #ifdef DEBUG_MAIN
-      Serial.println("DEBUG_MAIN: notify status case 3");
+      Serial.println(F("DEBUG_MAIN: notify status case 3"));
     #endif
     notify = true;
   }
@@ -230,12 +228,14 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
     notification.ambientSensorStatus = context->op->ambient.sensorStatus;
     notification.ambientTemp = context->op->ambient.currentTemp;
     #ifdef DEBUG_MAIN
-      Serial.println("DEBUG_MAIN: notify status case 4");
+      Serial.println(F("DEBUG_MAIN: notify status case 4"));
     #endif
     notify = true;
   }
 
   if (notify) {
+    notification.timeInState = now - context->op->currentStateStartMillis / 1000L;
+    notification.heatingTime = heatingTotalMillis(context->op) / 1000L;
     notificationTimeMillis = now;
     ui.notifyStatusChange(notification);
   }

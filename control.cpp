@@ -90,7 +90,7 @@ void ControlActions::setupSensors(ControlContext *context) {
    context->op->water.sensorStatus = SENSOR_ID_UNDEFINED;
    context->storage->logMessage(MSG_WATER_TEMP_SENSOR_ID_UNDEF, 0, 0); 
    #ifdef DEBUG_CONTROL
-     Serial.println("DEBUG_CONTROL: Water temp sensor ID undefined");
+     Serial.println(F("DEBUG_CONTROL: Water temp sensor ID undefined"));
    #endif
   }
   
@@ -98,7 +98,7 @@ void ControlActions::setupSensors(ControlContext *context) {
    context->op->ambient.sensorStatus = SENSOR_ID_UNDEFINED;
    context->storage->logMessage(MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF, 0, 0);
    #ifdef DEBUG_CONTROL
-     Serial.println("DEBUG_CONTROL: Ambient temp sensor ID undefined");
+     Serial.println(F("DEBUG_CONTROL: Ambient temp sensor ID undefined"));
    #endif
   } 
 
@@ -145,13 +145,13 @@ void ControlActions::completeSensorReadout(ControlContext *context) {
          context->op->water.sensorStatus = SENSOR_OK;
          context->op->water.currentTemp  = readout.celcius;
          #ifdef DEBUG_CONTROL
-           Serial.print("DEBUG_CONTROL: Water: Sensor OK, temp: ");
+           Serial.print(F("DEBUG_CONTROL: Water: Sensor OK, temp: "));
            Serial.println(readout.celcius);
          #endif
       } 
       #ifdef DEBUG_CONTROL
         else {
-          Serial.println("DEBUG_CONTROL: Water: Sensor NOK");
+          Serial.println(F("DEBUG_CONTROL: Water: Sensor NOK"));
         }
       #endif
     } else if (isAmbientSensor(addr, context->config)) {
@@ -160,13 +160,13 @@ void ControlActions::completeSensorReadout(ControlContext *context) {
          context->op->ambient.sensorStatus = SENSOR_OK;
          context->op->ambient.currentTemp  = readout.celcius;
          #ifdef DEBUG_CONTROL
-           Serial.print("DEBUG_CONTROL: Ambient: Sensor OK, temp: ");
+           Serial.print("DEBUG_CONTROL: Ambient: Sensor OK, temp: "));
            Serial.println(readout.celcius);
          #endif
       }
       #ifdef DEBUG_CONTROL
         else {
-          Serial.println("DEBUG_CONTROL: Ambient: Sensor NOK");
+          Serial.println(F("DEBUG_CONTROL: Ambient: Sensor NOK"));
         }
       #endif
     }

@@ -354,9 +354,9 @@ UserCommandEnum parseUserCommand(char buf[], byte bufSize) {
 }
 
 void printError(String msg) {
-  Serial.print("Error: ");
+  Serial.print(F("Error: "));
   Serial.print(msg);
-  Serial.println(".");
+  Serial.println(F("."));
 }
 
 void SerialUI::readUserCommand(ControlContext *context) {
@@ -374,9 +374,9 @@ void SerialUI::readUserCommand(ControlContext *context) {
     delay(2);
   } while( (count < COMMAND_BUF_SIZE) && !(Serial.peek() < 0) );
   #ifdef DEBUG_UI
-    Serial.print("DEBUG_UI: read cmd string: '");
+    Serial.print(F("DEBUG_UI: read cmd string: '"));
     Serial.print(buf);
-    Serial.print("', len: ");
+    Serial.print(F("', len: "));
     Serial.println(count);
   #endif
 
@@ -409,13 +409,13 @@ void SerialUI::readUserCommand(ControlContext *context) {
   context->op->command->command = parseUserCommand(buf, commandLength);  
   
   #ifdef DEBUG_UI
-    Serial.print("DEBUG_UI: parsed cmd: ");
+    Serial.print(F("DEBUG_UI: parsed cmd: "));
     Serial.print(context->op->command->command, HEX);
-    Serial.print(": ");
+    Serial.print(F(": "));
     Serial.print(getUserCommandName((UserCommandEnum) context->op->command->command));
-    Serial.print(", args: '");
+    Serial.print(F(", args: '"));
     Serial.print(context->op->command->args);
-    Serial.println("'");
+    Serial.println(F("'"));
   #endif
   if (context->op->command->command == CMD_NONE) {
     printError("Illegal command (try: help or ?)");
@@ -431,13 +431,13 @@ void printLogEntry(LogEntry *e) {
       {
         LogValuesData data;
         memcpy(&data, &(e->data), sizeof(LogValuesData));
-        Serial.print("V  water:");
+        Serial.print(F("V  water:"));
         Serial.print(getSensorStatusName((SensorStatusEnum)(data.flags>>4)));
-        Serial.print(" ");
+        Serial.print(F(" "));
         Serial.print(formatTemperature(data.water));
-        Serial.print(", ambient:");
+        Serial.print(F(", ambient:"));
         Serial.print(getSensorStatusName((SensorStatusEnum)(data.flags&0x0F)));
-        Serial.print(" ");
+        Serial.print(F(" "));
         Serial.println(formatTemperature(data.ambient));
       }
       break;
@@ -446,11 +446,11 @@ void printLogEntry(LogEntry *e) {
       {
         LogStateData data;
         memcpy(&data, &e->data, sizeof(LogStateData));
-        Serial.print("S  ");
+        Serial.print(F("S  "));
         Serial.print(getStateName((StateEnum)data.previous));
-        Serial.print(" -> [");
+        Serial.print(F(" -> ["));
         Serial.print(getEventName((EventEnum)data.event));
-        Serial.print("] -> ");
+        Serial.print(F("] -> "));
         Serial.println(getStateName((StateEnum)data.current));
       }
       break;
@@ -459,11 +459,11 @@ void printLogEntry(LogEntry *e) {
       {
         LogMessageData data;
         memcpy(&data, &e->data, sizeof(LogMessageData));
-        Serial.print("M  msg:");
+        Serial.print(F("M  msg:"));
         Serial.print(data.id);
-        Serial.print(", p1:");
+        Serial.print(F(", p1:"));
         Serial.print(data.params[0]);
-        Serial.print(", p2:");
+        Serial.print(F(", p2:"));
         Serial.println(data.params[1]);
       }
       break;
@@ -472,10 +472,10 @@ void printLogEntry(LogEntry *e) {
       {
         LogConfigParamData data;
         memcpy(&data, &e->data, sizeof(LogConfigParamData));
-        Serial.print("C  param:"); 
+        Serial.print(F("C  param:")); 
           ConfigParamEnum param = (ConfigParamEnum) data.id;
           Serial.print(getConfigParamName(param));
-        Serial.print(" = ");
+        Serial.print(F(" = "));
         Serial.println(data.newValue);
       }
       break;
@@ -491,7 +491,7 @@ void printLogEntry(LogEntry *e) {
  */
 void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton) {
   if (requests & READ_HELP) {
-    Serial.println("Accepted Commands:");
+    Serial.println(F("Accepted Commands:"));
     UserCommands commands = automaton->userCommands();
     unsigned short cmd = 0x1;
     for(byte i=0; i< NUM_USER_COMMANDS; i++) {
@@ -504,20 +504,20 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
   }
   
   if (requests & READ_STAT) {
-    Serial.print("State: ");
+    Serial.print(F("State: "));
     Serial.print(getStateName(automaton->state()->id()));
-    Serial.print(", Time in state [s]: ");
+    Serial.print(F(", Time in state [s]: "));
     Serial.println((millis() - context->op->currentStateStartMillis) / 1000L);
     
-    Serial.print("Water:   ");
+    Serial.print(F("Water:   "));
     Serial.print(getSensorStatusName(context->op->water.sensorStatus));
     if (context->op->water.sensorStatus == SENSOR_OK) {
-      Serial.print(", ");
+      Serial.print(F(", "));
       Serial.print(formatTemperature(context->op->water.currentTemp));
     }
     Serial.println();
     
-    Serial.print("Ambient: ");
+    Serial.print(F("Ambient: "));
     Serial.print(getSensorStatusName(context->op->ambient.sensorStatus));
     if (context->op->ambient.sensorStatus == SENSOR_OK) {
       Serial.print(", ");
@@ -527,7 +527,7 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
 
     unsigned long duration = heatingTotalMillis(context->op);
     if (duration != 0L) {
-      Serial.print("Accumulated heating time [s]: ");
+      Serial.print(F("Accumulated heating time [s]: "));
       Serial.println(duration / 1000L);
     }
   }
@@ -545,11 +545,11 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
       }
     }
     
-    Serial.print("Log contains ");
+    Serial.print(F("Log contains "));
     Serial.print(context->storage->currentLogEntries());
-    Serial.print(" entries (=");
+    Serial.print(F(" entries (="));
     Serial.print((short) (100L * context->storage->currentLogEntries() / context->storage->maxLogEntries()));
-    Serial.print("% full), showing ");
+    Serial.print(F("% full), showing "));
     Serial.println(entriesToReturn);
     
     context->storage->readMostRecentLogEntries(entriesToReturn);
@@ -562,10 +562,10 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
   if (requests & READ_CONFIG) {
     for(byte i=0; i<NUM_CONFIG_PARAMS; i++) {
       Serial.print(i);
-      Serial.print(" - ");
+      Serial.print(F(" - "));
       ConfigParamEnum p = (ConfigParamEnum) i;
       Serial.print(getConfigParamName(p));
-      Serial.print(": ");
+      Serial.print(F(": "));
       Serial.println(getConfigParamValue(context->config, p));
     }
   }
@@ -596,12 +596,12 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
   
 void SerialUI::notifyStatusChange(StatusNotification notification) {
   if (notification.timeInState == 0L) { } // prevent 'unused parameter' warning
-  Serial.println("* status notification");
+  Serial.println(F("* status notification"));
 }
 
 void SerialUI::notifyNewLogEntry(LogEntry entry) {
   if (entry.timestamp != UNDEFINED_TIMESTAMP) { } // prevent 'unused parameter' warning
-  Serial.println("* new log entry");
+  Serial.println(F("* new log entry"));
 }
 
 

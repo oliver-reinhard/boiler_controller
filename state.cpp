@@ -458,9 +458,9 @@ EventCandidates BoilerStateAutomaton::evaluate() {
 
 void BoilerStateAutomaton::transition(EventEnum event) {
   #ifdef DEBUG_STATE
-    Serial.print("DEBUG_STATE: State ");
+    Serial.print(F("DEBUG_STATE: State "));
     Serial.print(currentState->id());
-    Serial.print(": process event 0x");
+    Serial.print(F(": process event 0x"=);
     Serial.println(event, HEX);
   #endif
   StateEnum oldState = currentState->id();
@@ -468,9 +468,9 @@ void BoilerStateAutomaton::transition(EventEnum event) {
   if (newState == STATE_UNDEFINED) {
     if ((event & currentState->illegalTransitionLogged) == 0) { // this illegal event has not been logged at this state
       #ifdef DEBUG_STATE
-        Serial.print("DEBUG_STATE: State ");
+        Serial.print(F("DEBUG_STATE: State "));
         Serial.print(currentState->id());
-        Serial.print(": log invalid event 0x");
+        Serial.print(F(": log invalid event 0x"));
         Serial.println(event, HEX);
       #endif
 
@@ -489,7 +489,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
     context->storage->logState(oldState, newState, event);
   }
   #ifdef DEBUG_STATE
-    Serial.print("DEBUG_STATE: New state: ");
+    Serial.print(("DEBUG_STATE: New state: "));
     Serial.println(currentState->id());
   #endif
 }

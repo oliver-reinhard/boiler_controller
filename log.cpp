@@ -51,9 +51,9 @@ Timestamp timestamp() {
     }
   }
   #ifdef DEBUG_LOG
-    Serial.print("DEBUG_LOG: Timestamp ");
+    Serial.print(F("DEBUG_LOG: Timestamp "));
     Serial.print(t.sec);
-    Serial.print(".");
+    Serial.print(F("."));
     Serial.println(count);
   #endif
   return t.sec << TIMESTAMP_ID_BITS | count;
@@ -83,9 +83,9 @@ LogEntry createLogEntry(LogTypeID type, LogData data) {
   entry.timestamp = timestamp();
   entry.type = type;
   #ifdef DEBUG_LOG
-    Serial.print("DEBUG_LOG: createLogEntry: type ");
+    Serial.print(F("DEBUG_LOG: createLogEntry: type "));
     Serial.print(entry.type);
-    Serial.print(" => timestamp: ");
+    Serial.print(F(" => timestamp: "));
     Serial.println(entry.timestamp);
   #endif
   memcpy(&(entry.data), &data, sizeof(LogData));
