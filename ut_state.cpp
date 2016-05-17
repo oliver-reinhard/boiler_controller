@@ -1,12 +1,12 @@
 #include "bc_setup.h"
-#ifdef TEST_STATE
-  #line 4 "test_state.cpp"
+#ifdef UT_STATE
+  #line 4 "ut_state.cpp"
   #include <ArduinoUnit.h>
-  #include "storage.h"
+  #include "store.h"
   #include "state.h"
-  #include "test_state.h"
+  #include "ut_state.h"
 
-  //#define DEBUG_TEST_STATE
+  //#define DEBUG_UT_STATE
   
   /*
    * Class MockControlActions
@@ -46,8 +46,8 @@
 
 
   void MockControlActions::heat(boolean on, ControlContext *context) {
-    #ifdef DEBUG_TEST_STATE
-      Serial.println(F("DEBUG_TEST_STATE: heat (on/off)"));
+    #ifdef DEBUG_UT_STATE
+      Serial.println(F("DEBUG_UT_STATE: heat (on/off)"));
     #endif
     context->op->heating = on;
     if (on) {
@@ -127,8 +127,8 @@
   }
   
   Timestamp MockStorage::logValues(Temperature water, Temperature ambient, Flags flags) {
-    #ifdef DEBUG_TEST_STATE
-      Serial.println(F("DEBUG_TEST_STATE: logValues(...)"));
+    #ifdef DEBUG_UT_STATE
+      Serial.println(F("DEBUG_UT_STATE: logValues(...)"));
     #endif
     if (water == 0 || ambient == 0 || flags == 0) { } // prevent warning "unused parameter ..."
     logValuesCount++;
@@ -136,8 +136,8 @@
   }
   
   Timestamp MockStorage::logState(StateID previous, StateID current, EventID event) {
-    #ifdef DEBUG_TEST_STATE
-      Serial.println(F("DEBUG_TEST_STATE: logState(...)"));
+    #ifdef DEBUG_UT_STATE
+      Serial.println(F("DEBUG_UT_STATE: logState(...)"));
     #endif
     if (previous == 0 || current == 0 || event == 0) { } // prevent warning "unused parameter ..."
     logStateCount++;
@@ -145,8 +145,8 @@
   }
   
   Timestamp MockStorage::logMessage(MessageID id, short param1, short param2) {    
-    #ifdef DEBUG_TEST_STATE
-      Serial.println(F("DEBUG_TEST_STATE: logMessage(...)"));
+    #ifdef DEBUG_UT_STATE
+      Serial.println(F("DEBUG_UT_STATE: logMessage(...)"));
     #endif
     if (id == 0 || param1 == 0 || param2 == 0) { } // prevent warning "unused parameter ..."
     logMessageCount++;

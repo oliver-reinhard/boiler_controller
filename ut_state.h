@@ -1,10 +1,10 @@
 #include "bc_setup.h"
-#ifdef TEST_STATE
+#ifdef UT_STATE
 
-  #ifndef TEST_STATE_H_INCLUDED
-    #define TEST_STATE_H_INCLUDED
+  #ifndef UT_STATE_H_INCLUDED
+    #define UT_STATE_H_INCLUDED
     
-    #include "storage.h"
+    #include "store.h"
     #include "control.h"
   
     class MockControlActions : public ControlActions {

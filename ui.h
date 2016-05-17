@@ -19,6 +19,7 @@
 
   class AbstractUI {
     public:
+      virtual void setup(ControlContext *context) = 0;
       /*
        * Reads one user command and stores them in context->op.userCommand.
        */
@@ -34,7 +35,8 @@
   
   class SerialUI : public AbstractUI {
     public:
-    
+      void setup(ControlContext *context);
+      
       void readUserCommand(ControlContext *context);
       
       void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton);
@@ -48,6 +50,7 @@
   
   class BLEUI : public AbstractUI {
     public:
+      void setup(ControlContext *context);
     
       void readUserCommand(ControlContext *context);
       

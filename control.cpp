@@ -1,5 +1,5 @@
 #include "control.h"
-#include "message.h"
+#include "msg.h"
 
 // #define DEBUG_CONTROL
 

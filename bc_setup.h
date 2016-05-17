@@ -2,7 +2,7 @@
   #define BOILER_BC_SETUP_H_INCLUDED
   
   // Comment the following line to prevent ALL unit tests:
-  #define UNIT_TEST
+  //#define UNIT_TEST
   
   #ifndef UNIT_TEST
     // Comment the following line to get the SERIAL UI:
@@ -12,11 +12,11 @@
   #ifdef UNIT_TEST
     
     // Comment the following line to prevent execution of STORAGE tests:
-    #define TEST_STORAGE
+    #define UT_STORAGE
     #define UNIT_TEST_LOG_ENTRIES 5
 
     // Comment the following line to prevent execution of STATE tests:
-    //#define TEST_STATE
+    //#define UT_STATE
     
     // Do NOT COMMENT the following line:
     #define BLE_UI

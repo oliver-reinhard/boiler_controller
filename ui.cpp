@@ -1,7 +1,7 @@
 #include <string.h>
 #include "ui.h"
 #include "config.h"
-#include "storage.h"
+#include "store.h"
 
 #define COMMAND_BUF_SIZE 50   // Size of the read buffer for incoming data
 const char COMMAND_CHARS[] = " abcdefghijklmnopqrstuvwxyz"; // includes blank (first char)
@@ -359,6 +359,12 @@ void printError(String msg) {
   Serial.println(F("."));
 }
 
+
+void SerialUI::setup(ControlContext *context) {
+  if (context != NULL) { } // prevent 'unused parameter' warning
+  // empty
+}
+      
 void SerialUI::readUserCommand(ControlContext *context) {
   char buf[COMMAND_BUF_SIZE+1];
   // fill buffer with 0's => always \0-terminated!
@@ -605,6 +611,10 @@ void SerialUI::notifyNewLogEntry(LogEntry entry) {
 }
 
 
+void BLEUI::setup(ControlContext *context) {
+  if (context != NULL) { } // prevent 'unused parameter' warning
+  
+}
 
 void BLEUI::readUserCommand(ControlContext *context) {
   if (context != NULL) { } // prevent 'unused parameter' warning

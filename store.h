@@ -1,5 +1,5 @@
-#ifndef BOILER_STORAGE_H_INCLUDED
-  #define BOILER_STORAGE_H_INCLUDED
+#ifndef BOILER_STORE_H_INCLUDED
+  #define BOILER_STORE_H_INCLUDED
   
   #include "config.h"
   #include "log.h"

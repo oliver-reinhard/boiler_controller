@@ -1,7 +1,7 @@
 #ifndef BOILER_LOG_H_INCLUDED
   #define BOILER_LOG_H_INCLUDED
   
-  #include "message.h"
+  #include "msg.h"
   #include "config.h"
   
   /**

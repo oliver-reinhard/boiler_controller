@@ -1,8 +1,8 @@
 #include "bc_setup.h"
-#ifdef TEST_STORAGE
-  #line 4 "test_storage.cpp"
+#ifdef UT_STORE
+  #line 4 "ut_store.cpp"
   #include <ArduinoUnit.h>
-  #include "storage.h"
+  #include "store.h"
   
   test(storage_timestamp) {
     // ensure this test is not run within the first second of Arduino board time:

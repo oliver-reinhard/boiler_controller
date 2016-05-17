@@ -3,7 +3,7 @@
   
   #include <OneWire.h>
   #include "config.h"
-  #include "storage.h"
+  #include "store.h"
 
   #define HEATER_PIN   9
   #define ONE_WIRE_PIN 10 // Temperature sensors
