@@ -1,7 +1,7 @@
 #include <assert.h>
 #include "log.h"
 
-// #define DEBUG_LOG
+//#define DEBUG_LOG
 
 #define ASCII_0 48  // char(48)
 
@@ -9,6 +9,17 @@
  * The value (in seconds) added to Arduino board millis().
  */
 unsigned long timeBase_sec = 0L;
+
+/*
+ * The (adjusted) seconds of time when a the last timestamp was issued.
+ */
+static unsigned long last_sec = 0L;
+
+/*
+ * The ID count of the last issued timestamp.
+ */
+static byte count = 0;
+
 
 void adjustLogTime(Timestamp mostRecent) {
   unsigned long mostRecent_sec = mostRecent >> TIMESTAMP_ID_BITS;
@@ -22,6 +33,8 @@ void adjustLogTime(Timestamp mostRecent) {
 
 void resetLogTime() {
   timeBase_sec = 0L;
+  last_sec = 0L;
+  count = 0;
 }
 
 LogTimeRaw logTime() {
@@ -32,8 +45,6 @@ LogTimeRaw logTime() {
 
 
 Timestamp timestamp() {
-  static unsigned long last_sec = 0L;
-  static byte count = 0;
   LogTimeRaw t = logTime();
   
   if (t.sec > last_sec) {
@@ -50,13 +61,12 @@ Timestamp timestamp() {
       last_sec = t.sec;
     }
   }
+  Timestamp ts = t.sec << TIMESTAMP_ID_BITS | count;
   #ifdef DEBUG_LOG
     Serial.print(F("DEBUG_LOG: Timestamp "));
-    Serial.print(t.sec);
-    Serial.print(F("."));
-    Serial.println(count);
+    Serial.println(formatTimestamp(ts));
   #endif
-  return t.sec << TIMESTAMP_ID_BITS | count;
+  return ts;
 }
 
 
@@ -86,7 +96,7 @@ LogEntry createLogEntry(LogTypeID type, LogData data) {
     Serial.print(F("DEBUG_LOG: createLogEntry: type "));
     Serial.print(entry.type);
     Serial.print(F(" => timestamp: "));
-    Serial.println(entry.timestamp);
+    Serial.println(formatTimestamp(entry.timestamp));
   #endif
   memcpy(&(entry.data), &data, sizeof(LogData));
   return entry;

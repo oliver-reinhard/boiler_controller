@@ -126,6 +126,7 @@
     // none
   }
   
+  
   Timestamp MockStorage::logValues(Temperature water, Temperature ambient, Flags flags) {
     #ifdef DEBUG_UT_STATE
       Serial.println(F("DEBUG_UT_STATE: logValues(...)"));
@@ -144,24 +145,28 @@
     return timestamp();
   }
   
-  Timestamp MockStorage::logMessage(MessageID id, short param1, short param2) {    
+  Timestamp MockStorage::logMessage(MessageEnum msg, short param1, short param2) {    
     #ifdef DEBUG_UT_STATE
       Serial.println(F("DEBUG_UT_STATE: logMessage(...)"));
     #endif
-    if (id == 0 || param1 == 0 || param2 == 0) { } // prevent warning "unused parameter ..."
+    if (msg == 0 || param1 == 0 || param2 == 0) { } // prevent warning "unused parameter ..."
     logMessageCount++;
     return timestamp();
   }
   
-
   /*
    * Tests
    */
   test(state_automaton) {
     MockStorage storage = MockStorage();
     ConfigParams config;
+    memset(&config, 0, sizeof(ConfigParams));
     boolean updated;
     storage.initConfigParams(&config, &updated);
+    #ifdef DEBUG_UT_STATE
+      printConfig(config);
+    #endif
+    assertEqual(config.heaterCutOutWaterTemp, DEFAULT_HEATER_CUT_OUT_WATER_TEMP); 
     
     OperationalParams op;
     UserCommand cmd;
@@ -227,7 +232,7 @@
     //
     // user command SET_CONFIG in state IDLE
     //
-    assertEqual(int(automaton.userCommands()), int(CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_SET_CONFIG | CMD_REC_ON));
+    assertEqual(int(automaton.userCommands()), int(CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_SET_CONFIG | CMD_REC_ON));
     op.command->command = CMD_SET_CONFIG;
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_SET_CONFIG));
@@ -259,7 +264,7 @@
     //
     // user command REC OFF in state STANDBY
     //
-    assertEqual(int(automaton.userCommands()), int(CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_REC_OFF | CMD_HEAT_ON));
+    assertEqual(int(automaton.userCommands()), int(CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_REC_OFF | CMD_HEAT_ON));
     op.command->command = CMD_REC_OFF;
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_REC_OFF));
@@ -294,6 +299,7 @@
     control.resetCounters();
 
     // evaluate => no event
+    assertEqual(config.heaterCutOutWaterTemp, DEFAULT_HEATER_CUT_OUT_WATER_TEMP); 
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_NONE));
 
@@ -301,7 +307,6 @@
     // set water-sensor temp to overheated
     //
     op.water.currentTemp = DEFAULT_HEATER_CUT_OUT_WATER_TEMP + 1;
-    assertEqual(config.heaterCutOutWaterTemp, DEFAULT_HEATER_CUT_OUT_WATER_TEMP); 
     cand = automaton.evaluate();
     assertEqual(int(cand), int(EVENT_TEMP_OVER));
 

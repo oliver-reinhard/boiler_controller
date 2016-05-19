@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <EEPROM.h>
 
-// #define DEBUG_STORE
+//#define DEBUG_STORE
 
 const unsigned short VERSION_SIZE   = sizeof(Version);
 const unsigned short CONFIG_SIZE    = sizeof(ConfigParams);
@@ -174,7 +174,7 @@ void Storage::initLog() {
   unsigned short oldMaxLogEntries;
   EEPROM.get(EEPROM_LOG_OFFSET, oldMaxLogEntries);
   #ifdef DEBUG_STORE
-    Serial.print("F(DEBUG_STORE: initlog(), stored log size = "));
+    Serial.print(F("DEBUG_STORE: initlog(), stored log size = "));
     Serial.println(oldMaxLogEntries);
   #endif
   if (oldMaxLogEntries != MAX_LOG_ENTRIES) {
@@ -194,7 +194,7 @@ void Storage::initLog() {
     
     if (entry.timestamp == 0L) {
       logHead = i;
-      mostRecentIndex = (logHead - 1) % MAX_LOG_ENTRIES;
+      mostRecentIndex = (MAX_LOG_ENTRIES + logHead - 1) % MAX_LOG_ENTRIES;  // (logHead -1) can be negative => % function returns 0 ... !! => ensure always >= 0
       if(i == 0) {
         // if the head (= empty entry) is the very first entry of the array, then the most recent one is the very last one:
         LogEntry mostRecentEntry;
@@ -230,24 +230,36 @@ void Storage::initLog() {
 Timestamp Storage::logValues(Temperature water, Temperature ambient, Flags flags) {
   LogEntry entry = createLogValuesEntry(water, ambient, flags);
   writeLogEntry(&entry);
+  #ifdef DEBUG_STORE
+    Serial.println(F("DEBUG_STORE: logValues(..)"));
+  #endif
   return entry.timestamp;
 }
 
 Timestamp Storage::logState(StateID previous, StateID current, EventID event) {
   LogEntry entry = createLogStateEntry(previous, current, event);
   writeLogEntry(&entry);
+  #ifdef DEBUG_STORE
+    Serial.println(F("DEBUG_STORE: logState(..)"));
+  #endif
   return entry.timestamp;
 }
 
-Timestamp Storage::logMessage(MessageEnum id, short param1, short param2) {
-  LogEntry entry = createLogMessageEntry(id, param1, param2);
+Timestamp Storage::logMessage(MessageEnum msg, short param1, short param2) {
+  LogEntry entry = createLogMessageEntry(msg, param1, param2);
   writeLogEntry(&entry);
+  #ifdef DEBUG_STORE
+    Serial.println(F("DEBUG_STORE: logMessage(..)"));
+  #endif
   return entry.timestamp;
 }
 
 Timestamp Storage::logConfigParam(ConfigParamID id, float newValue) {
   LogEntry entry = createConfigParamEntry(id, newValue);
   writeLogEntry(&entry);
+  #ifdef DEBUG_STORE
+    Serial.println(F("DEBUG_STORE: logConfigParam(..)"));
+  #endif
   return entry.timestamp;
 }
 
@@ -261,7 +273,7 @@ void Storage::readMostRecentLogEntries(unsigned short maxResults) {
     reader.toRead = maxResults < n ? maxResults : n;
   }
   reader.read = 0;
-  reader.nextIndex = (logHead - 1) % MAX_LOG_ENTRIES;
+  reader.nextIndex = (MAX_LOG_ENTRIES + logHead - 1) % MAX_LOG_ENTRIES; // (logHead -1) can be negative => % function returns 0 ... !! => ensure always >= 0
   reader.valid = true;
 }
 

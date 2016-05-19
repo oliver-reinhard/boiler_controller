@@ -49,7 +49,7 @@
         void initLog();
         Timestamp logValues(Temperature water, Temperature ambient, Flags flags);
         Timestamp logState(StateID previous, StateID current, EventID event);
-        Timestamp logMessage(MessageID id, short param1, short param2);
+        Timestamp logMessage(MessageEnum msg, short param1, short param2);
       
         // Mock counters:
         unsigned short logValuesCount = 0;

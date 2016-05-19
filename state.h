@@ -23,18 +23,18 @@
     EVENT_NONE = 0,
     EVENT_READY = 0x1,       // 1
     EVENT_SENSORS_NOK = 0x2, // 2
-    EVENT_SET_CONFIG = 0x4,  // 3, user command
-    EVENT_REC_ON = 0x8,      // 4, user command
-    EVENT_REC_OFF = 0x10,    // 5, user command
-    EVENT_HELP = 0x20,       // 6, user command
-    EVENT_GET_CONFIG = 0x40, // 7, user command
-    EVENT_GET_LOG = 0x80,    // 8, user command
-    EVENT_GET_STAT = 0x100,  // 8, user command
-    EVENT_HEAT_ON = 0x200,   // 10, user command
-    EVENT_HEAT_OFF = 0x400,  // 11, user command
-    EVENT_TEMP_OVER = 0x800, // 12
-    EVENT_TEMP_OK = 0x1000,  // 13
-    EVENT_RESET = 0x2000     // 14, user command
+    EVENT_SET_CONFIG = 0x4,  // 3     (4) user command
+    EVENT_REC_ON = 0x8,      // 4     (8) user command
+    EVENT_REC_OFF = 0x10,    // 5    (16) user command
+    EVENT_HELP = 0x20,       // 6    (32) user command
+    EVENT_GET_CONFIG = 0x40, // 7    (64) user command
+    EVENT_GET_LOG = 0x80,    // 8   (128) user command
+    EVENT_GET_STAT = 0x100,  // 9   (256) user command
+    EVENT_HEAT_ON = 0x200,   // 10  (512) user command
+    EVENT_HEAT_OFF = 0x400,  // 11 (1024) user command
+    EVENT_TEMP_OVER = 0x800, // 12 (2048)
+    EVENT_TEMP_OK = 0x1000,  // 13 (4096)
+    EVENT_RESET = 0x2000     // 14 (8192) user command
   } EventEnum;
 
   const unsigned int NUM_EVENTS = 14;

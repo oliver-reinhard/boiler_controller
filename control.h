@@ -1,6 +1,7 @@
 #ifndef BOILER_CONTROL_H_INCLUDED
   #define BOILER_CONTROL_H_INCLUDED
   
+  #include "bc_setup.h"
   #include <OneWire.h>
   #include "config.h"
   #include "store.h"
@@ -16,12 +17,12 @@
     CMD_SET_CONFIG = 0x2,  // 3
     CMD_REC_ON = 0x4,      // 4
     CMD_REC_OFF = 0x8,     // 5
-    CMD_GET_LOG = 0x10,    // 6
-    CMD_GET_CONFIG = 0x20, // 7
-    CMD_GET_STAT = 0x40,   // 8
-    CMD_HEAT_ON = 0x80,    // 9
-    CMD_HEAT_OFF = 0x100,  // 10
-    CMD_RESET = 0x200,     // 11
+    CMD_GET_LOG = 0x10,    // 6  (16)
+    CMD_GET_CONFIG = 0x20, // 7  (32)
+    CMD_GET_STAT = 0x40,   // 8  (64)
+    CMD_HEAT_ON = 0x80,    // 9  (128)
+    CMD_HEAT_OFF = 0x100,  // 10 (256)
+    CMD_RESET = 0x200,     // 11 (512)
   } UserCommandEnum;
   
   const unsigned short NUM_USER_COMMANDS = 11;

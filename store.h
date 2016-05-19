@@ -58,7 +58,7 @@
       virtual Version version();
       
       /*
-       * Returns size of storage in bytes.
+       * Returns static size of storage in bytes.
        */
       unsigned short size();
 
@@ -125,7 +125,7 @@
       /*
        * Log a message.
        */
-      virtual Timestamp logMessage(MessageEnum id, short param1, short param2);
+      virtual Timestamp logMessage(MessageEnum msg, short param1, short param2);
 
       /*
        * Log a config-param change.

@@ -3,7 +3,8 @@
   #line 4 "ut_store.cpp"
   #include <ArduinoUnit.h>
   #include "store.h"
-  
+
+  //#define DEBUG_UT_STORE
   test(storage_timestamp) {
     // ensure this test is not run within the first second of Arduino board time:
     delay(1000);
@@ -50,8 +51,12 @@
     
     ConfigParams c;
     storage.getConfigParams(&c);
+    #ifdef DEBUG_UT_STORE
+      printConfig(c);
+    #endif
     assertNotEqual(storage.version(), 0L);
     assertEqual(c.targetTemp, DEFAULT_TARGET_TEMP);
+    assertEqual(c.heaterCutOutWaterTemp, DEFAULT_HEATER_CUT_OUT_WATER_TEMP); 
     
     c.targetTemp = 4000;
     storage.updateConfigParams(&c);

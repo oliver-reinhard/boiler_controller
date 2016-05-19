@@ -3,7 +3,7 @@
 
   #include "control.h"
   #include "state.h"
-  
+      
   struct StatusNotification {
     StateID state;
     // time [s] since most recent transition to current state:
@@ -19,46 +19,39 @@
 
   class AbstractUI {
     public:
-      virtual void setup(ControlContext *context) = 0;
+      virtual void setup(ControlContext *context);
       /*
        * Reads one user command and stores them in context->op.userCommand.
        */
-      virtual void readUserCommand(ControlContext *context) =  0;
+      virtual void readUserCommand(ControlContext *context);
       
-      virtual void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton) =  0;
+      virtual void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton);
     
-      virtual void notifyStatusChange(StatusNotification notification) =  0;
+      virtual void notifyStatusChange(StatusNotification notification);
     
-      virtual void notifyNewLogEntry(LogEntry entry) =  0;
-  };
+      virtual void notifyNewLogEntry(LogEntry entry);
+  };  
 
   
-  class SerialUI : public AbstractUI {
-    public:
-      void setup(ControlContext *context);
-      
-      void readUserCommand(ControlContext *context);
-      
-      void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton);
-    
-      void notifyStatusChange(StatusNotification notification);
-    
-      void notifyNewLogEntry(LogEntry entry);
-  };
+  #ifdef BLE_UI
   
+    class BLEUI : public AbstractUI {
+      public:
+        void setup(ControlContext *context);
+      
+        void readUserCommand(ControlContext *context);
+        
+        void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton);
+      
+        void notifyStatusChange(StatusNotification notification);
+      
+        void notifyNewLogEntry(LogEntry entry);
 
-  
-  class BLEUI : public AbstractUI {
-    public:
-      void setup(ControlContext *context);
-    
-      void readUserCommand(ControlContext *context);
-      
-      void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton);
-    
-      void notifyStatusChange(StatusNotification notification);
-    
-      void notifyNewLogEntry(LogEntry entry);
-  };
-  
+      protected:
+        int32_t bcServiceId;
+        int32_t statusCharacteristicId;  // read + notify
+        int32_t logCharacteristicId;     // read + notify
+        int32_t cmdCharacteristicId;     // write
+    };
+  #endif
 #endif

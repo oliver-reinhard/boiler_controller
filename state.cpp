@@ -2,7 +2,7 @@
 #include "store.h"
 #include <assert.h>
 
-// #define DEBUG_STATE
+//#define DEBUG_STATE
 
 /*
  * ABSTRACT STATE
@@ -158,6 +158,8 @@ EventCandidates SensorsNOK::eval(ExecutionContext *context) {
   EventCandidates result = AbstractState::eval(context);
   if (context->op->command->command == CMD_HELP) {
     result |= EVENT_HELP;
+  } else if (context->op->command->command == CMD_SET_CONFIG) {
+    result |= EVENT_SET_CONFIG;
   } else if (context->op->command->command == CMD_GET_CONFIG) {
     result |= EVENT_GET_CONFIG;
   } else if (context->op->command->command == CMD_GET_LOG) {
@@ -460,7 +462,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
   #ifdef DEBUG_STATE
     Serial.print(F("DEBUG_STATE: State "));
     Serial.print(currentState->id());
-    Serial.print(F(": process event 0x"=);
+    Serial.print(F(": process event 0x"));
     Serial.println(event, HEX);
   #endif
   StateEnum oldState = currentState->id();

@@ -72,4 +72,6 @@
 
   String formatTempSensorID(TempSensorID id);
   
+  void printConfig(ConfigParams p);
+  
 #endif

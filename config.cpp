@@ -33,3 +33,16 @@ String formatTempSensorID(TempSensorID id) {
   return s;
 }
 
+
+void printConfig(ConfigParams p) {
+  Serial.println(formatTemperature(p.targetTemp));
+  Serial.println(formatTempSensorID(p.waterTempSensorId));
+  Serial.println(formatTempSensorID(p.ambientTempSensorId));
+  Serial.println(formatTemperature(p.heaterCutOutWaterTemp));
+  Serial.println(formatTemperature(p.heaterBackOkWaterTemp));
+  Serial.println(formatTemperature(p.logTempDelta));
+  Serial.println(p.logTimeDelta);
+  Serial.println(p.tankCapacity);
+  Serial.println(p.heaterPower);
+  Serial.println(p.insulationFactor);
+}

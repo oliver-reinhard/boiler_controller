@@ -1,12 +1,14 @@
 #include "bc_setup.h"
 #ifdef UNIT_TEST
   #include <ArduinoUnit.h>
-  #include "ut_state.h"
 #endif
 #include "math.h"
 #include "control.h"
 #include "state.h"
 #include "ui.h"
+#ifdef SERIAL_UI
+  #include "ui_ser.h"
+#endif
 
 //#define DEBUG_MAIN
 
@@ -38,10 +40,12 @@ BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
 #ifdef BLE_UI
   BLEUI ui = BLEUI();
 #endif
-#ifndef BLE_UI
+#ifdef SERIAL_UI
   SerialUI ui = SerialUI();
 #endif
-
+#ifdef UNIT_TEST
+  AbstractUI ui = AbstractUI();
+#endif
 
 
 void setup() {
@@ -49,7 +53,11 @@ void setup() {
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-
+  
+  #ifdef UNIT_TEST
+    //Test::min_verbosity = TEST_VERBOSITY_ALL;
+  #endif
+  
   #ifndef UNIT_TEST    
     storage.getConfigParams(&configParams);
     storage.initLog();
@@ -128,7 +136,7 @@ void loop() {
 
 EventEnum processEventCandidates(EventCandidates cand) {
   #ifdef DEBUG_MAIN
-    Serial.print(F("DEBUG_MAIN: cand: 0x"));
+    Serial.print(F("DEBUG_MAIN: evaluation yields event candidates: 0x"));
     Serial.println(cand, HEX);
   #endif
   
