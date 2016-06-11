@@ -13,13 +13,13 @@
    *                   - up to 16 timestamps can be generated within one second
    * The timestamp() function creates ascending values in strong monotony, even across board resets.
    */
-  typedef unsigned long Timestamp;
+  typedef uint32_t Timestamp;
   #define TIMESTAMP_ID_BITS   4
   #define UNDEFINED_TIMESTAMP 0L
   
   struct LogTimeRaw {
-    unsigned long sec; // seconds since log was last reset or since last board reset, which ever happened earlier
-    unsigned short ms; // milliseconds [0 .. 999]
+    uint32_t sec; // seconds since log was last reset or since last board reset, which ever happened earlier
+    uint16_t ms; // milliseconds [0 .. 999]
   };
   
   typedef enum {
@@ -32,12 +32,12 @@
   /*
    * IDs for enum types, some defined in higher-level modules.
    */
-  typedef byte LogTypeID;
-  typedef byte MessageID;
-  typedef byte StateID;
-  typedef unsigned short EventID;
+  typedef uint8_t LogTypeID;
+  typedef uint8_t MessageID;
+  typedef uint8_t StateID;
+  typedef uint16_t EventID;
   
-  typedef byte Flags; // value logging
+  typedef uint8_t Flags; // value logging
 
   
   /**
@@ -63,7 +63,7 @@
     StateID previous;
     StateID current;
     EventID event;
-    byte unused; // filler byte
+    uint8_t unused; // filler uint8_t
   };
   
   /**
@@ -71,7 +71,7 @@
    */
   struct LogMessageData {
     MessageID id;
-    short params[2];
+    int16_t params[2];
   };
   
   /**
@@ -133,7 +133,7 @@
   /**
    * Returns a LogEntry with a data field of "type" LogMessageData.
    */
-  LogEntry createLogMessageEntry(MessageEnum id, short param1, short param2);
+  LogEntry createLogMessageEntry(MessageEnum id, int16_t param1, int16_t param2);
 
   /**
    * Returns a LogEntry with a data field of "type" LogConfigParamData.

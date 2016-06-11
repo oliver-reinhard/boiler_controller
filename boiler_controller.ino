@@ -14,7 +14,7 @@
 
 #define CONTROL_CYCLE_DURATION          5000L// [ms]
 #define TEMP_SENSOR_READOUT_WAIT         800L // [ms] = 750 ms + safety margin
-#define MIN_USER_NOTIFICATION_INTERVAL  1000L // [ms] (notification only happens is relevant changes occurred)
+#define MIN_USER_NOTIFICATION_INTERVAL  1000L // [ms] (notification only happens if relevant changes occurred)
 #define MAX_USER_NOTIFICATION_INTERVAL 10000L // [ms] notify user after this period at latest
 #define NOTIFICATION_TEMP_DELTA           20  // [°C * 100]
 
@@ -83,12 +83,12 @@ void loop() {
   #endif
   
   #ifndef UNIT_TEST
-    static unsigned long controlCycleStart = 0L;
+    static uint32_t controlCycleStart = 0L;
     static CycleStageEnum cycleStage = CYCLE_STAGE_0;
-    static unsigned long lastUserNotificationCheck = 0L;
+    static uint32_t lastUserNotificationCheck = 0L;
     
-    unsigned long now = millis();
-    unsigned long elapsed = now - controlCycleStart;
+    uint32_t now = millis();
+    uint32_t elapsed = now - controlCycleStart;
     if (controlCycleStart == 0L || elapsed >= CONTROL_CYCLE_DURATION) {
       controlCycleStart = now;
       elapsed = 0L;
@@ -140,7 +140,7 @@ EventEnum processEventCandidates(EventCandidates cand) {
     Serial.println(cand, HEX);
   #endif
   
-  for(unsigned int i=0; i< NUM_EVENTS; i++) {
+  for(uint16_t i=0; i< NUM_EVENTS; i++) {
     #ifdef DEBUG_MAIN
       Serial.print(F("DEBUG_MAIN: event(i): 0x"));
       Serial.println(EVENT_PRIORITIES[i], HEX);
@@ -161,7 +161,7 @@ EventEnum processEventCandidates(EventCandidates cand) {
  */
 void logTemperatureValues(ControlContext *context) {
   if (context->op->loggingValues) {
-    unsigned long time = millis();
+    uint32_t time = millis();
 
     if (time - context->op->water.lastLoggedTime > context->config->logTimeDelta * 1000L || time - context->op->ambient.lastLoggedTime > context->config->logTimeDelta * 1000L) {
       boolean logValuesNow = false;
@@ -197,9 +197,9 @@ void logTemperatureValues(ControlContext *context) {
 }
 
 
-void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automaton, unsigned long now) {
+void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automaton, uint32_t now) {
   // timepoint [ms] when this (= most recent) notification was sent to user:
-  static unsigned long notificationTimeMillis;
+  static uint32_t notificationTimeMillis;
   static StatusNotification notification;
 
   boolean notify = false;

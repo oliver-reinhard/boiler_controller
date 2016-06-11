@@ -23,15 +23,15 @@
         void requestStat();
         
         // Mock counters:
-        unsigned short heatTrueCount = 0;
-        unsigned short heatFalseCount = 0;
-        unsigned short setConfigParamCount = 0;
-        unsigned short requestHelpCount = 0;
-        unsigned short requestLogCount = 0;
-        unsigned short requestConfigCount = 0;
-        unsigned short requestStatCount = 0;
+        uint16_t heatTrueCount = 0;
+        uint16_t heatFalseCount = 0;
+        uint16_t setConfigParamCount = 0;
+        uint16_t requestHelpCount = 0;
+        uint16_t requestLogCount = 0;
+        uint16_t requestConfigCount = 0;
+        uint16_t requestStatCount = 0;
         
-        unsigned short totalInvocations();
+        uint16_t totalInvocations();
         void resetCounters();
     };
 
@@ -49,14 +49,14 @@
         void initLog();
         Timestamp logValues(Temperature water, Temperature ambient, Flags flags);
         Timestamp logState(StateID previous, StateID current, EventID event);
-        Timestamp logMessage(MessageEnum msg, short param1, short param2);
+        Timestamp logMessage(MessageEnum msg, int16_t param1, int16_t param2);
       
         // Mock counters:
-        unsigned short logValuesCount = 0;
-        unsigned short logStateCount = 0;
-        unsigned short logMessageCount = 0;
+        uint16_t logValuesCount = 0;
+        uint16_t logStateCount = 0;
+        uint16_t logMessageCount = 0;
         
-        unsigned short totalInvocations();
+        uint16_t totalInvocations();
         void resetCounters();
     };
 

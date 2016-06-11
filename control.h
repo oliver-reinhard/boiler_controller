@@ -25,10 +25,10 @@
     CMD_RESET = 0x200,     // 11 (512)
   } UserCommandEnum;
   
-  const unsigned short NUM_USER_COMMANDS = 11;
+  const uint16_t NUM_USER_COMMANDS = 11;
 
   // bitwise OR combination ("|") of UserCommandEnum(s):
-  typedef unsigned short UserCommands;
+  typedef uint16_t UserCommands;
 
   typedef enum {
     READ_WRITE_NONE = 0,
@@ -40,7 +40,7 @@
   } ReadWriteRequestEnum;
 
   // bitwise OR combination ("|") of ReadWriteRequestEnum(s)
-  typedef byte ReadWriteRequests;
+  typedef uint8_t ReadWriteRequests;
 
   typedef enum {
     SENSOR_INITIALISING = 0,
@@ -49,13 +49,13 @@
     SENSOR_ID_UNDEFINED = 3
   } SensorStatusEnum;
 
-  typedef byte SensorStatusID;
+  typedef uint8_t SensorStatusID;
   
   struct TemperatureSensor {
     SensorStatusEnum sensorStatus = SENSOR_INITIALISING;
     Temperature currentTemp = UNDEFINED_TEMPERATURE;
     Temperature lastLoggedTemp = UNDEFINED_TEMPERATURE;
-    unsigned long lastLoggedTime = 0L;
+    uint32_t lastLoggedTime = 0L;
   };
 
   struct UserCommand {
@@ -65,22 +65,22 @@
   
   struct OperationalParams {
     // timepoint [ms] of most recent transition to current state:
-    unsigned long currentStateStartMillis = 0L;
+    uint32_t currentStateStartMillis = 0L;
     TemperatureSensor water;
     TemperatureSensor ambient;
     UserCommand *command;
     boolean heating = false;
     // time [ms] of most recent transition to state HEATING:
-    unsigned long heatingStartMillis = 0L;
+    uint32_t heatingStartMillis = 0L;
     // accumulated time in state HEATING, not including the period since last start (if heatingStartMillis != 0L)
-    unsigned long heatingAccumulatedMillis = 0L;
+    uint32_t heatingAccumulatedMillis = 0L;
     boolean loggingValues = false;
   };
 
   /*
    * Calculates current heating time.
    */
-  unsigned long heatingTotalMillis(OperationalParams *op);
+  uint32_t heatingTotalMillis(OperationalParams *op);
 
   class ControlContext {
     public:
@@ -90,7 +90,7 @@
   };
   
   struct TemperatureReadout {
-    byte resolution;     // number of bits (= 9..12)
+    uint8_t resolution;     // number of bits (= 9..12)
     Temperature celcius; // [°C * 100]
   };
 
@@ -120,8 +120,8 @@
       
     protected:
       OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor to 5V is necessary)
-      boolean readScratchpad(byte addr[], byte *data);
-      TemperatureReadout getCelcius(byte data[]);
+      boolean readScratchpad(uint8_t addr[], uint8_t *data);
+      TemperatureReadout getCelcius(uint8_t data[]);
       ReadWriteRequests pendingRequests = READ_WRITE_NONE;
   };
   

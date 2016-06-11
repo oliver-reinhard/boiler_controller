@@ -8,22 +8,22 @@
 /*
  * The value (in seconds) added to Arduino board millis().
  */
-unsigned long timeBase_sec = 0L;
+uint32_t timeBase_sec = 0L;
 
 /*
  * The (adjusted) seconds of time when a the last timestamp was issued.
  */
-static unsigned long last_sec = 0L;
+static uint32_t last_sec = 0L;
 
 /*
  * The ID count of the last issued timestamp.
  */
-static byte count = 0;
+static uint8_t count = 0;
 
 
 void adjustLogTime(Timestamp mostRecent) {
-  unsigned long mostRecent_sec = mostRecent >> TIMESTAMP_ID_BITS;
-  unsigned long current_sec = millis() / 1000L;
+  uint32_t mostRecent_sec = mostRecent >> TIMESTAMP_ID_BITS;
+  uint32_t current_sec = millis() / 1000L;
   if (mostRecent_sec >= current_sec) {
     timeBase_sec = mostRecent_sec + 1; // continue at the "next" second
   } else {
@@ -38,8 +38,8 @@ void resetLogTime() {
 }
 
 LogTimeRaw logTime() {
-  long ms = millis();
-  LogTimeRaw t = {timeBase_sec + (ms / 1000L), (unsigned short) (ms % 1000L)};
+  uint32_t ms = millis();
+  LogTimeRaw t = {timeBase_sec + (ms / 1000L), (uint16_t) (ms % 1000L)};
   return t;
 }
 
@@ -72,13 +72,13 @@ Timestamp timestamp() {
 
 String formatTimestamp(Timestamp t) {
   char s[13];
-  unsigned long sec = t >> TIMESTAMP_ID_BITS;
-  byte count = t % 16;
+  uint32_t sec = t >> TIMESTAMP_ID_BITS;
+  uint8_t count = t % 16;
   s[12] = '\0';
   s[11] = ASCII_0 + count % 10;
   s[10] = ASCII_0 + count / 10;
   s[9] = '.';
-  for(short i = 8; i >= 0; i--) {
+  for(int16_t i = 8; i >= 0; i--) {
     s[i] = ASCII_0 + sec % 10;
     sec /= 10;
   }
@@ -131,7 +131,7 @@ LogEntry createLogStateEntry(StateID previous, StateID current, EventID event) {
   return createLogEntry(LOG_STATE, generic);
 }
 
-LogEntry createLogMessageEntry(MessageEnum id, short param1, short param2) {
+LogEntry createLogMessageEntry(MessageEnum id, int16_t param1, int16_t param2) {
   LogMessageData data;
   data.id = id;
   data.params[0] = param1;

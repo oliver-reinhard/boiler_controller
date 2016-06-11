@@ -17,7 +17,7 @@
     STATE_OVERHEATED = 7
   } StateEnum;
 
-  const unsigned short NUM_STATES = STATE_OVERHEATED + 1;
+  const uint16_t NUM_STATES = STATE_OVERHEATED + 1;
   
   typedef enum { 
     EVENT_NONE = 0,
@@ -37,7 +37,7 @@
     EVENT_RESET = 0x2000     // 14 (8192) user command
   } EventEnum;
 
-  const unsigned int NUM_EVENTS = 14;
+  const uint16_t NUM_EVENTS = 14;
   
   /*
    * All events (except EVENT_NONE) ordered by descending priority, i.e. most urgent first.
@@ -63,7 +63,7 @@
    * The result of the evaluation of the operational parameters by a state.
    * Denotes all possible events that result from the evaluation by a state as or'ed ("|") together.
    */
-  typedef unsigned short EventCandidates;
+  typedef uint16_t EventCandidates;
 
   class ExecutionContext : public ControlContext {
     public:
@@ -175,7 +175,7 @@
   
   class AbstractCompositeState : public AbstractState {
     public:
-      AbstractCompositeState(AbstractState **substates, unsigned short numSubstates);
+      AbstractCompositeState(AbstractState **substates, uint16_t numSubstates);
       
       AbstractState *initialSubstate();
       
@@ -194,7 +194,7 @@
       
     protected:   
       AbstractState **substates;
-      unsigned short numSubstates;
+      uint16_t numSubstates;
   };
   
   
@@ -222,7 +222,7 @@
   
   class Ready : public AbstractCompositeState {
     public:
-      Ready(AbstractState **substates, unsigned short numSubstates) : AbstractCompositeState(substates, numSubstates) { };
+      Ready(AbstractState **substates, uint16_t numSubstates) : AbstractCompositeState(substates, numSubstates) { };
       
       StateEnum id();
       UserCommands userCommands(ExecutionContext *context);
@@ -246,7 +246,7 @@
   
   class Recording : public AbstractCompositeState {
     public:
-      Recording(AbstractState **substates, unsigned short numSubstates) : AbstractCompositeState(substates, numSubstates) { };
+      Recording(AbstractState **substates, uint16_t numSubstates) : AbstractCompositeState(substates, numSubstates) { };
       
       StateEnum id();
       UserCommands userCommands(ExecutionContext *context);

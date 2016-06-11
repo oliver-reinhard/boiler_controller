@@ -53,7 +53,7 @@ String formatFloat(float f) {
   return s;
 }
 
-String formatInt(unsigned short i) {
+String formatInt(uint16_t i) {
   char s[20];
   utoa(i, &s[0], 10);
   return s;
@@ -86,8 +86,8 @@ String getConfigParamValue(ConfigParams *all, ConfigParamEnum p) {
   }
 }
 
-boolean parseTempSensorID(char *value, byte *id) {
-  byte len = strspn(value, SENSOR_ID_CHARS);
+boolean parseTempSensorID(char *value, uint8_t *id) {
+  uint8_t len = strspn(value, SENSOR_ID_CHARS);
   #ifdef DEBUG_UI
     Serial.print(F("DEBUG_UI: parsing sensor ID: '"));
     Serial.print(value);
@@ -95,10 +95,10 @@ boolean parseTempSensorID(char *value, byte *id) {
     Serial.println(len);
   #endif
   if (len == 3 * TEMP_SENSOR_ID_BYTES - 1) {
-    byte pos = 0;
-    for (byte i=0; i<TEMP_SENSOR_ID_BYTES; i++) {
-      long n = strtol(&value[pos], NULL, 16);
-      id[i] = (byte) n;
+    uint8_t pos = 0;
+    for (uint8_t i=0; i<TEMP_SENSOR_ID_BYTES; i++) {
+      int32_t n = strtol(&value[pos], NULL, 16);
+      id[i] = (uint8_t) n;
       pos += 3;
     }
     return true;
@@ -308,7 +308,7 @@ String getSensorStatusName(SensorStatusEnum literal) {
 /*
  * USER COMMANDS
  */
-UserCommandEnum parseUserCommand(char buf[], byte bufSize) {
+UserCommandEnum parseUserCommand(char buf[], uint8_t bufSize) {
   switch (bufSize) {
     case 1:
       if (!strcmp_P(buf, "?")) {
@@ -380,7 +380,7 @@ void SerialUI::readUserCommand(ControlContext *context) {
   }
   delay(2);
 
-  byte count = 0;
+  uint8_t count = 0;
   do {
     count += Serial.readBytes(&buf[count], COMMAND_BUF_SIZE);
     delay(2);
@@ -393,9 +393,9 @@ void SerialUI::readUserCommand(ControlContext *context) {
   #endif
 
   // remove multiple consecutive spaces
-  byte len = 0;
+  uint8_t len = 0;
   boolean prevSpace = false;
-  for (byte i = 0; i< count; i++) {
+  for (uint8_t i = 0; i< count; i++) {
      if (isspace(buf[i]) && prevSpace) {
         // skip
      } else {
@@ -409,7 +409,7 @@ void SerialUI::readUserCommand(ControlContext *context) {
   char *lower = strlwr(buf);
   
   // count the command characters up to the trailing numeric arguments (if any):
-  byte commandLength = strspn(lower, COMMAND_CHARS);
+  uint8_t commandLength = strspn(lower, COMMAND_CHARS);
   if (len > commandLength) {
     strcpy(context->op->command->args, &lower[commandLength]);
   }
@@ -510,8 +510,8 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
   if (requests & READ_HELP) {
     Serial.println(F("Accepted Commands:"));
     UserCommands commands = automaton->userCommands();
-    unsigned short cmd = 0x1;
-    for(byte i=0; i< NUM_USER_COMMANDS; i++) {
+    uint16_t cmd = 0x1;
+    for(uint8_t i=0; i< NUM_USER_COMMANDS; i++) {
       if (commands & cmd) {
         Serial.print("  - ");
         Serial.println(getUserCommandName((UserCommandEnum) cmd));
@@ -542,7 +542,7 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
     }
     Serial.println();
 
-    unsigned long duration = heatingTotalMillis(context->op);
+    uint32_t duration = heatingTotalMillis(context->op);
     if (duration != 0L) {
       Serial.print(F("Accumulated heating time [s]: "));
       Serial.println(duration / 1000L);
@@ -550,8 +550,8 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
   }
   
   if (requests & READ_LOG) {
-    unsigned short entriesToReturn = 5; // default
-    byte len = strspn(context->op->command->args, INT_CHARS);
+    uint16_t entriesToReturn = 5; // default
+    uint8_t len = strspn(context->op->command->args, INT_CHARS);
     if (len > 0) {
       context->op->command->args[len] = '\0';
       int n = atoi(context->op->command->args);
@@ -565,7 +565,7 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
     Serial.print(F("Log contains "));
     Serial.print(context->storage->currentLogEntries());
     Serial.print(F(" entries (= "));
-    Serial.print((short) (100L * context->storage->currentLogEntries() / context->storage->maxLogEntries()));
+    Serial.print((int16_t) (100L * context->storage->currentLogEntries() / context->storage->maxLogEntries()));
     Serial.print(F("% full), showing "));
     Serial.println(entriesToReturn);
     
@@ -577,7 +577,7 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
   }
   
   if (requests & READ_CONFIG) {
-    for(byte i=0; i<NUM_CONFIG_PARAMS; i++) {
+    for(uint8_t i=0; i<NUM_CONFIG_PARAMS; i++) {
       Serial.print(i);
       Serial.print(F(" - "));
       ConfigParamEnum p = (ConfigParamEnum) i;
@@ -589,9 +589,9 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
   
   if (requests & WRITE_CONFIG) {
     // determine length of config param id (=number):
-    byte len = strspn(context->op->command->args, INT_CHARS);
+    uint8_t len = strspn(context->op->command->args, INT_CHARS);
     context->op->command->args[len] = '\0';
-    int id = atoi(context->op->command->args);
+    int16_t id = atoi(context->op->command->args);
     char *paramValue = &context->op->command->args[len+1];
 
     if (id < NUM_CONFIG_PARAMS) {

@@ -7,13 +7,13 @@
   struct StatusNotification {
     StateID state;
     // time [s] since most recent transition to current state:
-    unsigned long timeInState = 0L;
+    uint32_t timeInState = 0L;
     SensorStatusID waterSensorStatus = SENSOR_INITIALISING;
     Temperature waterTemp = UNDEFINED_TEMPERATURE;
     SensorStatusID ambientSensorStatus = SENSOR_INITIALISING;
     Temperature ambientTemp = UNDEFINED_TEMPERATURE;
     // accumulated heating time [s] up to now:
-    unsigned long heatingTime = 0L;
+    uint32_t heatingTime = 0L;
   };
 
 

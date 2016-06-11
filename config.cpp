@@ -4,8 +4,8 @@
 
 String formatTemperature(Temperature t) {
   char s[9];
-  byte deg = t / 100;
-  byte frac = t % 100;
+  uint8_t deg = t / 100;
+  uint8_t frac = t % 100;
   s[8] = '\0';
   s[7] = 'C';
   s[6] = '\'';
@@ -21,8 +21,8 @@ String formatTemperature(Temperature t) {
 
 String formatTempSensorID(TempSensorID id) {
   char s[3*TEMP_SENSOR_ID_BYTES];
-  byte pos = 0;
-  for (byte i=0; i<TEMP_SENSOR_ID_BYTES; i++) {
+  uint8_t pos = 0;
+  for (uint8_t i=0; i<TEMP_SENSOR_ID_BYTES; i++) {
     sprintf(&s[pos], "%02X", id[i]);
     pos += 2;
     if (i < TEMP_SENSOR_ID_BYTES - 1) {

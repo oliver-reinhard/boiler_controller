@@ -72,11 +72,11 @@ void AbstractSimpleState::exit(EventEnum event, StateEnum next, ExecutionContext
  * COMPOSITE STATE
  */
 // Constructor
-AbstractCompositeState::AbstractCompositeState(AbstractState **substates, unsigned short numSubstates) {
+AbstractCompositeState::AbstractCompositeState(AbstractState **substates, uint16_t numSubstates) {
   this->substates = substates;
   this->numSubstates = numSubstates;
   // set containingStates of the subtates to "this":
-  for(unsigned short i=0; i< this->numSubstates; i++) {
+  for(uint16_t i=0; i< this->numSubstates; i++) {
     this->substates[i]->containingState = this;
   }
 }
@@ -102,7 +102,7 @@ StateEnum AbstractCompositeState::trans(EventEnum event, ExecutionContext *conte
 void AbstractCompositeState::exit(EventEnum event, StateEnum next, ExecutionContext *context) {
   // if the transition occurs within the substates of this containing state, then we will not exit this containing state
   // and neither its containing states:
-  for(unsigned short i=0; i< numSubstates; i++) {
+  for(uint16_t i=0; i< numSubstates; i++) {
     if (substates[i]->id() == next) {
       return;
     }
@@ -497,7 +497,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
 }
 
 AbstractState *BoilerStateAutomaton::getState(StateEnum id) {
-  for(unsigned short i=0; i<NUM_STATES; i++) {
+  for(uint16_t i=0; i<NUM_STATES; i++) {
     if (ALL_STATES[i]->id() == id) {
       return ALL_STATES[i];
     }

@@ -9,8 +9,8 @@
   
   #ifndef UNIT_TEST
     // Comment ONE (!) of the following lines:
-    //#define BLE_UI
-    #define SERIAL_UI
+    #define BLE_UI
+    //#define SERIAL_UI
   #endif
   
   #ifdef UNIT_TEST

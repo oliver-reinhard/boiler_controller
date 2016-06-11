@@ -106,7 +106,7 @@ void AbstractUI::notifyNewLogEntry(LogEntry entry) {
     */
     /* Characteristic ID for Measurement should be 1 */
     Serial.println(F("Adding Status characteristic (UUID = 0x2A37): "));
-    unsigned short structSize = sizeof(StatusNotification);
+    uint16_t structSize = sizeof(StatusNotification);
     success = ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID=0x2A37, PROPERTIES=0x10, MIN_LEN=2, MAX_LEN=3, VALUE=00-40"), &statusCharacteristicId);
     if (! success) {
       error(F("Could not add Status characteristic"));
@@ -147,7 +147,7 @@ void AbstractUI::notifyNewLogEntry(LogEntry entry) {
     ble.print( F("AT+GATTCHAR=") );
     ble.print( statusCharacteristicId );
     ble.print( F(",00-") );
-    int heart_rate = 144;
+    uint16_t heart_rate = 144;
     ble.println(heart_rate, HEX);
   }
   

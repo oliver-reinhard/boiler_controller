@@ -8,14 +8,14 @@
   test(storage_timestamp) {
     // ensure this test is not run within the first second of Arduino board time:
     delay(1000);
-    unsigned long ms = millis();
+    uint32_t ms = millis();
     if (ms % 1000 > 500) {
       // sleep until the next full second has started
       delay(1000 - (ms % 1000) + 1);
       ms = millis();
       assertLessOrEqual(ms % 1000, 3);
     }
-    unsigned long sec = ms / 1000;
+    uint32_t sec = ms / 1000;
     // 0
     Timestamp t1 = timestamp();
     assertEqual(t1>>TIMESTAMP_ID_BITS, sec); // check same second
@@ -23,7 +23,7 @@
   
     // 1 .. 15
     Timestamp t2;
-    for(unsigned long i=1; i<=15; i++) {
+    for(uint32_t i=1; i<=15; i++) {
       t2 = timestamp();
       assertMore(t2, t1);
       assertEqual(t2>>TIMESTAMP_ID_BITS, sec);

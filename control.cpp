@@ -6,21 +6,21 @@
 /*
  * Digital Temperature Sensor DS18B20 commands (see sensor data sheet)
  */
-const byte CMD_CONVERT_TEMP     = 0x44;  // write(0x44, 1)  // 1 = keep line high during conversion
-const byte CMD_READ_SCRATCHPAD  = 0xBE;  // write(0xBE)
+const uint8_t CMD_CONVERT_TEMP     = 0x44;  // write(0x44, 1)  // 1 = keep line high during conversion
+const uint8_t CMD_READ_SCRATCHPAD  = 0xBE;  // write(0xBE)
 
 /*
  * Number of bytes of data vector returned by the DS18B20: 8 byte data + 1 byte CRC
  */
-const byte TEMP_SENSOR_READOUT_BYTES = 9;
+const uint8_t TEMP_SENSOR_READOUT_BYTES = 9;
 
 /*
  * Configuration-byte position in data vector returned by the DS18B20
  */
-const byte DATA_CONFIG_BYTE = 4;
+const uint8_t DATA_CONFIG_BYTE = 4;
 
-unsigned long heatingTotalMillis(OperationalParams *op) {
-  unsigned long duration = op->heatingAccumulatedMillis;
+uint32_t heatingTotalMillis(OperationalParams *op) {
+  uint32_t duration = op->heatingAccumulatedMillis;
   if (op->heatingStartMillis != 0L) {
     duration += millis() - op->heatingStartMillis;
   }
@@ -44,14 +44,14 @@ boolean isAmbientSensor(TempSensorID addr, ConfigParams *config) {
  * @param addr  4-byte ID of DS18B20 temperature sensor
  * @param data  data vector returned by the DS18B20: 8 byte data + 1 byte CRC
  */
-boolean ControlActions::readScratchpad(byte addr[], byte *data) {
+boolean ControlActions::readScratchpad(uint8_t addr[], uint8_t *data) {
   oneWire.reset();
   // Talk only to sensor with 'addr':
   oneWire.select(addr);
   oneWire.write(CMD_READ_SCRATCHPAD);
   
   // Read 8 byte of data + 1 byte of CRC
-  for (byte i = 0; i < TEMP_SENSOR_READOUT_BYTES; i++) {           
+  for (uint8_t i = 0; i < TEMP_SENSOR_READOUT_BYTES; i++) {           
     data[i] = oneWire.read();
   }
   oneWire.reset();
@@ -62,9 +62,9 @@ boolean ControlActions::readScratchpad(byte addr[], byte *data) {
  * Parse temperature [°C] from raw DS18B20 data
  * @param data  data vector returned by the DS18B20: 8 byte data + 1 byte CRC
  */
-TemperatureReadout ControlActions::getCelcius(byte data[]) {
+TemperatureReadout ControlActions::getCelcius(uint8_t data[]) {
   int16_t raw = (data[1] << 8) | data[0];
-  byte config = (data[DATA_CONFIG_BYTE] & 0x60);
+  uint8_t config = (data[DATA_CONFIG_BYTE] & 0x60);
   
   TemperatureReadout temp;
   // At lower resolution, the low bits are undefined, so let's zero them
@@ -81,7 +81,7 @@ TemperatureReadout ControlActions::getCelcius(byte data[]) {
     temp.resolution = 12;
     // default is 12 bit resolution, 750 ms conversion time
   }
-  temp.celcius = (short)(raw * 100.0 / 16.0);  // [°C * 100]
+  temp.celcius = (int16_t)(raw * 100.0 / 16.0);  // [°C * 100]
   return temp;
 }
 
@@ -126,14 +126,14 @@ void ControlActions::completeSensorReadout(ControlContext *context) {
   context->op->ambient.sensorStatus = SENSOR_NOK;
   context->op->ambient.currentTemp  = UNDEFINED_TEMPERATURE;
   
-  byte addr[TEMP_SENSOR_ID_BYTES];
+  uint8_t addr[TEMP_SENSOR_ID_BYTES];
   
   while(oneWire.search(addr)) {  
     if (OneWire::crc8(addr, TEMP_SENSOR_ID_BYTES-1) != addr[TEMP_SENSOR_ID_BYTES-1]) {
       continue;
     }
     
-    byte data[TEMP_SENSOR_READOUT_BYTES];
+    uint8_t data[TEMP_SENSOR_READOUT_BYTES];
     if (! readScratchpad(addr, &data[0])) {
       continue;
     }

@@ -3,11 +3,11 @@
   
   #include "Arduino.h"
   
-  typedef short Temperature;  // [°C * 100]
+  typedef int16_t Temperature;  // [°C * 100]
   #define UNDEFINED_TEMPERATURE -10000 // [°C * 100];
 
   #define TEMP_SENSOR_ID_BYTES 8
-  typedef byte TempSensorID[TEMP_SENSOR_ID_BYTES];
+  typedef uint8_t TempSensorID[TEMP_SENSOR_ID_BYTES];
   const TempSensorID UNDEFINED_SENSOR_ID = {0,0,0,0,0,0,0,0};
 
   // Water min and max values used to check that sensor-temperature readout is plausible:
@@ -21,7 +21,7 @@
   /*
    * IDs are defined by ConfigParamEnum.
    */
-  typedef byte ConfigParamID;
+  typedef uint8_t ConfigParamID;
   
   typedef enum {
     PARAM_NONE = -1,
@@ -37,7 +37,7 @@
     PARAM_INSULATION_FACTOR = 9
   } ConfigParamEnum;
   
-  const byte NUM_CONFIG_PARAMS = 10;
+  const uint8_t NUM_CONFIG_PARAMS = 10;
   
   struct ConfigParams {
     Temperature targetTemp; // [°C * 100]
@@ -46,11 +46,11 @@
     Temperature heaterCutOutWaterTemp; // [°C * 100]
     Temperature heaterBackOkWaterTemp; // [°C * 100]
     Temperature logTempDelta; // [°C * 100]
-    unsigned short logTimeDelta; // [s]
+    uint16_t logTimeDelta; // [s]
     float tankCapacity;  // [litre]
     float heaterPower;  // [Watts]
     float insulationFactor; // correction factor to model tank insulation charactericstis
-    byte  reserved[32];  // for future use
+    uint8_t  reserved[32];  // for future use
   };
   
   #define DEFAULT_TARGET_TEMP                 4200 // [°C * 100]

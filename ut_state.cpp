@@ -11,7 +11,7 @@
   /*
    * Class MockControlActions
    */
-  unsigned short MockControlActions::totalInvocations() {
+  uint16_t MockControlActions::totalInvocations() {
     return 
       heatTrueCount +
       heatFalseCount +
@@ -85,7 +85,7 @@
   /*
    * Class MockStorage
    */
-  unsigned short MockStorage::totalInvocations() {
+  uint16_t MockStorage::totalInvocations() {
     return 
       logValuesCount +
       logStateCount +
@@ -145,7 +145,7 @@
     return timestamp();
   }
   
-  Timestamp MockStorage::logMessage(MessageEnum msg, short param1, short param2) {    
+  Timestamp MockStorage::logMessage(MessageEnum msg, int16_t param1, int16_t param2) {    
     #ifdef DEBUG_UT_STATE
       Serial.println(F("DEBUG_UT_STATE: logMessage(...)"));
     #endif
@@ -184,12 +184,12 @@
     BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
 
     assertEqual(automaton.state()->id(), STATE_INIT);
-    assertEqual(int(automaton.userCommands()), int(CMD_NONE));
+    assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_NONE));
     assertEqual(control.totalInvocations(), 0);
 
     // water sensor NOT OK YET => evaluate => no event
     EventCandidates cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_NONE));
+    assertEqual(int16_t(cand), int16_t(EVENT_NONE));
     assertEqual(automaton.state()->id(), STATE_INIT);
     assertEqual(control.totalInvocations(), 0);
 
@@ -212,7 +212,7 @@
     op.water.sensorStatus = SENSOR_OK;
     op.water.currentTemp = 2300;
     cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_READY));
+    assertEqual(int16_t(cand), int16_t(EVENT_READY));
     assertEqual(automaton.state()->id(), STATE_INIT);
     assertEqual(control.totalInvocations(), 0);
     assertEqual(storage.totalInvocations(), 0);
@@ -222,8 +222,8 @@
     automaton.transition(EVENT_READY);
     assertEqual(automaton.state()->id(), STATE_IDLE);
     assertEqual(control.totalInvocations(), 0);
-    assertEqual(int(op.loggingValues), int(false));
-    assertEqual(int(op.heating), int(false));
+    assertEqual(int16_t(op.loggingValues), int16_t(false));
+    assertEqual(int16_t(op.heating), int16_t(false));
     // state logging
     assertEqual(storage.logStateCount, 1);
     assertEqual(storage.totalInvocations(), 1);
@@ -232,10 +232,10 @@
     //
     // user command SET_CONFIG in state IDLE
     //
-    assertEqual(int(automaton.userCommands()), int(CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_SET_CONFIG | CMD_REC_ON));
+    assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_SET_CONFIG | CMD_REC_ON));
     op.command->command = CMD_SET_CONFIG;
     cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_SET_CONFIG));
+    assertEqual(int16_t(cand), int16_t(EVENT_SET_CONFIG));
     op.command->command = CMD_NONE;
     
     // transition state IDLE => event SET_CONFIG => stay in state IDLE
@@ -250,31 +250,31 @@
     //
     op.command->command = CMD_REC_ON;
     cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_REC_ON));
+    assertEqual(int16_t(cand), int16_t(EVENT_REC_ON));
     op.command->command = CMD_NONE;
     
     // transition state IDLE => event REC_ON => state STANDBY
-    assertEqual(int(op.loggingValues), int(false));
+    assertEqual(int16_t(op.loggingValues), int16_t(false));
     automaton.transition(EVENT_REC_ON); 
     assertEqual(automaton.state()->id(), STATE_STANDBY);
-    assertEqual(int(op.loggingValues), int(true));
-    assertEqual(int(op.heating), int(false));
+    assertEqual(int16_t(op.loggingValues), int16_t(true));
+    assertEqual(int16_t(op.heating), int16_t(false));
     control.resetCounters();
 
     //
     // user command REC OFF in state STANDBY
     //
-    assertEqual(int(automaton.userCommands()), int(CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_REC_OFF | CMD_HEAT_ON));
+    assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_REC_OFF | CMD_HEAT_ON));
     op.command->command = CMD_REC_OFF;
     cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_REC_OFF));
+    assertEqual(int16_t(cand), int16_t(EVENT_REC_OFF));
     op.command->command = CMD_NONE;
     
     // transition state STANDBY => event REC_OFF => state IDLE
     automaton.transition(EVENT_REC_OFF); 
     assertEqual(automaton.state()->id(), STATE_IDLE);
-    assertEqual(int(op.loggingValues), int(false));
-    assertEqual(int(op.heating), int(false));
+    assertEqual(int16_t(op.loggingValues), int16_t(false));
+    assertEqual(int16_t(op.heating), int16_t(false));
     control.resetCounters();
 
     // transition state IDLE => event REC_ON => state STANDBY
@@ -286,7 +286,7 @@
     //
     op.command->command = CMD_HEAT_ON;
     cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_HEAT_ON));
+    assertEqual(int16_t(cand), int16_t(EVENT_HEAT_ON));
     op.command->command = CMD_NONE;
     
     // transition state STANDBY => event HEAT_ON => state HEATING
@@ -294,34 +294,34 @@
     assertEqual(automaton.state()->id(), STATE_HEATING);
     assertEqual(control.heatTrueCount, 1);
     assertEqual(control.totalInvocations(), 1);
-    assertEqual(int(op.loggingValues), int(true));
-    assertEqual(int(op.heating), int(true));
+    assertEqual(int16_t(op.loggingValues), int16_t(true));
+    assertEqual(int16_t(op.heating), int16_t(true));
     control.resetCounters();
 
     // evaluate => no event
     assertEqual(config.heaterCutOutWaterTemp, DEFAULT_HEATER_CUT_OUT_WATER_TEMP); 
     cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_NONE));
+    assertEqual(int16_t(cand), int16_t(EVENT_NONE));
 
     //
     // set water-sensor temp to overheated
     //
     op.water.currentTemp = DEFAULT_HEATER_CUT_OUT_WATER_TEMP + 1;
     cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_TEMP_OVER));
+    assertEqual(int16_t(cand), int16_t(EVENT_TEMP_OVER));
 
     // transition state HEATING => event EVENT_TEMP_OVER => state OVERHEATED
     automaton.transition(EVENT_TEMP_OVER); 
     assertEqual(automaton.state()->id(), STATE_OVERHEATED);
     assertEqual(control.heatFalseCount, 1);
     assertEqual(control.totalInvocations(), 1);
-    assertEqual(int(op.loggingValues), int(true));
-    assertEqual(int(op.heating), int(false));
+    assertEqual(int16_t(op.loggingValues), int16_t(true));
+    assertEqual(int16_t(op.heating), int16_t(false));
     control.resetCounters();
     
     // evaluate => no event
     cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_NONE));
+    assertEqual(int16_t(cand), int16_t(EVENT_NONE));
 
     //
     // set water-sensor temp to ok
@@ -329,7 +329,7 @@
     op.water.currentTemp = DEFAULT_HEATER_BACK_OK_WATER_TEMP -1;
     assertEqual(config.heaterBackOkWaterTemp, DEFAULT_HEATER_BACK_OK_WATER_TEMP); 
     cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_TEMP_OK));
+    assertEqual(int16_t(cand), int16_t(EVENT_TEMP_OK));
     op.water.currentTemp = 4500;
 
     // transition state OVERHEATED => event EVENT_TEMP_OK => state HEATING
@@ -337,8 +337,8 @@
     assertEqual(automaton.state()->id(), STATE_HEATING);
     assertEqual(control.heatTrueCount, 1);
     assertEqual(control.totalInvocations(), 1);
-    assertEqual(int(op.loggingValues), int(true));
-    assertEqual(int(op.heating), int(true));
+    assertEqual(int16_t(op.loggingValues), int16_t(true));
+    assertEqual(int16_t(op.heating), int16_t(true));
     control.resetCounters();
     
     //
@@ -346,7 +346,7 @@
     //
     op.command->command = CMD_HEAT_OFF;
     cand = automaton.evaluate();
-    assertEqual(int(cand), int(EVENT_HEAT_OFF));
+    assertEqual(int16_t(cand), int16_t(EVENT_HEAT_OFF));
     op.command->command = CMD_NONE;
     
     // transition state HEATING => event HEAT_OFF => state STANDBY
@@ -354,8 +354,8 @@
     assertEqual(automaton.state()->id(), STATE_STANDBY);
     assertEqual(control.heatFalseCount, 1);
     assertEqual(control.totalInvocations(), 1);
-    assertEqual(int(op.loggingValues), int(true));
-    assertEqual(int(op.heating), int(false));
+    assertEqual(int16_t(op.loggingValues), int16_t(true));
+    assertEqual(int16_t(op.heating), int16_t(false));
     control.resetCounters();
   }
   
