@@ -2,7 +2,6 @@
 #ifdef UT_STATE
   #line 4 "ut_state.cpp"
   #include <ArduinoUnit.h>
-  #include "store.h"
   #include "state.h"
   #include "ut_state.h"
 
@@ -83,86 +82,57 @@
   }
 
   /*
-   * Class MockStorage
+   * Class MockLog
    */
-  uint16_t MockStorage::totalInvocations() {
+  uint16_t MockLog::totalInvocations() {
     return 
       logValuesCount +
       logStateCount +
       logMessageCount;
   }
    
-  void MockStorage::resetCounters() {
+  void MockLog::resetCounters() {
     logValuesCount = 0;
     logStateCount = 0;
     logMessageCount = 0;
   }
-
-  Version MockStorage::version() {
-    return EEPROM_LAYOUT_VERSION;
-  }
-  
-  void MockStorage::clearConfigParams() {
-    // none
-  }
-  
-  void MockStorage::getConfigParams(ConfigParams *configParams) {
-    if (configParams == NULL) { } // prevent warning "unused parameter ..."
-  }
-  
-  void MockStorage::updateConfigParams(const ConfigParams *configParams) {
-    if (configParams == NULL) { } // prevent warning "unused parameter ..."
-  }
-  
-  void MockStorage::readConfigParams(ConfigParams *configParams) {
-    if (configParams == NULL) { } // prevent warning "unused parameter ..."
-  }
-  
-  void MockStorage::resetLog() {
-    // none
-  }
-  
-  void MockStorage::initLog() {
-    // none
-  }
   
   
-  Timestamp MockStorage::logValues(Temperature water, Temperature ambient, Flags flags) {
-    #ifdef DEBUG_UT_STATE
-      Serial.println(F("DEBUG_UT_STATE: logValues(...)"));
-    #endif
-    if (water == 0 || ambient == 0 || flags == 0) { } // prevent warning "unused parameter ..."
-    logValuesCount++;
-    return timestamp();
-  }
-  
-  Timestamp MockStorage::logState(StateID previous, StateID current, EventID event) {
-    #ifdef DEBUG_UT_STATE
-      Serial.println(F("DEBUG_UT_STATE: logState(...)"));
-    #endif
-    if (previous == 0 || current == 0 || event == 0) { } // prevent warning "unused parameter ..."
-    logStateCount++;
-    return timestamp();
-  }
-  
-  Timestamp MockStorage::logMessage(MessageEnum msg, int16_t param1, int16_t param2) {    
+  Timestamp MockLog::logMessage(MessageID msg, int16_t param1, int16_t param2) {    
     #ifdef DEBUG_UT_STATE
       Serial.println(F("DEBUG_UT_STATE: logMessage(...)"));
     #endif
     if (msg == 0 || param1 == 0 || param2 == 0) { } // prevent warning "unused parameter ..."
     logMessageCount++;
-    return timestamp();
+    return logTime.timestamp();
+  }
+  
+  Timestamp MockLog::logValues(Temperature water, Temperature ambient, Flags flags) {
+    #ifdef DEBUG_UT_STATE
+      Serial.println(F("DEBUG_UT_STATE: logValues(...)"));
+    #endif
+    if (water == 0 || ambient == 0 || flags == 0) { } // prevent warning "unused parameter ..."
+    logValuesCount++;
+    return logTime.timestamp();
+  }
+  
+  Timestamp MockLog::logState(StateID previous, StateID current, EventID event) {
+    #ifdef DEBUG_UT_STATE
+      Serial.println(F("DEBUG_UT_STATE: logState(...)"));
+    #endif
+    if (previous == 0 || current == 0 || event == 0) { } // prevent warning "unused parameter ..."
+    logStateCount++;
+    return logTime.timestamp();
   }
   
   /*
    * Tests
    */
   test(state_automaton) {
-    MockStorage storage = MockStorage();
-    ConfigParams config;
-    memset(&config, 0, sizeof(ConfigParams));
+    MockLog logger = MockLog();
+    MockConfig config = MockConfig();
     boolean updated;
-    storage.initConfigParams(&config, &updated);
+    config.initParams(updated);
     #ifdef DEBUG_UT_STATE
       printConfig(config);
     #endif
@@ -176,7 +146,7 @@
     MockControlActions control;
 
     ExecutionContext context;
-    context.storage = &storage;
+    context.log = &logger;
     context.config = &config;
     context.op = &op;
     context.control = &control;
@@ -198,13 +168,13 @@
     assertEqual(automaton.state()->id(), STATE_INIT);
     assertEqual(control.totalInvocations(), 0);
     // invalid event logging
-    assertEqual(storage.logMessageCount, 1);
-    assertEqual(storage.totalInvocations(), 1);
-    storage.resetCounters();
+    assertEqual(logger.logMessageCount, 1);
+    assertEqual(logger.totalInvocations(), 1);
+    logger.resetCounters();
 
     // transition again (INVALID event) => must NOT LOG again
     automaton.transition(EVENT_SET_CONFIG); 
-    assertEqual(storage.totalInvocations(), 0);
+    assertEqual(logger.totalInvocations(), 0);
 
     //
     // set water sensor OK => evaluate => event READY
@@ -215,7 +185,7 @@
     assertEqual(int16_t(cand), int16_t(EVENT_READY));
     assertEqual(automaton.state()->id(), STATE_INIT);
     assertEqual(control.totalInvocations(), 0);
-    assertEqual(storage.totalInvocations(), 0);
+    assertEqual(logger.totalInvocations(), 0);
     
 
     // transition state INIT => event READY => state IDLE
@@ -225,9 +195,9 @@
     assertEqual(int16_t(op.loggingValues), int16_t(false));
     assertEqual(int16_t(op.heating), int16_t(false));
     // state logging
-    assertEqual(storage.logStateCount, 1);
-    assertEqual(storage.totalInvocations(), 1);
-    storage.resetCounters();
+    assertEqual(logger.logStateCount, 1);
+    assertEqual(logger.totalInvocations(), 1);
+    logger.resetCounters();
 
     //
     // user command SET_CONFIG in state IDLE

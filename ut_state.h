@@ -4,7 +4,7 @@
   #ifndef UT_STATE_H_INCLUDED
     #define UT_STATE_H_INCLUDED
     
-    #include "store.h"
+    #include "log.h"
     #include "control.h"
   
     class MockControlActions : public ControlActions {
@@ -36,20 +36,25 @@
     };
 
     
-    class MockStorage : public Storage {
+    class MockConfig : public ConfigParams {
       public:
-        Version version();
-        
-        void clearConfigParams();
-        void getConfigParams(ConfigParams *configParams);
-        void updateConfigParams(const ConfigParams *configParams);
-        void readConfigParams(ConfigParams *configParams);
-        
-        void resetLog();
-        void initLog();
+        LayoutVersion version()  { return EEPROM_LAYOUT_VERSION; }
+        void clear() { }
+        void load()  { }
+        void save()  { }
+        void initParams(boolean &updated) {
+          ConfigParams::initParams(updated);
+        }
+    };
+    
+    class MockLog : public Log {
+      public:
+        MockLog() : Log(0L) {}
+        void clear() { }
+        void init()  { }
+        Timestamp logMessage(MessageID msg, int16_t param1, int16_t param2);
         Timestamp logValues(Temperature water, Temperature ambient, Flags flags);
         Timestamp logState(StateID previous, StateID current, EventID event);
-        Timestamp logMessage(MessageEnum msg, int16_t param1, int16_t param2);
       
         // Mock counters:
         uint16_t logValuesCount = 0;
@@ -61,5 +66,4 @@
     };
 
   #endif
-
 #endif

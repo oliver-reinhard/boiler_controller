@@ -3,6 +3,11 @@
   
   #include "control.h"
   
+  typedef enum {
+    MSG_ILLEGAL_TRANS = 30,   // State [state]: illegal transition attemt (event [event])
+    MSG_UNKNOWN_STATE = 31    // State [state] has not been defined
+  } StateMessageEnum;
+  
   typedef enum  {
     STATE_UNDEFINED = -2,
     STATE_SAME = -1,

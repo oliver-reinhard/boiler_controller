@@ -4,10 +4,16 @@
   #include "bc_setup.h"
   #include <OneWire.h>
   #include "config.h"
-  #include "store.h"
+  #include "log.h"
 
   #define HEATER_PIN   9
   #define ONE_WIRE_PIN 10 // Temperature sensors
+
+  typedef enum {
+    MSG_WATER_TEMP_SENSOR_ID_UNDEF = 20,  // Sensor ID of water-temperature sensor has not been configured. Configure and restart.
+    MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF = 21  // Sensor ID of ambient-temperature sensor has not been configured. Configure and restart.
+  } ControlMessageEnum;
+
   
   #define CMD_ARG_BUF_SIZE 30   // Size of the read buffer for incoming data
   
@@ -84,7 +90,7 @@
 
   class ControlContext {
     public:
-      Storage *storage;
+      Log *log;
       ConfigParams *config;
       OperationalParams *op;
   };

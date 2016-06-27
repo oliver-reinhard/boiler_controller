@@ -1,7 +1,7 @@
 #ifndef BOILER_CONFIG_H_INCLUDED
   #define BOILER_CONFIG_H_INCLUDED
   
-  #include "Arduino.h"
+  #include "config/Configuration.h"
   
   typedef int16_t Temperature;  // [°C * 100]
   #define UNDEFINED_TEMPERATURE -10000 // [°C * 100];
@@ -19,7 +19,7 @@
   #define AMBIENT_MAX_TEMP 5000 // [°C * 100]
   
   /*
-   * IDs are defined by ConfigParamEnum.
+   * ID values are defined by ConfigParamEnum.
    */
   typedef uint8_t ConfigParamID;
   
@@ -39,20 +39,6 @@
   
   const uint8_t NUM_CONFIG_PARAMS = 10;
   
-  struct ConfigParams {
-    Temperature targetTemp; // [°C * 100]
-    TempSensorID waterTempSensorId;
-    TempSensorID ambientTempSensorId;
-    Temperature heaterCutOutWaterTemp; // [°C * 100]
-    Temperature heaterBackOkWaterTemp; // [°C * 100]
-    Temperature logTempDelta; // [°C * 100]
-    uint16_t logTimeDelta; // [s]
-    float tankCapacity;  // [litre]
-    float heaterPower;  // [Watts]
-    float insulationFactor; // correction factor to model tank insulation charactericstis
-    uint8_t  reserved[32];  // for future use
-  };
-  
   #define DEFAULT_TARGET_TEMP                 4200 // [°C * 100]
   #define DEFAULT_WATER_TEMP_SENSOR_ID        UNDEFINED_SENSOR_ID
   #define DEFAULT_AMBIENT_TEMP_SENSOR_ID      UNDEFINED_SENSOR_ID
@@ -64,6 +50,33 @@
   #define DEFAULT_HEATER_POWER                210 // [W]
   #define DEFAULT_INSULATION_FACTOR           2.0 // [???]
 
+  
+  class ConfigParams : public AbstractConfiguration {
+    public:
+      ConfigParams() : AbstractConfiguration(0L) { };
+      
+      Temperature targetTemp; // [°C * 100]
+      TempSensorID waterTempSensorId;
+      TempSensorID ambientTempSensorId;
+      Temperature heaterCutOutWaterTemp; // [°C * 100]
+      Temperature heaterBackOkWaterTemp; // [°C * 100]
+      Temperature logTempDelta; // [°C * 100]
+      uint16_t logTimeDelta; // [s]
+      float tankCapacity;  // [litre]
+      float heaterPower;  // [Watts]
+      float insulationFactor; // correction factor to model tank insulation charactericstis
+      uint8_t  reserved[32];  // for future use
+  
+      void print();
+      
+      uint16_t size() {
+        return sizeof(*this);
+      };
+      
+    protected:
+      void initParams(boolean &updated);
+  };
+  
 
   /**
    * Returns the temperature in a dotted notation, 8 chars + terminal '\0': ["-"]dd.ff"°C" (optional "-", d = degrees Celsius (2 digits), f = fraction (1 digit))
@@ -71,7 +84,5 @@
   String formatTemperature(Temperature t);
 
   String formatTempSensorID(TempSensorID id);
-  
-  void printConfig(ConfigParams p);
   
 #endif

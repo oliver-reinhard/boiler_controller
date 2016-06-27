@@ -1,6 +1,4 @@
 #include "state.h"
-#include "store.h"
-#include <assert.h>
 
 //#define DEBUG_STATE
 
@@ -476,7 +474,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
         Serial.println(event, HEX);
       #endif
 
-      context->storage->logMessage(MSG_ILLEGAL_TRANS, currentState->id(), event);
+      context->log->logMessage(MSG_ILLEGAL_TRANS, currentState->id(), event);
       currentState->illegalTransitionLogged |= event;
     }
     
@@ -488,7 +486,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
     currentState = getState(newState);
     context->op->currentStateStartMillis = millis();
     
-    context->storage->logState(oldState, newState, event);
+    context->log->logState(oldState, newState, event);
   }
   #ifdef DEBUG_STATE
     Serial.print(("DEBUG_STATE: New state: "));
@@ -502,6 +500,7 @@ AbstractState *BoilerStateAutomaton::getState(StateEnum id) {
       return ALL_STATES[i];
     }
   }
-  assert(false);
+  context->log->S_O_S(MSG_UNKNOWN_STATE, id, 0);  // function NEVER RETURNS
+  abort();
 }
 

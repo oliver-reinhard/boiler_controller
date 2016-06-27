@@ -1,7 +1,6 @@
 #include <string.h>
 #include "ui_ser.h"
 #include "config.h"
-#include "store.h"
 
 #define COMMAND_BUF_SIZE 50   // Size of the read buffer for incoming data
 const char COMMAND_CHARS[] = " abcdefghijklmnopqrstuvwxyz"; // includes blank (first char)
@@ -112,47 +111,47 @@ boolean setConfigParamValue(ControlContext *context, ConfigParamEnum p, char *va
   switch(p) {
     case PARAM_TARGET_TEMP: 
       context->config->targetTemp = atoi(value);
-      context->storage->logConfigParam(p, (float) context->config->targetTemp);
+      context->log->logConfigParam(p, (float) context->config->targetTemp);
       return true;
     case PARAM_WATER_TEMP_SENSOR_ID:
       if (parseTempSensorID(value, &(context->config->waterTempSensorId[0]))) {
-        context->storage->logConfigParam(p, 0.0);
+        context->log->logConfigParam(p, 0.0);
         return true;
       }
       return false;
     case PARAM_AMBIENT_TEMP_SENSOR_ID:
       if (parseTempSensorID(value, &(context->config->ambientTempSensorId[0]))) {
-        context->storage->logConfigParam(p, 0.0);
+        context->log->logConfigParam(p, 0.0);
         return true;
       }
       return false;
     case PARAM_HEATER_CUT_OUT_WATER_TEMP: 
       context->config->heaterCutOutWaterTemp = atoi(value);
-      context->storage->logConfigParam(p, (float) context->config->heaterCutOutWaterTemp);
+      context->log->logConfigParam(p, (float) context->config->heaterCutOutWaterTemp);
       return true;
     case PARAM_HEATER_BACK_OK_WATER_TEMP: 
       context->config->heaterBackOkWaterTemp = atoi(value);
-      context->storage->logConfigParam(p, (float) context->config->heaterBackOkWaterTemp);
+      context->log->logConfigParam(p, (float) context->config->heaterBackOkWaterTemp);
       return true;
     case PARAM_LOG_TEMP_DELTA: 
       context->config->logTempDelta = atoi(value);
-      context->storage->logConfigParam(p, (float) context->config->logTempDelta);
+      context->log->logConfigParam(p, (float) context->config->logTempDelta);
       return true;
     case PARAM_LOG_TIME_DELTA:
       context->config->logTimeDelta = atoi(value);
-      context->storage->logConfigParam(p, (float) context->config->logTimeDelta);
+      context->log->logConfigParam(p, (float) context->config->logTimeDelta);
       return true;
     case PARAM_TANK_CAPACITY:
       context->config->tankCapacity = (float) atof(value);
-      context->storage->logConfigParam(p, context->config->tankCapacity);
+      context->log->logConfigParam(p, context->config->tankCapacity);
       return true;
     case PARAM_HEATER_POWER:
       context->config->heaterPower = (float) atof(value);
-      context->storage->logConfigParam(p, context->config->heaterPower);
+      context->log->logConfigParam(p, context->config->heaterPower);
       return true;
     case PARAM_INSULATION_FACTOR:
       context->config->insulationFactor = (float) atof(value);
-      context->storage->logConfigParam(p, context->config->insulationFactor);
+      context->log->logConfigParam(p, context->config->insulationFactor);
       return true;
     default:
       return false;
@@ -437,9 +436,22 @@ void SerialUI::readUserCommand(ControlContext *context) {
 void printLogEntry(LogEntry *e) {
   Serial.print(formatTimestamp(e->timestamp));
   Serial.print("  ");
-  LogTypeEnum type = (LogTypeEnum)e->type;
+  LogDataTypeEnum type = (LogDataTypeEnum)e->type;
   switch (type) {
-    case LOG_VALUES:
+    case LOG_DATA_TYPE_MESSAGE:
+      {
+        LogMessageData data;
+        memcpy(&data, &e->data, sizeof(LogMessageData));
+        Serial.print(F("M  msg:"));
+        Serial.print(data.id);
+        Serial.print(F(", p1:"));
+        Serial.print(data.params[0]);
+        Serial.print(F(", p2:"));
+        Serial.println(data.params[1]);
+      }
+      break;
+      
+    case LOG_DATA_TYPE_VALUES:
       {
         LogValuesData data;
         memcpy(&data, &(e->data), sizeof(LogValuesData));
@@ -454,7 +466,7 @@ void printLogEntry(LogEntry *e) {
       }
       break;
       
-    case LOG_STATE:
+    case LOG_DATA_TYPE_STATE:
       {
         LogStateData data;
         memcpy(&data, &e->data, sizeof(LogStateData));
@@ -467,20 +479,7 @@ void printLogEntry(LogEntry *e) {
       }
       break;
       
-    case LOG_MESSAGE:
-      {
-        LogMessageData data;
-        memcpy(&data, &e->data, sizeof(LogMessageData));
-        Serial.print(F("M  msg:"));
-        Serial.print(data.id);
-        Serial.print(F(", p1:"));
-        Serial.print(data.params[0]);
-        Serial.print(F(", p2:"));
-        Serial.println(data.params[1]);
-      }
-      break;
-      
-    case LOG_CONFIG:
+    case LOG_DATA_TYPE_CONFIG:
       {
         LogConfigParamData data;
         memcpy(&data, &e->data, sizeof(LogConfigParamData));
@@ -563,15 +562,15 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
     }
     
     Serial.print(F("Log contains "));
-    Serial.print(context->storage->currentLogEntries());
+    Serial.print(context->log->currentLogEntries());
     Serial.print(F(" entries (= "));
-    Serial.print((int16_t) (100L * context->storage->currentLogEntries() / context->storage->maxLogEntries()));
+    Serial.print((int16_t) (100L * context->log->currentLogEntries() / context->log->maxLogEntries()));
     Serial.print(F("% full), showing "));
     Serial.println(entriesToReturn);
     
-    context->storage->readMostRecentLogEntries(entriesToReturn);
+    context->log->readMostRecentLogEntries(entriesToReturn);
     LogEntry e;
-    while (context->storage->nextLogEntry(&e)) {
+    while (context->log->nextLogEntry(e)) {
       printLogEntry(&e);
     }
   }
@@ -597,7 +596,7 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
     if (id < NUM_CONFIG_PARAMS) {
       ConfigParamEnum param = (ConfigParamEnum)id;
       if (setConfigParamValue(context, param, paramValue)) {
-        context->storage->updateConfigParams(context->config);
+        context->config->save();
       } else {
         printError(F("Illegal value"));
       }

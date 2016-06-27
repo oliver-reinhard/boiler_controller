@@ -1,54 +1,41 @@
 #ifndef BOILER_LOG_H_INCLUDED
   #define BOILER_LOG_H_INCLUDED
-  
-  #include "msg.h"
+
   #include "config.h"
+  #include "log/Logging.h"
+
   
-  /**
-   * Timestamps are unique identifiers across the full time range of this type.
-   * 
-   * Timestamp format: 28 bits [seconds since last log reset] + 4 bits [uniquness identifier 0..15].
-   *                   - 2^28 seconds is about 8.5 years
-   *                   - the log reset may have happened several board resets earlier
-   *                   - up to 16 timestamps can be generated within one second
-   * The timestamp() function creates ascending values in strong monotony, even across board resets.
+  /*
+   * The messages issued by the implementation of this module. Stored as MessageID.
+   * Note: the actual message texts and the conversion of message IDs to text have to be implemented by 
+   *       the consumer of this libraray 
    */
-  typedef uint32_t Timestamp;
-  #define TIMESTAMP_ID_BITS   4
-  #define UNDEFINED_TIMESTAMP 0L
+  typedef enum {
+    MSG_LOG_DATA_SIZE = 10   // Size of LogData subtype does not correspond to sizeof(LogData); subtype = [LogDataTypeEnum]
+  } LogMessageEnum;
   
-  struct LogTimeRaw {
-    uint32_t sec; // seconds since log was last reset or since last board reset, which ever happened earlier
-    uint16_t ms; // milliseconds [0 .. 999]
-  };
+  #define LOG_DATA_PAYLOAD_SIZE 5
   
   typedef enum {
-    LOG_VALUES = 0,
-    LOG_STATE = 1,
-    LOG_MESSAGE = 2,
-    LOG_CONFIG = 3,
-  } LogTypeEnum;
+    LOG_DATA_TYPE_MESSAGE = 0,
+    LOG_DATA_TYPE_VALUES = 1,
+    LOG_DATA_TYPE_STATE = 2,
+    LOG_DATA_TYPE_CONFIG = 3,
+  } LogDataTypeEnum;
+
 
   /*
-   * IDs for enum types, some defined in higher-level modules.
+   * LogDataType: LOG_DATA_TYPE_MESSAGE, "subtype" of LogData
    */
-  typedef uint8_t LogTypeID;
-  typedef uint8_t MessageID;
-  typedef uint8_t StateID;
-  typedef uint16_t EventID;
-  
-  typedef uint8_t Flags; // value logging
-
-  
-  /**
-   * Generic "supertype" for log data.
-   */
-  struct LogData {
-    char data[5]; // placeholder
+  struct LogMessageData {
+    MessageID id;
+    int16_t params[2];
   };
   
-  /**
-   * LogType: LOG_VALUES, "subtype" of LogData
+  typedef uint8_t Flags; // value logging
+  
+  /*
+   * LogDataType: LOG_DATA_TYPE_VALUES, "subtype" of LogData
    */
   struct LogValuesData {
     Temperature water;
@@ -56,8 +43,14 @@
     Flags flags;
   };
   
+  /*
+   * IDs for enum types, some defined in higher-level modules.
+   */
+  typedef uint8_t StateID;
+  typedef uint16_t EventID;
+  
   /**
-   * LogType: LOG_STATE, "subtype" of LogData
+   * LogDataType: LOG_DATA_TYPE_STATE, "subtype" of LogData
    */
   struct LogStateData {
     StateID previous;
@@ -67,77 +60,37 @@
   };
   
   /**
-   * LogType: LOG_MESSAGE, "subtype" of LogData
-   */
-  struct LogMessageData {
-    MessageID id;
-    int16_t params[2];
-  };
-  
-  /**
-   * LogType: LOG_CONFIG, "subtype" of LogData
+   * LogDataType: LOG_DATA_TYPE_CONFIG, "subtype" of LogData
    */
   struct LogConfigParamData {
     ConfigParamID id;
     float newValue;
   };
+
   
-  /**
-   * Actual log record. At runtime the data field is an instance of a "subtype" of LogData.
-   */
-  struct LogEntry {
-    Timestamp timestamp;
-    LogTypeID type;
-    LogData data; // generic
+  class Log : public AbstractLog {
+    public:
+      Log(uint16_t eepromOffset) : AbstractLog(eepromOffset) { };
+
+      /*
+       * Log a message.
+       */
+      virtual Timestamp logMessage(MessageID msg, int16_t param1, int16_t param2);
+
+      /*
+       * Log a value change.
+       */
+      virtual Timestamp logValues(Temperature water, Temperature ambient, Flags flags);
+
+      /*
+       * Log a state change.
+       */
+      virtual Timestamp logState(StateID previous, StateID current, EventID event);
+
+      /*
+       * Log a config-param change.
+       */
+      virtual Timestamp logConfigParam(ConfigParamID id, float newValue);     
   };
-  
-  /**
-   * Calculates a time offset from the mostRecent log-entry timestamp (which usually stems from a 
-   * log entry prior to board reset or power down).
-   */
-  void adjustLogTime(Timestamp mostRecent);
-  
-  /**
-   * Resets the offset to 0 which means that log time and millis() coincide again in terms of seconds elapsed.
-   */
-  void resetLogTime();
-  
-  /**
-   * Returns the raw log time in internal format.
-   */
-  LogTimeRaw logTime();
-  
-  /**
-   * Returns a unique timestamp. A maximum of 16 timestamps can be generated within the same second.
-   * 
-   * Note: this function will delay() until the next second starts (where millis() % 1000 == 0) if the 
-   * maximum of 16 timestamps in a given second is exceeded.
-   */
-  Timestamp timestamp();
-
-  /**
-   * Returns the timestamp in a 13-character dotted notation, terminated by '\0': sssssssss.cc  (s = seconds: 2^28 = 268435456 (9 digits), cc = count: 0..15 (2 digits))
-   */
- String formatTimestamp(Timestamp t);
-  
-  /**
-   * Returns a LogEntry with a data field of "type" LogValuesData.
-   */
-  LogEntry createLogValuesEntry(Temperature water, Temperature ambient, Flags flags);
-
-  /**
-   * Returns a LogEntry with a data field of "type" LogStateData.
-   */
-  LogEntry createLogStateEntry(StateID previous, StateID current, EventID event);
-
-  /**
-   * Returns a LogEntry with a data field of "type" LogMessageData.
-   */
-  LogEntry createLogMessageEntry(MessageEnum id, int16_t param1, int16_t param2);
-
-  /**
-   * Returns a LogEntry with a data field of "type" LogConfigParamData.
-   */
-  LogEntry createConfigParamEntry(ConfigParamID id, float newValue);
 
 #endif

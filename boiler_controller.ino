@@ -29,8 +29,8 @@ typedef enum {
 /*
  * GLOBALS
  */
-Storage storage = Storage();
-ConfigParams configParams;
+ConfigParams config = ConfigParams();
+Log logger = Log(sizeof(ConfigParams)); 
 OperationalParams opParams;
 ControlActions controlActions = ControlActions();
 
@@ -49,22 +49,23 @@ BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
   
   #ifdef UNIT_TEST
     //Test::min_verbosity = TEST_VERBOSITY_ALL;
+    Serial.println(F("Unit Testing."));
   #endif
   
-  #ifndef UNIT_TEST    
-    storage.getConfigParams(&configParams);
-    storage.initLog();
-    storage.logMessage(MSG_SYSTEM_INIT, 0, 0);
+  #ifndef UNIT_TEST 
+    logger.init();
+    logger.logMessage(MSG_SYSTEM_INIT, 0, 0);
+    config.load(); 
 
-    context.storage = &storage;
-    context.config = &configParams;
+    context.log = &logger;
+    context.config = &config;
     context.op = &opParams;
     context.control = &controlActions;
 
@@ -186,7 +187,7 @@ void logTemperatureValues(ControlContext *context) {
       
       if (logValuesNow) {
         Flags flags = context->op->water.sensorStatus<<4 | context->op->ambient.sensorStatus;
-        context->storage->logValues(context->op->water.currentTemp, context->op->ambient.currentTemp, flags);
+        context->log->logValues(context->op->water.currentTemp, context->op->ambient.currentTemp, flags);
         context->op->water.lastLoggedTemp = water;
         context->op->water.lastLoggedTime = time;
         context->op->ambient.lastLoggedTemp = ambient;
@@ -250,9 +251,9 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
 }
 
 void checkForNewLogEntries(ControlContext *context) {
-  context->storage->readUnnotifiedLogEntries();
+  context->log->readUnnotifiedLogEntries();
   LogEntry e;
-  while (context->storage->nextLogEntry(&e)) {
+  while (context->log->nextLogEntry(e)) {
     ui.notifyNewLogEntry(e);
   }
 }

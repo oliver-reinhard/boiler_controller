@@ -1,5 +1,4 @@
 #include "control.h"
-#include "msg.h"
 
 // #define DEBUG_CONTROL
 
@@ -88,7 +87,7 @@ TemperatureReadout ControlActions::getCelcius(uint8_t data[]) {
 void ControlActions::setupSensors(ControlContext *context) {
   if (undefinedSensorId(context->config->waterTempSensorId)) {
    context->op->water.sensorStatus = SENSOR_ID_UNDEFINED;
-   context->storage->logMessage(MSG_WATER_TEMP_SENSOR_ID_UNDEF, 0, 0); 
+   context->log->logMessage(MSG_WATER_TEMP_SENSOR_ID_UNDEF, 0, 0); 
    #ifdef DEBUG_CONTROL
      Serial.println(F("DEBUG_CONTROL: Water temp sensor ID undefined"));
    #endif
@@ -96,7 +95,7 @@ void ControlActions::setupSensors(ControlContext *context) {
   
   if (undefinedSensorId(context->config->ambientTempSensorId)) {
    context->op->ambient.sensorStatus = SENSOR_ID_UNDEFINED;
-   context->storage->logMessage(MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF, 0, 0);
+   context->log->logMessage(MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF, 0, 0);
    #ifdef DEBUG_CONTROL
      Serial.println(F("DEBUG_CONTROL: Ambient temp sensor ID undefined"));
    #endif
