@@ -7,15 +7,14 @@
 #define ASSERT(cond, msg) ((cond) ? (void)0 : S_O_S(F(msg)))
 
 
-AbstractLog::AbstractLog(uint16_t eepromOffset, uint16_t eepromlogSize) {
+AbstractLog::AbstractLog(const uint16_t eepromOffset, const uint16_t eepromlogSize) {
   this->eepromOffset = eepromOffset;
   this->eepromLogSize = eepromlogSize;
-  eepromEntriesOffset = eepromOffset + NUM_SLOTS_SIZE;
   logEntrySlots = (eepromLogSize - NUM_SLOTS_SIZE) / LOG_ENTRY_SIZE;
 }   
 
 uint16_t AbstractLog::entryOffset(uint16_t index) {
-  return eepromEntriesOffset + index * LOG_ENTRY_SIZE;
+  return eepromOffset + NUM_SLOTS_SIZE + index * LOG_ENTRY_SIZE;
 }
 
 uint16_t AbstractLog::maxLogEntries() {

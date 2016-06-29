@@ -114,13 +114,13 @@ boolean setConfigParamValue(ControlContext *context, ConfigParamEnum p, char *va
       context->log->logConfigParam(p, (float) context->config->targetTemp);
       return true;
     case PARAM_WATER_TEMP_SENSOR_ID:
-      if (parseTempSensorID(value, &(context->config->waterTempSensorId[0]))) {
+      if (parseTempSensorID(value, context->config->waterTempSensorId)) {
         context->log->logConfigParam(p, 0.0);
         return true;
       }
       return false;
     case PARAM_AMBIENT_TEMP_SENSOR_ID:
-      if (parseTempSensorID(value, &(context->config->ambientTempSensorId[0]))) {
+      if (parseTempSensorID(value, context->config->ambientTempSensorId)) {
         context->log->logConfigParam(p, 0.0);
         return true;
       }
@@ -198,6 +198,7 @@ String getStateName(StateEnum literal) {
 /*
  * EVENTS
  */
+
 const char STR_EVENT_NONE[] PROGMEM = "None";
 const char STR_EVENT_READY[] PROGMEM = "Ready";
 const char STR_EVENT_SENSORS_NOK[] PROGMEM = "Sensors NOK";
@@ -239,6 +240,7 @@ String getEventName(EventEnum literal) {
   strcpy_P(buf, getEventNamePtr(literal));
   return buf;
 }
+
 
 /*
  * COMMANDS
@@ -365,12 +367,12 @@ void printError(const __FlashStringHelper *err) {
 }
 
 
-void SerialUI::setup(ControlContext *context) {
+void SerialUI::setup() {
   if (context != NULL) { } // prevent 'unused parameter' warning
   // empty
 }
       
-void SerialUI::readUserCommand(ControlContext *context) {
+void SerialUI::readUserCommand() {
   char buf[COMMAND_BUF_SIZE+1];
   // fill buffer with 0's => always \0-terminated!
   memset(buf, 0, COMMAND_BUF_SIZE);
@@ -487,7 +489,7 @@ void printLogEntry(LogEntry *e) {
         ConfigParamEnum param = (ConfigParamEnum) data.id;
         Serial.print(getConfigParamName(param));
         Serial.print(F(" = "));
-        Serial.println(data.newValue);
+        Serial.println(formatFloat(data.newValue));  // line uses 1 KByte without the formatFloat!
       }
       break;
       
@@ -500,7 +502,7 @@ void printLogEntry(LogEntry *e) {
 /*
  * READ and WRITE REQUESTS
  */
-void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton) {
+void SerialUI::processReadWriteRequests(ReadWriteRequests requests, BoilerStateAutomaton *automaton) {
   #ifdef DEBUG_UI
     Serial.print(F("DEBUG_UI: processing request: 0x"));
     Serial.println(requests, HEX);
@@ -536,7 +538,7 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, ControlConte
     Serial.print(F("Ambient: "));
     Serial.print(getSensorStatusName(context->op->ambient.sensorStatus));
     if (context->op->ambient.sensorStatus == SENSOR_OK) {
-      Serial.print(", ");
+      Serial.print(F(", "));
       Serial.print(formatTemperature(context->op->ambient.currentTemp));
     }
     Serial.println();

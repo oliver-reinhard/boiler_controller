@@ -9,12 +9,14 @@
   
     class MockControlActions : public ControlActions {
       public:
+        MockControlActions(ControlContext *context) : ControlActions(context) { }
+        
         // Mocked methods:
-        void setupSensors(ControlContext *context);
-        void initSensorReadout(ControlContext *context);
-        void completeSensorReadout(ControlContext *context);
+        void setupSensors() { }
+        void initSensorReadout() { }
+        void completeSensorReadout() { }
     
-        void heat(boolean on, ControlContext *context);
+        void heat(boolean on);
     
         void setConfigParam();
         void requestHelp();

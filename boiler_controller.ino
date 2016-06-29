@@ -6,8 +6,10 @@
 #include "control.h"
 #include "state.h"
 #include "ui.h"
-#ifdef SERIAL_UI
+#if defined SERIAL_UI
   #include "ui_ser.h"
+#elif defined BLE_UI
+  #include "ui_ble.h"
 #endif
 
 //#define DEBUG_MAIN
@@ -32,19 +34,16 @@ typedef enum {
 ConfigParams config = ConfigParams();
 Log logger = Log(sizeof(ConfigParams)); 
 OperationalParams opParams;
-ControlActions controlActions = ControlActions();
-
 ExecutionContext context;
+ControlActions controlActions = ControlActions(&context);
 BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
 
-#ifdef BLE_UI
-  BLEUI ui = BLEUI();
-#endif
-#ifdef SERIAL_UI
-  SerialUI ui = SerialUI();
-#endif
-#ifdef UNIT_TEST
-  AbstractUI ui = AbstractUI();
+#if defined BLE_UI
+  BLEUI ui = BLEUI(&context);
+#elif defined SERIAL_UI
+  SerialUI ui = SerialUI(&context);
+#else 
+  NullUI ui = NullUI(&context);
 #endif
 
 
@@ -54,12 +53,11 @@ void setup() {
     ; // wait for serial port to connect. Needed for native USB port only
   }
   
-  #ifdef UNIT_TEST
+  #if defined UNIT_TEST
     //Test::min_verbosity = TEST_VERBOSITY_ALL;
     Serial.println(F("Unit Testing."));
-  #endif
-  
-  #ifndef UNIT_TEST 
+    
+  #else
     logger.init();
     logger.logMessage(MSG_SYSTEM_INIT, 0, 0);
     config.load(); 
@@ -70,7 +68,7 @@ void setup() {
     context.control = &controlActions;
 
     pinMode(HEATER_PIN, OUTPUT);
-    controlActions.setupSensors(&context);
+    controlActions.setupSensors();
     
     Serial.println(F("Ready."));
   #endif
@@ -79,11 +77,10 @@ void setup() {
 
 void loop() {
   
-  #ifdef UNIT_TEST
+  #if defined UNIT_TEST
     Test::run();
-  #endif
-  
-  #ifndef UNIT_TEST
+    
+  #else
     static uint32_t controlCycleStart = 0L;
     static CycleStageEnum cycleStage = CYCLE_STAGE_0;
     static uint32_t lastUserNotificationCheck = 0L;
@@ -98,11 +95,11 @@ void loop() {
   
     if (cycleStage == CYCLE_STAGE_0 && elapsed == 0L) {
       cycleStage = CYCLE_STAGE_1;
-      context.control->initSensorReadout(&context);
+      context.control->initSensorReadout();
       
     } else if (cycleStage == CYCLE_STAGE_1 && elapsed >= TEMP_SENSOR_READOUT_WAIT) {
       cycleStage = CYCLE_STAGE_2;
-      context.control->completeSensorReadout(&context);
+      context.control->completeSensorReadout();
       
     } else if (cycleStage == CYCLE_STAGE_2) {
       cycleStage = CYCLE_STAGE_3;
@@ -112,7 +109,7 @@ void loop() {
     UserCommand command;  
     memset(command.args, 0, CMD_ARG_BUF_SIZE);
     context.op->command = &command;
-    ui.readUserCommand(&context);
+    ui.readUserCommand();
   
     EventCandidates cand = automaton.evaluate();
     if (cand != EVENT_NONE) {
@@ -120,7 +117,7 @@ void loop() {
       if (event != EVENT_NONE) {
         automaton.transition(event);
         
-        ui.processReadWriteRequests(context.control->getPendingReadWriteRequests(), &context, &automaton);
+        ui.processReadWriteRequests(context.control->getPendingReadWriteRequests(), &automaton);
         context.control->clearPendingReadWriteRequests();
       }
     }

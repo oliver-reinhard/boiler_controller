@@ -14,6 +14,7 @@
    * The timestamp() function creates ascending values in strong monotony, even across board resets.
    */
   typedef uint32_t Timestamp;
+  
   #define TIMESTAMP_ID_BITS   4
   #define UNDEFINED_TIMESTAMP 0L
   
@@ -50,11 +51,6 @@
        * Resets the offset to 0 which means that log time and millis() coincide again in terms of seconds elapsed.
        */
       void reset();
-      
-      /**
-       * See static function formatTimestamp(), below.
-       */
-      String format(Timestamp t);
 
     protected:
       

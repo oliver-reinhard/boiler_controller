@@ -2,7 +2,6 @@
   #define BC_LOGGING_H_INCLUDED
   
   #include <EEPROM.h>
-  #include <Arduino.h>
   #include "LogTime.h"
 
   // Define this symbol in an including module (prior to #include "Logging.h") to have a different payload size (in Byte):
@@ -31,11 +30,6 @@
     MSG_LOG_SIZE_CHG = 2,     // Number of log entries has changed from [old] to [new])
   } AbstractLogMessageEnum;
   
-  /*
-   * Discriminator for various types of log data.
-   */
-  typedef uint8_t LogDataTypeID;
-  
   /**
    * Generic "supertype" for log data; "subtypes" are distinguished via LogDataTypeID.
    * Note: The actual payload size can be configured / changed via symbol definition (LOG_DATA_PAYLOAD_SIZE).
@@ -43,6 +37,11 @@
   struct LogData {
     byte payload[LOG_DATA_PAYLOAD_SIZE]; // placeholder
   };
+  
+  /*
+   * Discriminator for various types of log data.
+   */
+  typedef uint8_t LogDataTypeID;
   
   /**
    * Actual log record. At runtime the data field is an instance of a "subtype" of LogData.
@@ -187,10 +186,6 @@
        * Byte offset of log space within EEPROM.
        */
       uint16_t eepromOffset;
-      /*
-       * Byte offset of first log entry within EEPROM. 
-       */
-      uint16_t eepromEntriesOffset;
       /*
        * Number of bytes of log space.
        */

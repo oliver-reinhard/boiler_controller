@@ -94,11 +94,6 @@
       ConfigParams *config;
       OperationalParams *op;
   };
-  
-  struct TemperatureReadout {
-    uint8_t resolution;     // number of bits (= 9..12)
-    Temperature celcius; // [°C * 100]
-  };
 
   /*
    * This class is stateless; all effects of actions are either immediate (to a port of the Arduino chip, including serial com port), or 
@@ -107,14 +102,17 @@
    */
   class ControlActions {
     public:
-      virtual void setupSensors(ControlContext *context);
-      virtual void initSensorReadout(ControlContext *context);
-      virtual void completeSensorReadout(ControlContext *context);
+      ControlActions(ControlContext *context) {
+        this->context = context;
+      }
+      virtual void setupSensors();
+      virtual void initSensorReadout();
+      virtual void completeSensorReadout();
 
       /*
        * Physically turns the water heater on or off.
        */
-      virtual void heat(boolean on, ControlContext *context);
+      virtual void heat(boolean on);
   
       virtual void setConfigParam();
       virtual void requestHelp();
@@ -125,9 +123,8 @@
       void clearPendingReadWriteRequests();
       
     protected:
-      OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor to 5V is necessary)
-      boolean readScratchpad(uint8_t addr[], uint8_t *data);
-      TemperatureReadout getCelcius(uint8_t data[]);
+      ControlContext *context;
+      OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor to +5V is necessary)
       ReadWriteRequests pendingRequests = READ_WRITE_NONE;
   };
   

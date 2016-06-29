@@ -56,11 +56,6 @@ void LogTime::reset() {
 }
 
 
-String LogTime::format(Timestamp t) {
-  return formatTimestamp(t);
-}
-
-
 String formatTimestamp(Timestamp t) {
   char s[13];
   uint32_t sec = t >> TIMESTAMP_ID_BITS;

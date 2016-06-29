@@ -30,21 +30,9 @@
     requestConfigCount = 0;
     requestStatCount = 0;
   }
-      
-  void MockControlActions::setupSensors(ControlContext *context) {
-    if (context == NULL) { } // prevent warning "unused parameter ..."
-  }
-  
-  void MockControlActions::initSensorReadout(ControlContext *context) {
-    if (context == NULL) { } // prevent warning "unused parameter ..."
-  }
-  
-  void MockControlActions::completeSensorReadout(ControlContext *context) {
-    if (context == NULL) { } // prevent warning "unused parameter ..."
-  }
 
 
-  void MockControlActions::heat(boolean on, ControlContext *context) {
+  void MockControlActions::heat(boolean on) {
     #ifdef DEBUG_UT_STATE
       Serial.println(F("DEBUG_UT_STATE: heat (on/off)"));
     #endif
@@ -143,9 +131,10 @@
     memset(cmd.args, 0, CMD_ARG_BUF_SIZE);
     op.command = &cmd;
     
-    MockControlActions control;
-
     ExecutionContext context;
+    
+    MockControlActions control = MockControlActions(&context);
+
     context.log = &logger;
     context.config = &config;
     context.op = &op;

@@ -19,24 +19,24 @@
 /*
  * The memory layout version is stored on the EEPROM -- but not in the class!
  */
-#define VERSION_SIZE sizeof(uint16_t)
+#define VERSION_SIZE sizeof(LayoutVersion)
 
 
-AbstractConfiguration::AbstractConfiguration(const uint16_t eepromOffset) {
+AbstractConfigParams::AbstractConfigParams(const uint16_t eepromOffset) {
   this->eepromOffset = eepromOffset;
 }
 
-LayoutVersion AbstractConfiguration::version() {
+LayoutVersion AbstractConfigParams::version() {
   LayoutVersion v;
   EEPROM.get(eepromOffset, v);
   return v;
 }
 
-void AbstractConfiguration::clear() {
+void AbstractConfigParams::clear() {
   #ifdef DEBUG_CONFIG
     Serial.println(F("DEBUG_CONFIG *Clear"));
   #endif
-  const uint16_t maxIndex = eepromOffset + VERSION_SIZE + (size() - CONFIG_DATA_OFFSET);
+  const uint16_t maxIndex = eepromOffset + eepromSize();
   for (uint16_t i = eepromOffset;  i < maxIndex ; i++) {
     #ifdef DEBUG_CONFIG
       Serial.print(F("DEBUG_CONFIG clr  ["));
@@ -50,7 +50,7 @@ void AbstractConfiguration::clear() {
 }
 
 
-void AbstractConfiguration::load() {
+void AbstractConfigParams::load() {
   #ifdef DEBUG_CONFIG
    Serial.println(F("DEBUG_CONFIG *Load"));
   #endif
@@ -73,14 +73,14 @@ void AbstractConfiguration::load() {
   }
 }
 
-void AbstractConfiguration::save() {
+void AbstractConfigParams::save() {
   #ifdef DEBUG_CONFIG
     Serial.println(F("DEBUG_CONFIG *Save"));
   #endif
   EEPtr e = eepromOffset + VERSION_SIZE;
   uint8_t *ptr = (uint8_t*) (this);
   ptr+= CONFIG_DATA_OFFSET;
-  const uint16_t len = size() - CONFIG_DATA_OFFSET;
+  const uint16_t len = memSize() - CONFIG_DATA_OFFSET;
   for(uint16_t count = 0; count < len ; count++, e++ ) {
     #ifdef DEBUG_CONFIG
       Serial.print(F("DEBUG_CONFIG upd  ["));
@@ -92,15 +92,20 @@ void AbstractConfiguration::save() {
   }
 }
 
-void AbstractConfiguration::print() {
+
+uint16_t AbstractConfigParams::eepromSize() {
+  return VERSION_SIZE + (memSize() - CONFIG_DATA_OFFSET);
+}
+
+void AbstractConfigParams::print() {
   Serial.println(version());
 }
 
-void AbstractConfiguration::readParams() {
+void AbstractConfigParams::readParams() {
   EEPtr e = eepromOffset + VERSION_SIZE;
   uint8_t *ptr = (uint8_t*) (this);
   ptr+= CONFIG_DATA_OFFSET;
-  const uint16_t len = size() - CONFIG_DATA_OFFSET;
+  const uint16_t len = memSize() - CONFIG_DATA_OFFSET;
   for(uint16_t count = 0; count < len ; count++, e++ ) {
     #ifndef DEBUG_CONFIG
       *ptr++ = *e;

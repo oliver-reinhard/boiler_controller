@@ -2,7 +2,8 @@
   #define BOILER_CONFIG_H_INCLUDED
   
   #include "config/Configuration.h"
-  
+
+  /*
   typedef int16_t Temperature;  // [°C * 100]
   #define UNDEFINED_TEMPERATURE -10000 // [°C * 100];
 
@@ -10,6 +11,7 @@
   typedef uint8_t TempSensorID[TEMP_SENSOR_ID_BYTES];
   const TempSensorID UNDEFINED_SENSOR_ID = {0,0,0,0,0,0,0,0};
 
+  */
   // Water min and max values used to check that sensor-temperature readout is plausible:
   #define WATER_MIN_TEMP -2000 // [°C * 100]
   #define WATER_MAX_TEMP 10000 // [°C * 100]
@@ -51,9 +53,9 @@
   #define DEFAULT_INSULATION_FACTOR           2.0 // [???]
 
   
-  class ConfigParams : public AbstractConfiguration {
+  class ConfigParams : public AbstractConfigParams {
     public:
-      ConfigParams() : AbstractConfiguration(0L) { };
+      ConfigParams() : AbstractConfigParams(0L) { };
       
       Temperature targetTemp; // [°C * 100]
       TempSensorID waterTempSensorId;
@@ -69,20 +71,10 @@
   
       void print();
       
-      uint16_t size() {
-        return sizeof(*this);
-      };
+      uint16_t memSize() { return sizeof(*this); };
       
     protected:
       void initParams(boolean &updated);
   };
-  
-
-  /**
-   * Returns the temperature in a dotted notation, 8 chars + terminal '\0': ["-"]dd.ff"°C" (optional "-", d = degrees Celsius (2 digits), f = fraction (1 digit))
-   */
-  String formatTemperature(Temperature t);
-
-  String formatTempSensorID(TempSensorID id);
   
 #endif

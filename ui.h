@@ -17,31 +17,39 @@
   };
 
 
-  class AbstractUI {
+  class NullUI {
     public:
-      virtual void setup(ControlContext *context);
+      NullUI(ControlContext *context) {
+        this->context = context;
+      }
+      
+      virtual void setup() { }
       /*
        * Reads one user command and stores them in context->op.userCommand.
        */
-      virtual void readUserCommand(ControlContext *context);
+      virtual void readUserCommand() { }
       
-      virtual void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton);
+      virtual void processReadWriteRequests(ReadWriteRequests, BoilerStateAutomaton) {  }
     
-      virtual void notifyStatusChange(StatusNotification notification);
+      virtual void notifyStatusChange(StatusNotification) { }
     
-      virtual void notifyNewLogEntry(LogEntry entry);
+      virtual void notifyNewLogEntry(LogEntry) { }
+   
+    protected:
+      ControlContext *context;
   };  
 
   
   #ifdef BLE_UI
   
-    class BLEUI : public AbstractUI {
+    class BLEUI : public NullUI {
       public:
-        void setup(ControlContext *context);
+        BLEUI(ControlContext *context) : NullUI(context) { }
+        void setup();
       
-        void readUserCommand(ControlContext *context);
+        void readUserCommand();
         
-        void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton);
+        void processReadWriteRequests(ReadWriteRequests requests, BoilerStateAutomaton *automaton);
       
         void notifyStatusChange(StatusNotification notification);
       

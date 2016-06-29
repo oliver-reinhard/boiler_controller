@@ -5,37 +5,35 @@
 /*
  * ABSTRACT STATE
  */
-UserCommands AbstractState::userCommands(ExecutionContext *context) {
+UserCommands AbstractState::userCommands() {
   // default implementation: delegate to containing state (if any):
   if(containingState != NULL) { 
-    return containingState->userCommands(context);
+    return containingState->userCommands();
   } else {
     return CMD_NONE;
   }
 }
 
-EventCandidates AbstractState::eval(ExecutionContext *context) {
+EventCandidates AbstractState::eval() {
   // default implementation: delegate to containing state (if any):
   if(containingState != NULL) { 
-    return containingState->eval(context);
+    return containingState->eval();
   } else {
     return EVENT_NONE;
   }
 }
 
-StateEnum AbstractState::transAction(EventEnum event, ExecutionContext *context) {
-  if (event == EVENT_NONE || context == NULL) { }  // prevent compiler warning "unused parameter"
+StateEnum AbstractState::transAction(EventEnum event) {
+  if (event == EVENT_NONE) { }  // prevent compiler warning "unused parameter"
   // default implementation: empty
   return STATE_UNDEFINED;
 }
 
-void AbstractState::entryAction(ExecutionContext *context) {
-  if (context == NULL) { }  // prevent compiler warning "unused parameter"
+void AbstractState::entryAction() {
   // default implementation: empty
 }
 
-void AbstractState::exitAction(ExecutionContext *context){
-  if (context == NULL) { }  // prevent compiler warning "unused parameter"
+void AbstractState::exitAction(){
   // default implementation: empty
 }
 
@@ -43,26 +41,26 @@ void AbstractState::exitAction(ExecutionContext *context){
 /*
  * SIMPLE STATE
  */
-StateEnum AbstractSimpleState::enter(ExecutionContext *context) {
-  entryAction(context);
+StateEnum AbstractSimpleState::enter() {
+  entryAction();
   return id();
 }
         
-StateEnum AbstractSimpleState::trans(EventEnum event, ExecutionContext *context) {
-  StateEnum next = transAction(event, context);
+StateEnum AbstractSimpleState::trans(EventEnum event) {
+  StateEnum next = transAction(event);
   if (next == STATE_UNDEFINED && containingState != NULL) {
-    next = containingState->trans(event, context);
+    next = containingState->trans(event);
   }
   if (next != STATE_SAME && next != STATE_UNDEFINED) {
-    exit(event, next, context);
+    exit(event, next);
   }
   return next;
 }
 
-void AbstractSimpleState::exit(EventEnum event, StateEnum next, ExecutionContext *context) {
-  exitAction(context);
+void AbstractSimpleState::exit(EventEnum event, StateEnum next) {
+  exitAction();
   if(containingState != NULL) { 
-    containingState->exit(event, next, context);
+    containingState->exit(event, next);
   }
 }
 
@@ -70,7 +68,7 @@ void AbstractSimpleState::exit(EventEnum event, StateEnum next, ExecutionContext
  * COMPOSITE STATE
  */
 // Constructor
-AbstractCompositeState::AbstractCompositeState(AbstractState **substates, uint16_t numSubstates) {
+AbstractCompositeState::AbstractCompositeState(ExecutionContext *context, AbstractState **substates, uint16_t numSubstates) : AbstractState(context) {
   this->substates = substates;
   this->numSubstates = numSubstates;
   // set containingStates of the subtates to "this":
@@ -83,21 +81,21 @@ AbstractState *AbstractCompositeState::initialSubstate() {
   return substates[0];
 }
       
-StateEnum AbstractCompositeState::enter(ExecutionContext *context) {
-  entryAction(context);
-  return initialSubstate()->enter(context);
+StateEnum AbstractCompositeState::enter() {
+  entryAction();
+  return initialSubstate()->enter();
 }
 
-StateEnum AbstractCompositeState::trans(EventEnum event, ExecutionContext *context) {
-  StateEnum next = transAction(event, context);
+StateEnum AbstractCompositeState::trans(EventEnum event) {
+  StateEnum next = transAction(event);
   if (next == STATE_UNDEFINED && containingState != NULL) {
-    next = containingState->trans(event, context);
+    next = containingState->trans(event);
   }
   return next;
   // Do not invoke the exit action here: exits are performed "up" the containment hiearchy.
 }
 
-void AbstractCompositeState::exit(EventEnum event, StateEnum next, ExecutionContext *context) {
+void AbstractCompositeState::exit(EventEnum event, StateEnum next) {
   // if the transition occurs within the substates of this containing state, then we will not exit this containing state
   // and neither its containing states:
   for(uint16_t i=0; i< numSubstates; i++) {
@@ -105,23 +103,20 @@ void AbstractCompositeState::exit(EventEnum event, StateEnum next, ExecutionCont
       return;
     }
   }
-  exitAction(context);
+  exitAction();
   if(containingState != NULL) { 
-    containingState->exit(event, next, context);
+    containingState->exit(event, next);
   }
 }
 
 /*
  * INIT
  */
-StateEnum Init::id() {
-  return STATE_INIT;
-}
 
 // No user commands available.
 
-EventCandidates Init::eval(ExecutionContext *context) {
-  EventCandidates result = AbstractState::eval(context);
+EventCandidates Init::eval() {
+  EventCandidates result = AbstractState::eval();
   if (context->op->water.sensorStatus == SENSOR_NOK 
     || context->op->water.sensorStatus == SENSOR_ID_UNDEFINED
     || context->op->ambient.sensorStatus == SENSOR_ID_UNDEFINED) {
@@ -132,28 +127,25 @@ EventCandidates Init::eval(ExecutionContext *context) {
   return result;
 }
 
-StateEnum Init::transAction(EventEnum event, ExecutionContext *context) {
+StateEnum Init::transAction(EventEnum event) {
   if (event == EVENT_READY) {
     return STATE_READY;
   } else if (event == EVENT_SENSORS_NOK) {
     return STATE_SENSORS_NOK;
   }
-  return AbstractState::transAction(event, context);
+  return AbstractState::transAction(event);
 }
 
 /*
  * SENSORS NOK
  */
-StateEnum SensorsNOK::id() {
-  return STATE_SENSORS_NOK;
+
+UserCommands SensorsNOK::userCommands() {
+  return AbstractState::userCommands() | CMD_HELP | CMD_SET_CONFIG | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
 }
 
-UserCommands SensorsNOK::userCommands(ExecutionContext *context) {
-  return AbstractState::userCommands(context) | CMD_HELP | CMD_SET_CONFIG | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
-}
-
-EventCandidates SensorsNOK::eval(ExecutionContext *context) {
-  EventCandidates result = AbstractState::eval(context);
+EventCandidates SensorsNOK::eval() {
+  EventCandidates result = AbstractState::eval();
   if (context->op->command->command == CMD_HELP) {
     result |= EVENT_HELP;
   } else if (context->op->command->command == CMD_SET_CONFIG) {
@@ -168,7 +160,7 @@ EventCandidates SensorsNOK::eval(ExecutionContext *context) {
   return result;
 }
 
-StateEnum SensorsNOK::transAction(EventEnum event, ExecutionContext *context) {
+StateEnum SensorsNOK::transAction(EventEnum event) {
   if (event == EVENT_HELP) {
     context->control->requestHelp();
     return STATE_SAME;
@@ -189,22 +181,19 @@ StateEnum SensorsNOK::transAction(EventEnum event, ExecutionContext *context) {
     context->control->requestStat();
     return STATE_SAME;
   }
-  return AbstractState::transAction(event, context);
+  return AbstractState::transAction(event);
 }
 
 /*
  * READY
  */
-StateEnum Ready::id() {
-  return STATE_READY;
+
+UserCommands Ready::userCommands() {
+  return AbstractState::userCommands() | CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
 }
 
-UserCommands Ready::userCommands(ExecutionContext *context) {
-  return AbstractState::userCommands(context) | CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
-}
-
-EventCandidates Ready::eval(ExecutionContext *context) {
-  EventCandidates result = AbstractState::eval(context);
+EventCandidates Ready::eval() {
+  EventCandidates result = AbstractState::eval();
   if (context->op->water.sensorStatus == SENSOR_NOK) {
     result |= EVENT_SENSORS_NOK;
   } 
@@ -222,7 +211,7 @@ EventCandidates Ready::eval(ExecutionContext *context) {
   return result;
 }
 
-StateEnum Ready::transAction(EventEnum event, ExecutionContext *context) {
+StateEnum Ready::transAction(EventEnum event) {
   if (event == EVENT_SENSORS_NOK) {
     return STATE_SENSORS_NOK;
     
@@ -242,22 +231,19 @@ StateEnum Ready::transAction(EventEnum event, ExecutionContext *context) {
     context->control->requestStat();
     return STATE_SAME;
   }
-  return AbstractState::transAction(event, context);
+  return AbstractState::transAction(event);
 }
 
 /*
  * IDLE
  */
-StateEnum Idle::id() {
-  return STATE_IDLE;
+
+UserCommands Idle::userCommands() {
+  return AbstractState::userCommands() | CMD_SET_CONFIG | CMD_REC_ON;
 }
 
-UserCommands Idle::userCommands(ExecutionContext *context) {
-  return AbstractState::userCommands(context) | CMD_SET_CONFIG | CMD_REC_ON;
-}
-
-EventCandidates Idle::eval(ExecutionContext *context) {
-  EventCandidates result = AbstractState::eval(context);
+EventCandidates Idle::eval() {
+  EventCandidates result = AbstractState::eval();
   if (context->op->command->command == CMD_SET_CONFIG) {
     result |= EVENT_SET_CONFIG;
   }
@@ -267,7 +253,7 @@ EventCandidates Idle::eval(ExecutionContext *context) {
   return result;
 }
 
-StateEnum Idle::transAction(EventEnum event, ExecutionContext *context) {
+StateEnum Idle::transAction(EventEnum event) {
   if (event == EVENT_SET_CONFIG) {
     context->control->setConfigParam();
     return STATE_SAME;
@@ -275,83 +261,74 @@ StateEnum Idle::transAction(EventEnum event, ExecutionContext *context) {
   } else if (event == EVENT_REC_ON) {
     return STATE_RECORDING;
   }
-  return AbstractState::transAction(event, context);
+  return AbstractState::transAction(event);
 }
 
 /*
  * RECORDING
  */
-StateEnum Recording::id() {
-  return STATE_RECORDING;
-}
 
-UserCommands Recording::userCommands(ExecutionContext *context) {
-  return AbstractState::userCommands(context) | CMD_REC_OFF;
+UserCommands Recording::userCommands() {
+  return AbstractState::userCommands() | CMD_REC_OFF;
 }
 
 
-EventCandidates Recording::eval(ExecutionContext *context) {
-  EventCandidates result = AbstractState::eval(context);
+EventCandidates Recording::eval() {
+  EventCandidates result = AbstractState::eval();
   if (context->op->command->command == CMD_REC_OFF) {
     result |= EVENT_REC_OFF;
   }
   return result;
 }
 
-StateEnum Recording::transAction(EventEnum event, ExecutionContext *context) {
+StateEnum Recording::transAction(EventEnum event) {
   if (event == EVENT_REC_OFF) {
     return STATE_IDLE;
   }
-  return AbstractState::transAction(event, context);
+  return AbstractState::transAction(event);
 }
 
-void Recording::entryAction(ExecutionContext *context) {
+void Recording::entryAction() {
   context->op->loggingValues = true;
 }
 
-void Recording::exitAction(ExecutionContext *context){
+void Recording::exitAction(){
   context->op->loggingValues = false;
 }
 
 /*
  * STANDBY
  */
-StateEnum Standby::id() {
-  return STATE_STANDBY;
+
+UserCommands Standby::userCommands() {
+  return AbstractState::userCommands() | CMD_HEAT_ON;
 }
 
-UserCommands Standby::userCommands(ExecutionContext *context) {
-  return AbstractState::userCommands(context) | CMD_HEAT_ON;
-}
-
-EventCandidates Standby::eval(ExecutionContext *context) {
-  EventCandidates result = AbstractState::eval(context);
+EventCandidates Standby::eval() {
+  EventCandidates result = AbstractState::eval();
   if (context->op->command->command == CMD_HEAT_ON) {
     result |= EVENT_HEAT_ON;
   }
   return result;
 }
 
-StateEnum Standby::transAction(EventEnum event, ExecutionContext *context) {
+StateEnum Standby::transAction(EventEnum event) {
   if (event == EVENT_HEAT_ON) {
     return STATE_HEATING;
   }
-  return AbstractState::transAction(event, context);
+  return AbstractState::transAction(event);
 }
 
 /*
  * HEATING
  */
-StateEnum Heating::id() {
-  return STATE_HEATING;
+
+UserCommands Heating::userCommands() {
+  return AbstractState::userCommands() | CMD_HEAT_OFF;
 }
 
-UserCommands Heating::userCommands(ExecutionContext *context) {
-  return AbstractState::userCommands(context) | CMD_HEAT_OFF;
-}
-
-EventCandidates Heating::eval(ExecutionContext *context) {
-  EventCandidates result = AbstractState::eval(context);
+EventCandidates Heating::eval() {
+  EventCandidates result = AbstractState::eval();
   if (context->op->command->command == CMD_HEAT_OFF) {
     result |= EVENT_HEAT_OFF;
   }
@@ -361,22 +338,22 @@ EventCandidates Heating::eval(ExecutionContext *context) {
   return result;
 }
 
-StateEnum Heating::transAction(EventEnum event, ExecutionContext *context) {
+StateEnum Heating::transAction(EventEnum event) {
   if (event == EVENT_HEAT_OFF) {
     return STATE_STANDBY;
   } else if (event == EVENT_TEMP_OVER) {
     return STATE_OVERHEATED;
   }
-  return AbstractState::transAction(event, context);
+  return AbstractState::transAction(event);
 }
 
-void Heating::entryAction(ExecutionContext *context) {
-  context->control->heat(true, context);
+void Heating::entryAction() {
+  context->control->heat(true);
   context->op->heatingStartMillis = millis();
 }
 
-void Heating::exitAction(ExecutionContext *context){
-  context->control->heat(false, context);
+void Heating::exitAction(){
+  context->control->heat(false);
   context->op->heatingAccumulatedMillis += millis() - context->op->heatingStartMillis;
   context->op->heatingStartMillis = 0L;
 }
@@ -384,16 +361,13 @@ void Heating::exitAction(ExecutionContext *context){
 /*
  * OVERHEATED
  */
-StateEnum Overheated::id() {
-  return STATE_OVERHEATED;
+
+UserCommands Overheated::userCommands() {
+  return AbstractState::userCommands() | CMD_RESET;
 }
 
-UserCommands Overheated::userCommands(ExecutionContext *context) {
-  return AbstractState::userCommands(context) | CMD_RESET;
-}
-
-EventCandidates Overheated::eval(ExecutionContext *context) {
-  EventCandidates result = AbstractState::eval(context);
+EventCandidates Overheated::eval() {
+  EventCandidates result = AbstractState::eval();
   if (context->op->command->command == CMD_RESET) {
     result |= EVENT_RESET;
   }
@@ -403,14 +377,14 @@ EventCandidates Overheated::eval(ExecutionContext *context) {
   return result;
 }
 
-StateEnum Overheated::transAction(EventEnum event, ExecutionContext *context) {
+StateEnum Overheated::transAction(EventEnum event) {
   if (event == EVENT_RESET) {
     return STATE_STANDBY;
     
   } else if (event == EVENT_TEMP_OK) {
     return STATE_HEATING;
   }
-  return AbstractState::transAction(event, context);
+  return AbstractState::transAction(event);
 }
 
 /*
@@ -419,18 +393,18 @@ StateEnum Overheated::transAction(EventEnum event, ExecutionContext *context) {
 BoilerStateAutomaton::BoilerStateAutomaton(ExecutionContext *context) {
   this->context = context;
   
-  static Init INIT;
-  static Idle IDLE;
-  static SensorsNOK SENSORS_NOK;
-  static Standby STANDBY;
-  static Heating HEATING;
-  static Overheated OVERHEATED;
+  static Init INIT(context);
+  static Idle IDLE(context);
+  static SensorsNOK SENSORS_NOK(context);
+  static Standby STANDBY(context);
+  static Heating HEATING(context);
+  static Overheated OVERHEATED(context);
 
   static AbstractState *RECORDING_SUBSTATES[] = {&STANDBY, &HEATING, &OVERHEATED};
-  static Recording RECORDING(RECORDING_SUBSTATES, 3);
+  static Recording RECORDING(context, RECORDING_SUBSTATES, 3);
 
   static AbstractState *READY_SUBSTATES[] = {&IDLE, &RECORDING};
-  static Ready READY(READY_SUBSTATES, 2);
+  static Ready READY(context, READY_SUBSTATES, 2);
 
   ALL_STATES[STATE_INIT] = &INIT;
   ALL_STATES[STATE_SENSORS_NOK] = &SENSORS_NOK;
@@ -449,11 +423,11 @@ AbstractState *BoilerStateAutomaton::state() {
 }
   
 UserCommands BoilerStateAutomaton::userCommands() {
-  return currentState->userCommands(context);
+  return currentState->userCommands();
 }
   
 EventCandidates BoilerStateAutomaton::evaluate() {
-  return currentState->eval(context);
+  return currentState->eval();
 }
 
 void BoilerStateAutomaton::transition(EventEnum event) {
@@ -464,7 +438,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
     Serial.println(event, HEX);
   #endif
   StateEnum oldState = currentState->id();
-  StateEnum newState = currentState->trans(event, context);
+  StateEnum newState = currentState->trans(event);
   if (newState == STATE_UNDEFINED) {
     if ((event & currentState->illegalTransitionLogged) == 0) { // this illegal event has not been logged at this state
       #ifdef DEBUG_STATE
@@ -482,7 +456,7 @@ void BoilerStateAutomaton::transition(EventEnum event) {
     currentState = getState(newState);
     
     // Enter the new state (which can be a composite state but will always end up in a simple state):
-    newState = currentState->enter(context);
+    newState = currentState->enter();
     currentState = getState(newState);
     context->op->currentStateStartMillis = millis();
     

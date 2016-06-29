@@ -3,13 +3,15 @@
 
   #include "ui.h"
   
-  class SerialUI : public AbstractUI {
+  class SerialUI : public NullUI {
     public:
-      void setup(ControlContext *context);
+      SerialUI(ControlContext *context) : NullUI(context) { }
       
-      void readUserCommand(ControlContext *context);
+      void setup();
       
-      void processReadWriteRequests(ReadWriteRequests requests, ControlContext *context, BoilerStateAutomaton *automaton);
+      void readUserCommand();
+      
+      void processReadWriteRequests(ReadWriteRequests requests, BoilerStateAutomaton *automaton);
     
       void notifyStatusChange(StatusNotification notification);
     

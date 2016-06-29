@@ -64,11 +64,12 @@
     EVENT_GET_LOG      // 14
   };
     
-  /**
+  /*
    * The result of the evaluation of the operational parameters by a state.
    * Denotes all possible events that result from the evaluation by a state as or'ed ("|") together.
    */
   typedef uint16_t EventCandidates;
+  
 
   class ExecutionContext : public ControlContext {
     public:
@@ -82,8 +83,7 @@
    */
   class AbstractState {
     public:
-      
-      /**
+      /*
        * The containing state, or NULL if none.
        */
       AbstractState *containingState = NULL;
@@ -94,6 +94,13 @@
        * at this state for the lifetime of the state object.
        */
       EventCandidates illegalTransitionLogged = EVENT_NONE;
+
+      /*
+       * Constructor.
+       */
+      AbstractState(ExecutionContext *context) {
+        this->context = context;
+      }
 
       /*
        * The non-object ID of the state.
@@ -107,7 +114,7 @@
        * 
        * Returns CMD_NONE if there should be no user commands available at the time.
        */
-      virtual UserCommands userCommands(ExecutionContext *context);
+      virtual UserCommands userCommands();
 
       /*
        * Enters a state by invoking its entryAction() method, then triggers the enter() method of its initial substate (if any).
@@ -115,7 +122,7 @@
        * 
        * Returns the actual new state, which is always a simple state; if "this" is a composite state then the new state is its initial substate and so on.
        */
-      virtual StateEnum enter(ExecutionContext *context) = 0;
+      virtual StateEnum enter() = 0;
       
       /*
        * Checks every event condition and returns those events ready for transitioning at the time of invocation of this method. 
@@ -126,7 +133,7 @@
        * 
        * Returns TRANS_NONE if there should not be a state change.
        */
-      virtual EventCandidates eval(ExecutionContext *context);
+      virtual EventCandidates eval();
       
       /*
        * Handels the event and executes the transistion. If this state can't handle the event it delegates to the containing state's trans() method.
@@ -135,67 +142,73 @@
        * 
        * Returns STATE_UNDEFINED if event wasn't handled.
        */
-      virtual StateEnum trans(EventEnum event, ExecutionContext *context) = 0;
+      virtual StateEnum trans(EventEnum event) = 0;
      
       /*
        * Performes the exit tasks of "this", then invokes the containing state's exit method.
        * Note: exit methods are always invoked *up* the containment chain, i.e. simple state first, then its containing state(s).
        */
-      virtual void exit(EventEnum event, StateEnum next, ExecutionContext *context) = 0;
+      virtual void exit(EventEnum event, StateEnum next) = 0;
   
     protected:
+      /*
+       * "Connection" to the world outside the state.
+       */
+      ExecutionContext *context;
           
       /*
        * Executes the transition actions for this event (if any), calculates and returns the next state.
        * 
-       * Returns TRANS_NONE if event couldn't be handled at this level.
+       * Returns STATE_UNDEFINED if event couldn't be handled at this level.
        */
-      virtual StateEnum transAction(EventEnum event, ExecutionContext *context);
+      virtual StateEnum transAction(EventEnum event);
 
       /*
        * Executes the action(s) that are always performed when this state is entered.
        */
-      virtual void entryAction(ExecutionContext *context);
+      virtual void entryAction();
       
       /*
        * Executes the action(s) that are always performed when this state is truly exited.
        */
-      virtual void exitAction(ExecutionContext *context);
+      virtual void exitAction();
   };
 
 
   class AbstractSimpleState : public AbstractState {
     public:
-      virtual StateEnum enter(ExecutionContext *context);
+      AbstractSimpleState(ExecutionContext *context) : AbstractState(context) { };
+      
+      virtual StateEnum enter();
       
       /*
        * If the next state is different from "this" then the exit() method is invoked, which may directly trigger exit() at containing states.
        */
-      virtual StateEnum trans(EventEnum event, ExecutionContext *context);
+      virtual StateEnum trans(EventEnum event);
 
     protected:
-      virtual void exit(EventEnum event, StateEnum next, ExecutionContext *context);
+      virtual void exit(EventEnum event, StateEnum next);
   };
 
   
   class AbstractCompositeState : public AbstractState {
     public:
-      AbstractCompositeState(AbstractState **substates, uint16_t numSubstates);
+      AbstractCompositeState(ExecutionContext *context, AbstractState **substates, uint16_t numSubstates);
       
       AbstractState *initialSubstate();
       
-      virtual StateEnum enter(ExecutionContext *context);
+      virtual StateEnum enter();
       
       /*
        * Does not invoke the exit action (exits are triggered by simple states and are then performed "up" the containment hiearchy).
        */
-      virtual StateEnum trans(EventEnum event, ExecutionContext *context);
+      virtual StateEnum trans(EventEnum event);
       
     protected:
       /*
        * If the next state is a simple state not contained by "this" then the exitAction() method is invoked (else we won't leave "this").
        */      
-      virtual void exit(EventEnum event, StateEnum next, ExecutionContext *context);
+      virtual void exit(EventEnum event, StateEnum next);
       
     protected:   
       AbstractState **substates;
@@ -205,105 +218,111 @@
   
   class Init : public AbstractSimpleState {
     public:
-      StateEnum id();
+      Init(ExecutionContext *context) : AbstractSimpleState(context) { };
+      StateEnum id() { return STATE_INIT; }
       // No user commands for this state.
-      EventCandidates eval(ExecutionContext *context);
+      EventCandidates eval();
       
     protected:
-      StateEnum transAction(EventEnum event, ExecutionContext *context);
+      StateEnum transAction(EventEnum event);
   };
   
   
   class SensorsNOK : public AbstractSimpleState {
     public:
-      StateEnum id();
-      UserCommands userCommands(ExecutionContext *context);
-      EventCandidates eval(ExecutionContext *context);
+      SensorsNOK(ExecutionContext *context) : AbstractSimpleState(context) { };
+      StateEnum id() { return STATE_SENSORS_NOK; }
+      UserCommands userCommands();
+      EventCandidates eval();
       
     protected:
-      StateEnum transAction(EventEnum event, ExecutionContext *context);
+      StateEnum transAction(EventEnum event);
   };
 
   
   class Ready : public AbstractCompositeState {
     public:
-      Ready(AbstractState **substates, uint16_t numSubstates) : AbstractCompositeState(substates, numSubstates) { };
+      Ready(ExecutionContext *context, AbstractState **substates, uint16_t numSubstates) : AbstractCompositeState(context, substates, numSubstates) { };
       
-      StateEnum id();
-      UserCommands userCommands(ExecutionContext *context);
-      EventCandidates eval(ExecutionContext *context);
+      StateEnum id() { return STATE_READY; }
+      UserCommands userCommands();
+      EventCandidates eval();
       
     protected:
-      StateEnum transAction(EventEnum event, ExecutionContext *context);
+      StateEnum transAction(EventEnum event);
   };
 
   
   class Idle : public AbstractSimpleState {
     public:
-      StateEnum id();
-      UserCommands userCommands(ExecutionContext *context);
-      EventCandidates eval(ExecutionContext *context);
+      Idle(ExecutionContext *context) : AbstractSimpleState(context) { };
+      StateEnum id() { return STATE_IDLE; }
+      UserCommands userCommands();
+      EventCandidates eval();
       
     protected:
-      StateEnum transAction(EventEnum event, ExecutionContext *context);
+      StateEnum transAction(EventEnum event);
   };
 
   
   class Recording : public AbstractCompositeState {
     public:
-      Recording(AbstractState **substates, uint16_t numSubstates) : AbstractCompositeState(substates, numSubstates) { };
+      Recording(ExecutionContext *context, AbstractState **substates, uint16_t numSubstates) : AbstractCompositeState(context, substates, numSubstates) { };
       
-      StateEnum id();
-      UserCommands userCommands(ExecutionContext *context);
-      EventCandidates eval(ExecutionContext *context);
+      StateEnum id() { return STATE_RECORDING; }
+      UserCommands userCommands();
+      EventCandidates eval();
       
     protected:
-      StateEnum transAction(EventEnum event, ExecutionContext *context);
+      StateEnum transAction(EventEnum event);
       
       /*
        * Turn value logging ON (entry) / OFF (exit)
        */
-      void entryAction(ExecutionContext *context);
-      void exitAction(ExecutionContext *context);
+      void entryAction();
+      void exitAction();
   };
 
   
   class Standby : public AbstractSimpleState {
     public:
-      StateEnum id();
-      UserCommands userCommands(ExecutionContext *context);
-      EventCandidates eval(ExecutionContext *context);
+      Standby(ExecutionContext *context) : AbstractSimpleState(context) { };
+      StateEnum id() { return STATE_STANDBY; }
+      UserCommands userCommands();
+      EventCandidates eval();
       
     protected:
-      StateEnum transAction(EventEnum event, ExecutionContext *context);
+      StateEnum transAction(EventEnum event);
   };
 
   
   class Heating : public AbstractSimpleState {
     public:
-      StateEnum id();
-      UserCommands userCommands(ExecutionContext *context);
-      EventCandidates eval(ExecutionContext *context);
+      Heating(ExecutionContext *context) : AbstractSimpleState(context) { };
+      StateEnum id() { return STATE_HEATING; }
+      UserCommands userCommands();
+      EventCandidates eval();
       
     protected:
-      StateEnum transAction(EventEnum event, ExecutionContext *context);
+      StateEnum transAction(EventEnum event);
       
       /*
        * Turn heater ON (entry) / OFF (exit)
        */
-      void entryAction(ExecutionContext *context);
-      void exitAction(ExecutionContext *context);
+      void entryAction();
+      void exitAction();
   };
 
   
   class Overheated : public AbstractSimpleState {
     public:
-      StateEnum id();
-      UserCommands userCommands(ExecutionContext *context);
-      EventCandidates eval(ExecutionContext *context);
+      Overheated(ExecutionContext *context) : AbstractSimpleState(context) { };
+      StateEnum id() { return STATE_OVERHEATED; }
+      UserCommands userCommands();
+      EventCandidates eval();
       
     protected:
-      StateEnum transAction(EventEnum event, ExecutionContext *context);
+      StateEnum transAction(EventEnum event);
   };
 
   

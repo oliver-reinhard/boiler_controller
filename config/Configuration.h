@@ -23,13 +23,13 @@
    * initialized with your own default values (you need to implement initParams() for that). 
    * Then these new values are stored.
    */
-  class AbstractConfiguration {
+  class AbstractConfigParams {
 
     public:
       /*
        * @param eepromOffset number of bytes this object's storage is offset from the first byte of the EEPROM store.
        */
-      AbstractConfiguration(const uint16_t eepromOffset);
+      AbstractConfigParams(const uint16_t eepromOffset);
       
       /*
        * Returns the version identifier.
@@ -58,9 +58,14 @@
       void print();
       
       /*
-       * Dynamic version of sizeof(); works for subclasses, too.
+       * Dynamic version of sizeof() (object size in memory); works for subclasses, too.
        */
-      virtual uint16_t size() = 0;
+      virtual uint16_t memSize() = 0;
+      
+      /*
+       * Size on EEPROM.
+       */
+      uint16_t eepromSize();
 
    protected:
       /*
@@ -69,7 +74,7 @@
       uint16_t eepromOffset;
       
       /*
-       * Reads and returns the ConfigParams structure from the EEPROM. No initialisation of values is performed.
+       * Reads the configuration values (and only these) from the EEPROM. No initialisation of values is performed.
        */
       void readParams();
       

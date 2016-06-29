@@ -23,25 +23,15 @@ void loop() {
 #define BLOB_BASE_VALUE 222
 #define BLOB_NEW_VALUE  111
 
-class TestConfiguration : public AbstractConfiguration {
+class TestConfigParams : public AbstractConfigParams {
   public:
-    TestConfiguration() : AbstractConfiguration(EEPROM_OFFSET) { };
+    TestConfigParams() : AbstractConfigParams(EEPROM_OFFSET) { };
 
     // Actual configuration parameters:
     // (public for test verification purposes)
     byte blob[TEST_DATA_LENGTH];
 
-    byte getBlob(uint16_t index) {
-      return blob[index];
-    }
-
-    void setBlob(uint16_t index, byte value) {
-      blob[index] = value;
-    }
-
-    uint16_t size() {
-      return sizeof(*this);
-    };
+    uint16_t memSize() { return sizeof(*this); };
     
     void initParams(boolean &updated) {
       updated = false;
@@ -56,7 +46,9 @@ class TestConfiguration : public AbstractConfiguration {
 
 
 test(config) {
-  TestConfiguration config = TestConfiguration();
+  TestConfigParams config = TestConfigParams();
+  assertEqual(config.memSize(), sizeof(TestConfigParams));
+  assertEqual(config.eepromSize(), sizeof(LayoutVersion) + TEST_DATA_LENGTH);
   
   config.clear();
   assertEqual(config.version(), 0);
@@ -71,18 +63,18 @@ test(config) {
   uint16_t index = TEST_DATA_LENGTH-1;
   assertEqual(config.blob[index], BLOB_BASE_VALUE + index); 
   
-  config.setBlob(index, BLOB_NEW_VALUE);
+  config.blob[index] = BLOB_NEW_VALUE;
   config.save();
   
-  TestConfiguration config2 = TestConfiguration();
+  TestConfigParams config2 = TestConfigParams();
   config2.load();
   assertEqual(config2.version(), EEPROM_LAYOUT_VERSION);
-  assertEqual(config2.getBlob(0), BLOB_BASE_VALUE);
-  assertEqual(config2.getBlob(index), BLOB_NEW_VALUE);
+  assertEqual(config2.blob[0], BLOB_BASE_VALUE);
+  assertEqual(config2.blob[index], BLOB_NEW_VALUE);
   
   config2.clear();
   assertEqual(config2.version(), 0L);
-  assertEqual(config2.getBlob(0), 0);
-  assertEqual(config2.getBlob(index), 0);
+  assertEqual(config2.blob[0], 0);
+  assertEqual(config2.blob[index], 0);
 }
 
