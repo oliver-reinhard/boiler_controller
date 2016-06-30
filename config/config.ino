@@ -1,5 +1,4 @@
-#line 2 "config.ino"
-#include "ArduinoUnit.h"
+#include <ArduinoUnit.h>
 #include "Configuration.h"
 
 //#define DEBUG_UT_CONFIG
@@ -45,7 +44,7 @@ class TestConfigParams : public AbstractConfigParams {
 };
 
 
-test(config) {
+test(configuration) {
   TestConfigParams config = TestConfigParams();
   assertEqual(config.memSize(), sizeof(TestConfigParams));
   assertEqual(config.eepromSize(), sizeof(LayoutVersion) + TEST_DATA_LENGTH);

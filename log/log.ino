@@ -1,4 +1,3 @@
-#line 2 "log.ino"
 #include <ArduinoUnit.h>
 
 #define UNIT_TEST
@@ -64,7 +63,7 @@ Timestamp TestLog::logValues(int16_t value) {
 }
 
 
-test(log_timestamp) {
+test(a_log_timestamp) {
   // ensure this test is not run within the first second of Arduino board time:
   delay(1000);
   uint32_t ms = millis();
@@ -103,7 +102,7 @@ test(log_timestamp) {
 }
 
 
-test(log_ring_buffer) {
+test(b_log_ring_buffer) {
   TestLog logging = TestLog();
 
   logging.clear();
@@ -144,7 +143,7 @@ test(log_ring_buffer) {
   assertEqual(logging.logHeadIndex, 2);
 }
 
-test(log_init) {
+test(c_log_init) {
   TestLog logging = TestLog();
 
   // Test initialisation:
@@ -184,7 +183,7 @@ test(log_init) {
   assertEqual(logging.logHeadIndex, 2);
 }
 
-test(log_reader_unnotified) {
+test(d_log_reader_unnotified) {
   TestLog logging = TestLog();
 
   logging.clear(); // creates a first log entry
@@ -226,7 +225,7 @@ test(log_reader_unnotified) {
   assertEqual(lvd3.value, 3200);
 }
 
-test(log_reader_most_recent) {
+test(e_log_reader_most_recent) {
   TestLog logging = TestLog();
 
   logging.clear(); // creates a first log entry
