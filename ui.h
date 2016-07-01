@@ -29,7 +29,7 @@
        */
       virtual void readUserCommand() { }
       
-      virtual void processReadWriteRequests(ReadWriteRequests, BoilerStateAutomaton) {  }
+      virtual void processReadWriteRequests(ReadWriteRequests, BoilerStateAutomaton *) {  }
     
       virtual void notifyStatusChange(StatusNotification) { }
     

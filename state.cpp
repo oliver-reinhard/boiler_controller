@@ -119,7 +119,9 @@ EventCandidates Init::eval() {
   EventCandidates result = AbstractState::eval();
   if (context->op->water.sensorStatus == SENSOR_NOK 
     || context->op->water.sensorStatus == SENSOR_ID_UNDEFINED
-    || context->op->ambient.sensorStatus == SENSOR_ID_UNDEFINED) {
+    || context->op->water.sensorStatus == SENSOR_ID_AUTO_ASSIGNED
+    || context->op->ambient.sensorStatus == SENSOR_ID_UNDEFINED
+    || context->op->ambient.sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
     result |= EVENT_SENSORS_NOK;
   } else if (context->op->water.sensorStatus == SENSOR_OK) {
     result |= EVENT_READY;

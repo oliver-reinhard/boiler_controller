@@ -1,5 +1,5 @@
-#ifndef UT_ONEWIRESENSORS_H_INCLUDED
-  #define UT_ONEWIRESENSORS_H_INCLUDED
+#ifndef UT_MOCKONEWIRE_H_INCLUDED
+  #define UT_MOCKONEWIRE_H_INCLUDED
   
   #include <OneWire.h>
 
@@ -12,11 +12,6 @@
   class MockOneWire : public OneWire{
     public:
       MockOneWire(uint8_t pin) : OneWire(pin) { }
-      
-      //uint8_t reset(void) { return 0; }      
-      //void select(const uint8_t rom[TEMP_SENSOR_ID_BYTES]) { if(rom == 0) { } }      
-      //void skip(void) { }
-      //void write(uint8_t v, uint8_t power = 0) { if (v==0 || power == 0) { } }
  
       void _setSearchResults(uint8_t *addr, uint8_t len) {
         searchResult = addr;
@@ -32,6 +27,11 @@
         #endif
       }
       
+
+      /* 
+       *  Override.
+       *  NOTE: Ensure that the declaration in OneWire.h has "virtual" inserted.
+       */
       uint8_t search(uint8_t *newAddr, bool) {
         if (searchResultIndex >= searchResultLen) {
           return 0;
@@ -46,6 +46,11 @@
         return 1;
       }
       
+      
+      /* 
+       *  Override.
+       *  NOTE: Ensure that the declaration in OneWire.h has "virtual" inserted.
+       */
       void reset_search() {
         searchResultIndex = 0;
       }
@@ -58,6 +63,11 @@
         readIndex = 0;
       }
       
+      
+      /* 
+       *  Override.
+       *  NOTE: Ensure that the declaration in OneWire.h has "virtual" inserted.
+       */
       uint8_t read(void) { 
         if (readIndex >= readResultLen * TEMP_SENSOR_READOUT_BYTES) {
           return 0;

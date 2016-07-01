@@ -1,7 +1,4 @@
 #include "bc_setup.h"
-#ifdef UNIT_TEST
-  #include <ArduinoUnit.h>
-#endif
 #include "math.h"
 #include "control.h"
 #include "state.h"
@@ -10,6 +7,8 @@
   #include "ui_ser.h"
 #elif defined BLE_UI
   #include "ui_ble.h"
+#elif defined UNIT_TEST
+  #include <ArduinoUnit.h>
 #endif
 
 //#define DEBUG_MAIN
@@ -31,9 +30,13 @@ typedef enum {
 /*
  * GLOBALS
  */
-ConfigParams config = ConfigParams();
-Log logger = Log(sizeof(ConfigParams)); 
+ConfigParams configParams = ConfigParams();
+Log logger = Log(configParams.eepromSize()); 
 OperationalParams opParams;
+DS18B20TemperatureSensor *sensors[] = {&opParams.water, &opParams.ambient};
+OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor to +5V is necessary)
+DS18B20Controller controller = DS18B20Controller(&oneWire, sensors, 2);
+
 ExecutionContext context;
 ControlActions controlActions = ControlActions(&context);
 BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
@@ -60,11 +63,12 @@ void setup() {
   #else
     logger.init();
     logger.logMessage(MSG_SYSTEM_INIT, 0, 0);
-    config.load(); 
+    configParams.load(); 
 
     context.log = &logger;
-    context.config = &config;
+    context.config = &configParams;
     context.op = &opParams;
+    context.controller = &controller;
     context.control = &controlActions;
 
     pinMode(HEATER_PIN, OUTPUT);

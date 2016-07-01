@@ -1,5 +1,5 @@
-#ifndef BOILER_UI_BLE_H_INCLUDED
-  #define BOILER_UI_BLE_H_INCLUDED
+#ifndef BC_UI_BLE_H_INCLUDED
+  #define BC_UI_BLE_H_INCLUDED
 
   #include "ui.h"
   

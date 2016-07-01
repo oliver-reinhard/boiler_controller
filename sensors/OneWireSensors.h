@@ -10,8 +10,6 @@
   #define TEMP_SENSOR_ID_BYTES 8
   typedef uint8_t TempSensorID[TEMP_SENSOR_ID_BYTES];
   const TempSensorID UNDEFINED_SENSOR_ID = {0,0,0,0,0,0,0,0};
-
-  boolean isUndefinedTempSensorID(TempSensorID addr);
   
   /*
    * Number of bytes of data vector returned by the DS18B20: 8 byte data + 1 byte CRC
@@ -67,6 +65,13 @@
        * Returns true if the ID of this sensor is UNDEFINED_SENSOR_ID, i.e. this object does represent a physical sensor.
        */
       boolean idUndefined() {
+        return idUndefined(this->id);
+      }
+
+      /*
+       * Returns true if the given is UNDEFINED_SENSOR_ID.
+       */
+      static boolean idUndefined(const TempSensorID id) {
         return ! memcmp(id, UNDEFINED_SENSOR_ID, TEMP_SENSOR_ID_BYTES);
       }
   };

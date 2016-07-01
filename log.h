@@ -1,5 +1,5 @@
-#ifndef BOILER_LOG_H_INCLUDED
-  #define BOILER_LOG_H_INCLUDED
+#ifndef BC_LOG_H_INCLUDED
+  #define BC_LOG_H_INCLUDED
 
   #include "config.h"
   #include "log/Logging.h"

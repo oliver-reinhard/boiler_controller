@@ -82,7 +82,7 @@ Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_
   */
   /* Characteristic ID for Measurement should be 1 */
   Serial.println(F("Adding Status characteristic (UUID = 0x2A37): "));
-  uint16_t structSize = sizeof(StatusNotification);
+  //uint16_t structSize = sizeof(StatusNotification);
   success = ble.sendCommandWithIntReply( F("AT+GATTADDCHAR=UUID=0x2A37, PROPERTIES=0x10, MIN_LEN=2, MAX_LEN=3, VALUE=00-40"), &statusCharacteristicId);
   if (! success) {
     error(F("Could not add Status characteristic"));

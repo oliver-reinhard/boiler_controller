@@ -1,5 +1,5 @@
-#ifndef BOILER_STATE_H_INCLUDED
-  #define BOILER_STATE_H_INCLUDED
+#ifndef BC_STATE_H_INCLUDED
+  #define BC_STATE_H_INCLUDED
   
   #include "control.h"
   

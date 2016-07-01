@@ -1,8 +1,7 @@
-#ifndef BOILER_CONTROL_H_INCLUDED
-  #define BOILER_CONTROL_H_INCLUDED
+#ifndef BC_CONTROL_H_INCLUDED
+  #define BC_CONTROL_H_INCLUDED
   
   #include "bc_setup.h"
-  #include <OneWire.h>
   #include "config.h"
   #include "log.h"
 
@@ -10,10 +9,20 @@
   #define ONE_WIRE_PIN 10 // Temperature sensors
 
   typedef enum {
-    MSG_WATER_TEMP_SENSOR_ID_UNDEF = 20,  // Sensor ID of water-temperature sensor has not been configured. Configure and restart.
-    MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF = 21  // Sensor ID of ambient-temperature sensor has not been configured. Configure and restart.
+    MSG_WATER_TEMP_SENSOR_ID_UNDEF = 20,   // Sensor ID of water-temperature sensor could not be obtained. Check wiring and sensor, then restart.
+    MSG_WATER_TEMP_SENSOR_ID_AUTO =  21,   // Sensor ID of water-temperature sensor was assigned automatically. Confirm that it refers to the correct sensor, then restart.
+    MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF = 22, // Sensor ID of ambient-temperature sensor could not be obtained. Check wiring and sensor, then restart.
+    MSG_AMBIENT_TEMP_SENSOR_ID_AUTO =  23  // Sensor ID of ambient-temperature sensor was assigned automatically. Confirm that it refers to the correct sensor, then restart.
   } ControlMessageEnum;
 
+
+  // Water min and max values used to check that sensor-temperature readout is plausible:
+  #define WATER_MIN_TEMP -2000 // [°C * 100]
+  #define WATER_MAX_TEMP 10000 // [°C * 100]
+  
+  // Water min and max values used to check that ambient-temperature readout is plausible:
+  #define AMBIENT_MIN_TEMP -3000 // [°C * 100]
+  #define AMBIENT_MAX_TEMP 5000 // [°C * 100]
   
   #define CMD_ARG_BUF_SIZE 30   // Size of the read buffer for incoming data
   
@@ -48,22 +57,6 @@
   // bitwise OR combination ("|") of ReadWriteRequestEnum(s)
   typedef uint8_t ReadWriteRequests;
 
-  typedef enum {
-    SENSOR_INITIALISING = 0,
-    SENSOR_OK = 1,
-    SENSOR_NOK = 2,
-    SENSOR_ID_UNDEFINED = 3
-  } SensorStatusEnum;
-
-  typedef uint8_t SensorStatusID;
-  
-  struct TemperatureSensor {
-    SensorStatusEnum sensorStatus = SENSOR_INITIALISING;
-    Temperature currentTemp = UNDEFINED_TEMPERATURE;
-    Temperature lastLoggedTemp = UNDEFINED_TEMPERATURE;
-    uint32_t lastLoggedTime = 0L;
-  };
-
   struct UserCommand {
     UserCommandEnum command = CMD_NONE;
     char args[CMD_ARG_BUF_SIZE]; // always '\0' terminated
@@ -72,8 +65,8 @@
   struct OperationalParams {
     // timepoint [ms] of most recent transition to current state:
     uint32_t currentStateStartMillis = 0L;
-    TemperatureSensor water;
-    TemperatureSensor ambient;
+    DS18B20TemperatureSensor water = DS18B20TemperatureSensor("Water");
+    DS18B20TemperatureSensor ambient = DS18B20TemperatureSensor("Ambient");
     UserCommand *command;
     boolean heating = false;
     // time [ms] of most recent transition to state HEATING:
@@ -93,6 +86,7 @@
       Log *log;
       ConfigParams *config;
       OperationalParams *op;
+      DS18B20Controller *controller;
   };
 
   /*
@@ -105,7 +99,7 @@
       ControlActions(ControlContext *context) {
         this->context = context;
       }
-      virtual void setupSensors();
+      virtual uint8_t setupSensors();
       virtual void initSensorReadout();
       virtual void completeSensorReadout();
 
@@ -124,7 +118,6 @@
       
     protected:
       ControlContext *context;
-      OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor to +5V is necessary)
       ReadWriteRequests pendingRequests = READ_WRITE_NONE;
   };
   

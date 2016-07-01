@@ -285,17 +285,19 @@ String getUserCommandName(UserCommandEnum literal) {
  * SENSOR STATUS
  */
 const char STR_SENSOR_INITIALISING[] PROGMEM = "Init";
+const char STR_SENSOR_ID_AUTO_ASSIGNED[] PROGMEM = "Auto ID";
+const char STR_SENSOR_ID_UNDEFINED[] PROGMEM = "No ID";
 const char STR_SENSOR_OK[] PROGMEM = "OK";
 const char STR_SENSOR_NOK[] PROGMEM = "NOK";
-const char STR_SENSOR_ID_UNDEFINED[] PROGMEM = "No ID";
 const char STR_SENSOR_UNDEF[] PROGMEM = "Undefined Sensor Status";
     
 PGM_P getSensorStatusNamePtr(SensorStatusEnum literal) {
   switch(literal) {
-    case SENSOR_INITIALISING: return STR_SENSOR_INITIALISING;
-    case SENSOR_OK: return STR_SENSOR_OK;
+    case SENSOR_INITIALISING:     return STR_SENSOR_INITIALISING;
+    case SENSOR_ID_AUTO_ASSIGNED: return STR_SENSOR_ID_AUTO_ASSIGNED;
+    case SENSOR_ID_UNDEFINED:     return STR_SENSOR_ID_UNDEFINED;
+    case SENSOR_OK:  return STR_SENSOR_OK;
     case SENSOR_NOK: return STR_SENSOR_NOK;
-    case SENSOR_ID_UNDEFINED: return STR_SENSOR_ID_UNDEFINED;
     default: return STR_SENSOR_UNDEF;
   }
 }
@@ -312,7 +314,7 @@ String getSensorStatusName(SensorStatusEnum literal) {
 UserCommandEnum parseUserCommand(char buf[], uint8_t bufSize) {
   switch (bufSize) {
     case 1:
-      if (!strcmp_P(buf, "?")) {
+      if (!strcmp(buf, "?")) {
         return CMD_HELP;
       } 
       break;
@@ -611,13 +613,11 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, BoilerStateA
 }
 
   
-void SerialUI::notifyStatusChange(StatusNotification notification) {
-  if (notification.timeInState == 0L) { } // prevent 'unused parameter' warning
+void SerialUI::notifyStatusChange(StatusNotification) {
   Serial.println(F("* status notification"));
 }
 
-void SerialUI::notifyNewLogEntry(LogEntry entry) {
-  if (entry.timestamp != UNDEFINED_TIMESTAMP) { } // prevent 'unused parameter' warning
+void SerialUI::notifyNewLogEntry(LogEntry) {
   Serial.println(F("* new log entry"));
 }
 

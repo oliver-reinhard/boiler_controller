@@ -12,7 +12,7 @@
         MockControlActions(ControlContext *context) : ControlActions(context) { }
         
         // Mocked methods:
-        void setupSensors() { }
+        uint8_t setupSensors() { return 0; }
         void initSensorReadout() { }
         void completeSensorReadout() { }
     

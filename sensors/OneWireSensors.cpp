@@ -17,10 +17,6 @@
  */
 #define DATA_CONFIG_BYTE  4
 
-boolean isUndefinedTempSensorID(TempSensorID addr) {
-  return ! memcmp(addr, UNDEFINED_SENSOR_ID, TEMP_SENSOR_ID_BYTES);
-}
-
 uint8_t DS18B20Controller::setupSensors() {
   for(uint8_t i=0; i<numSensors; i++) {
     if(sensors[i]->idUndefined()) {

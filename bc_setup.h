@@ -1,8 +1,8 @@
-#ifndef BOILER_BC_SETUP_H_INCLUDED
-  #define BOILER_BC_SETUP_H_INCLUDED
+#ifndef BC_SETUP_H_INCLUDED
+  #define BC_SETUP_H_INCLUDED
   
-  // Uncomment ONE (!) of the following lines:
-     #define UNIT_TEST
+  // Uncomment AT MOST ONE (!) of the following lines:
+    // #define UNIT_TEST
     // #define BLE_UI
     // #define SERIAL_UI
   

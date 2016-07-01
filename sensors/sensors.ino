@@ -69,11 +69,17 @@ test(a_sensor_setup) {
     oneWire._setSearchResults((uint8_t *) SENSOR_IDS, 2);
   #endif
   uint8_t matched = controller.setupSensors();
+  #ifndef MOCK_ONE_WIRE
+    if (matched < 2) }
+      Serial.println(F("Cannot access one or more physical sensors -> check wiring."));
+    }
+  #endif
   assertEqual(matched, 2);
   assertEqual(s1.sensorStatus, SENSOR_ID_AUTO_ASSIGNED);
   assertEqual(s2.sensorStatus, SENSOR_ID_AUTO_ASSIGNED);
   assertEqual(s3.sensorStatus, SENSOR_ID_UNDEFINED);
   #ifdef MOCK_ONE_WIRE
+    // check that the sensor IDs were "recognized" (mocking) correctly:
     assertTrue(! memcmp(s1.id, SENSOR_IDS[0], TEMP_SENSOR_ID_BYTES));
     assertTrue(! memcmp(s2.id, SENSOR_IDS[1], TEMP_SENSOR_ID_BYTES));
   #else

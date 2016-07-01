@@ -1,24 +1,8 @@
-#ifndef BOILER_CONFIG_H_INCLUDED
-  #define BOILER_CONFIG_H_INCLUDED
+#ifndef BC_CONFIG_H_INCLUDED
+  #define BC_CONFIG_H_INCLUDED
   
   #include "config/Configuration.h"
-
-  /*
-  typedef int16_t Temperature;  // [°C * 100]
-  #define UNDEFINED_TEMPERATURE -10000 // [°C * 100];
-
-  #define TEMP_SENSOR_ID_BYTES 8
-  typedef uint8_t TempSensorID[TEMP_SENSOR_ID_BYTES];
-  const TempSensorID UNDEFINED_SENSOR_ID = {0,0,0,0,0,0,0,0};
-
-  */
-  // Water min and max values used to check that sensor-temperature readout is plausible:
-  #define WATER_MIN_TEMP -2000 // [°C * 100]
-  #define WATER_MAX_TEMP 10000 // [°C * 100]
-  
-  // Water min and max values used to check that ambient-temperature readout is plausible:
-  #define AMBIENT_MIN_TEMP -3000 // [°C * 100]
-  #define AMBIENT_MAX_TEMP 5000 // [°C * 100]
+  #include "sensors/OneWireSensors.h"
   
   /*
    * ID values are defined by ConfigParamEnum.
