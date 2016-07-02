@@ -1,4 +1,4 @@
-#include <string.h>
+//#include <string.h>
 #include "ui_ser.h"
 #include "config.h"
 
@@ -6,6 +6,10 @@
 const char COMMAND_CHARS[] = " abcdefghijklmnopqrstuvwxyz"; // includes blank (first char)
 const char INT_CHARS[] = "0123456789"; 
 const char SENSOR_ID_CHARS[] = "0123456789abcdef-"; // includes dash
+
+const char STR_CONFIG_SENSOR_ID_SWAP[] PROGMEM = "swap";
+const char STR_CONFIG_SENSOR_ID_CLR[]  PROGMEM = "clr";
+const char STR_CONFIG_SENSOR_ID_ACK[]  PROGMEM = "ack";
 
 //#define DEBUG_UI
 
@@ -48,13 +52,13 @@ String getConfigParamName(ConfigParamEnum literal) {
 
 String formatFloat(float f) {
   char s[20];
-  dtostrf((double)f, 6, 2, &s[0]); 
+  dtostrf((double)f, 6, 2, s); 
   return s;
 }
 
 String formatInt(uint16_t i) {
   char s[20];
-  utoa(i, &s[0], 10);
+  utoa(i, s, 10);
   return s;
 }
 
@@ -85,6 +89,7 @@ String getConfigParamValue(ConfigParams *all, ConfigParamEnum p) {
   }
 }
 
+/*
 boolean parseTempSensorID(char *value, uint8_t *id) {
   uint8_t len = strspn(value, SENSOR_ID_CHARS);
   #ifdef DEBUG_UI
@@ -106,24 +111,25 @@ boolean parseTempSensorID(char *value, uint8_t *id) {
     return false;
   }
 }
+*/
 
-boolean setConfigParamValue(ControlContext *context, ConfigParamEnum p, char *value) {
+boolean setConfigParamValue(ExecutionContext *context, ConfigParamEnum p, char *value) {
   switch(p) {
     case PARAM_TARGET_TEMP: 
       context->config->targetTemp = atoi(value);
       context->log->logConfigParam(p, (float) context->config->targetTemp);
       return true;
     case PARAM_WATER_TEMP_SENSOR_ID:
-      if (parseTempSensorID(value, context->config->waterTempSensorId)) {
-        context->log->logConfigParam(p, 0.0);
-        return true;
-      }
-      return false;
     case PARAM_AMBIENT_TEMP_SENSOR_ID:
-      if (parseTempSensorID(value, context->config->ambientTempSensorId)) {
-        context->log->logConfigParam(p, 0.0);
+      if (!strcmp_P(value, STR_CONFIG_SENSOR_ID_SWAP)) {
+        context->control->swapTempSensorIDs();
         return true;
-      }
+      } else if (!strcmp_P(value, STR_CONFIG_SENSOR_ID_CLR)) {
+        context->control->clearTempSensorIDs();
+        return true;
+      } else if (!strcmp_P(value, STR_CONFIG_SENSOR_ID_ACK)) {
+        return context->control->confirmTempSensorIDs();
+      } 
       return false;
     case PARAM_HEATER_CUT_OUT_WATER_TEMP: 
       context->config->heaterCutOutWaterTemp = atoi(value);
@@ -438,6 +444,7 @@ void SerialUI::readUserCommand() {
 }
 
 void printLogEntry(LogEntry *e) {
+
   Serial.print(formatTimestamp(e->timestamp));
   Serial.print("  ");
   LogDataTypeEnum type = (LogDataTypeEnum)e->type;
@@ -531,7 +538,7 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, BoilerStateA
     
     Serial.print(F("Water:   "));
     Serial.print(getSensorStatusName(context->op->water.sensorStatus));
-    if (context->op->water.sensorStatus == SENSOR_OK) {
+    if (context->op->water.sensorStatus == SENSOR_OK  || context->op->water.sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
       Serial.print(F(", "));
       Serial.print(formatTemperature(context->op->water.currentTemp));
     }
@@ -539,7 +546,7 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, BoilerStateA
     
     Serial.print(F("Ambient: "));
     Serial.print(getSensorStatusName(context->op->ambient.sensorStatus));
-    if (context->op->ambient.sensorStatus == SENSOR_OK) {
+    if (context->op->ambient.sensorStatus == SENSOR_OK || context->op->ambient.sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
       Serial.print(F(", "));
       Serial.print(formatTemperature(context->op->ambient.currentTemp));
     }

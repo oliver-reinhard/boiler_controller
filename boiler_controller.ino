@@ -187,7 +187,7 @@ void logTemperatureValues(ControlContext *context) {
       }
       
       if (logValuesNow) {
-        Flags flags = context->op->water.sensorStatus<<4 | context->op->ambient.sensorStatus;
+        Flags flags = (context->op->water.sensorStatus<<4) | (context->op->ambient.sensorStatus);
         context->log->logValues(context->op->water.currentTemp, context->op->ambient.currentTemp, flags);
         context->op->water.lastLoggedTemp = water;
         context->op->water.lastLoggedTime = time;

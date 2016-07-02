@@ -104,8 +104,8 @@ test(b_single_sensor_readout) {
   uint8_t matched = controller.setupSensors();
   assertEqual(matched, 1);
   assertEqual(s1.sensorStatus, SENSOR_ID_AUTO_ASSIGNED);
-  // manually confirm auto-assigned:
-  s1.sensorStatus = SENSOR_OK;
+  // manually confirm auto-assigned ID:
+  s1.confirmId();
   
   #ifdef MOCK_ONE_WIRE
     const int16_t temperatures100_1[] = {2300};
@@ -164,8 +164,8 @@ test(c_twin_sensor_readout) {
   uint8_t matched = controller.setupSensors();
   assertEqual(matched, 2);
   assertEqual(s1.sensorStatus, SENSOR_ID_AUTO_ASSIGNED);
-  // manually confirm auto-assigned s1 but not s2:
-  s1.sensorStatus = SENSOR_OK;
+  // manually confirm auto-assigned ID for s1 but not for s2:
+  s1.confirmId();
   
   #ifdef MOCK_ONE_WIRE
     const int16_t temperatures100_1[] = {2300, 2400};

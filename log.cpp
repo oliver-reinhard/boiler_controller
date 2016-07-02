@@ -40,7 +40,7 @@ Timestamp Log::logState(StateID previous, StateID current, EventID event) {
   data.previous = previous;
   data.current = current;
   data.event = event;
-  LogEntry e = addLogEntry(LOG_DATA_TYPE_VALUES, (LogData *) &data);
+  LogEntry e = addLogEntry(LOG_DATA_TYPE_STATE, (LogData *) &data);
   #ifdef DEBUG_LOG
     Serial.println(F("DEBUG_LOG: logState(..)"));
   #endif
@@ -54,7 +54,7 @@ Timestamp Log::logConfigParam(ConfigParamID id, float newValue) {
   LogConfigParamData data;
   data.id = id;
   data.newValue = newValue;
-  LogEntry e = addLogEntry(LOG_DATA_TYPE_VALUES, (LogData *) &data);
+  LogEntry e = addLogEntry(LOG_DATA_TYPE_CONFIG, (LogData *) &data);
   #ifdef DEBUG_LOG
     Serial.println(F("DEBUG_LOG: logConfigParam(..)"));
   #endif

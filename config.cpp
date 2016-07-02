@@ -1,5 +1,11 @@
 #include "config.h"
 
+
+void ConfigParams::setTempSensorIDs(TempSensorID water, TempSensorID ambient) {
+  memcpy(this->waterTempSensorId, water, TEMP_SENSOR_ID_BYTES);
+  memcpy(this->ambientTempSensorId, ambient, TEMP_SENSOR_ID_BYTES);
+}
+
 void ConfigParams::initParams(boolean &updated) {
   updated = false;
   

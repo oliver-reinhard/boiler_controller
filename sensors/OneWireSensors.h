@@ -21,10 +21,10 @@
    */
   typedef enum {
     SENSOR_INITIALISING = 1,
-    SENSOR_OK = 2,               // temperature value is defined and within the given range
-    SENSOR_NOK = 3,              // temperature value could not be obtained or is outside the given range
-    SENSOR_ID_UNDEFINED = 4,     // no physical sensor could be found for the logical sensor
-    SENSOR_ID_AUTO_ASSIGNED = 5  // a physical sensor was assigned to the logical sensor but it may not correspond to the intended sensor
+    SENSOR_ID_AUTO_ASSIGNED = 2, // a physical sensor was assigned to the logical sensor but it may not correspond to the intended sensor
+    SENSOR_ID_UNDEFINED = 3,     // no physical sensor could be found for the logical sensor
+    SENSOR_OK = 4,               // temperature value is defined and within the given range
+    SENSOR_NOK = 5               // temperature value could not be obtained or is outside the given range
   } SensorStatusEnum;
 
   typedef uint8_t SensorStatusID;
@@ -73,6 +73,19 @@
        */
       static boolean idUndefined(const TempSensorID id) {
         return ! memcmp(id, UNDEFINED_SENSOR_ID, TEMP_SENSOR_ID_BYTES);
+      }
+
+      /*
+       * Sets the sensor status to SENSOR_OK iff it is SENSOR_ID_AUTO_ASSIGNED.
+       * 
+       * @return true if status was changed.
+       */
+      boolean confirmId() {
+        if (sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
+          sensorStatus = SENSOR_OK;
+          return true;
+        }
+        return false;
       }
   };
   

@@ -52,9 +52,13 @@
       float heaterPower;  // [Watts]
       float insulationFactor; // correction factor to model tank insulation charactericstis
       uint8_t  reserved[32];  // for future use
-  
+
+      void setTempSensorIDs(TempSensorID water, TempSensorID ambient);
+      
+      /* Override. */
       void print();
       
+      /* Override. */
       uint16_t memSize() { return sizeof(*this); };
       
     protected:

@@ -5,7 +5,7 @@
   
   class SerialUI : public NullUI {
     public:
-      SerialUI(ControlContext *context) : NullUI(context) { }
+      SerialUI(ExecutionContext *context) : NullUI(context) { }
       
       void setup();
       

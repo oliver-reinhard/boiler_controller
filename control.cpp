@@ -3,6 +3,17 @@
 // #define DEBUG_CONTROL
 
 
+void OperationalParams::swapTempSensorIDs() {
+  TempSensorID tempId;
+  memcpy(tempId, water.id, TEMP_SENSOR_ID_BYTES);
+  water.setId(ambient.id);
+  ambient.setId(tempId);
+  
+  SensorStatusEnum tempStatus = water.sensorStatus;
+  water.sensorStatus = ambient.sensorStatus;
+  ambient.sensorStatus = tempStatus;      
+}
+    
 uint32_t heatingTotalMillis(OperationalParams *op) {
   uint32_t duration = op->heatingAccumulatedMillis;
   if (op->heatingStartMillis != 0L) {
@@ -48,6 +59,32 @@ uint8_t ControlActions::setupSensors() {
   }
 
   return matched;
+}
+
+void ControlActions::swapTempSensorIDs() {
+  context->op->swapTempSensorIDs();
+}
+
+void ControlActions::clearTempSensorIDs() {
+  context->config->setTempSensorIDs((uint8_t*) UNDEFINED_SENSOR_ID, (uint8_t*) UNDEFINED_SENSOR_ID);
+  context->config->save();
+  context->log->logConfigParam(PARAM_WATER_TEMP_SENSOR_ID, 0.0);
+  context->log->logConfigParam(PARAM_AMBIENT_TEMP_SENSOR_ID, 0.0);
+  context->log->logMessage(MSG_TEMP_SENSOR_IDS_CLEARED, 0, 0);
+}
+
+boolean ControlActions::confirmTempSensorIDs() {
+  if (context->op->water.sensorStatus == SENSOR_ID_AUTO_ASSIGNED || context->op->ambient.sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
+    context->config->setTempSensorIDs(context->op->water.id, context->op->ambient.id);
+    context->config->save();
+    context->log->logConfigParam(PARAM_WATER_TEMP_SENSOR_ID, 0.0);
+    context->log->logConfigParam(PARAM_AMBIENT_TEMP_SENSOR_ID, 0.0);
+    
+    context->op->water.confirmId();
+    context->op->ambient.confirmId();
+    return true;
+  }
+  return false;
 }
 
 void ControlActions::initSensorReadout() {

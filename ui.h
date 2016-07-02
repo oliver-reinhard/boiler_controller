@@ -19,7 +19,7 @@
 
   class NullUI {
     public:
-      NullUI(ControlContext *context) {
+      NullUI(ExecutionContext *context) {
         this->context = context;
       }
       
@@ -36,7 +36,7 @@
       virtual void notifyNewLogEntry(LogEntry) { }
    
     protected:
-      ControlContext *context;
+      ExecutionContext *context;
   };  
 
   
@@ -44,7 +44,7 @@
   
     class BLEUI : public NullUI {
       public:
-        BLEUI(ControlContext *context) : NullUI(context) { }
+        BLEUI(ExecutionContext *context) : NullUI(context) { }
         void setup();
       
         void readUserCommand();

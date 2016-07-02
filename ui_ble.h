@@ -5,7 +5,7 @@
   
   class BLEUI : public NullUI {
     public:
-      BLEUI(ControlContext *context) : NullUI(context) { }
+      BLEUI(ExecutionContext *context) : NullUI(context) { }
       void setup();
     
       void readUserCommand();

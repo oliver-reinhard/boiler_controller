@@ -12,7 +12,8 @@
     MSG_WATER_TEMP_SENSOR_ID_UNDEF = 20,   // Sensor ID of water-temperature sensor could not be obtained. Check wiring and sensor, then restart.
     MSG_WATER_TEMP_SENSOR_ID_AUTO =  21,   // Sensor ID of water-temperature sensor was assigned automatically. Confirm that it refers to the correct sensor, then restart.
     MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF = 22, // Sensor ID of ambient-temperature sensor could not be obtained. Check wiring and sensor, then restart.
-    MSG_AMBIENT_TEMP_SENSOR_ID_AUTO =  23  // Sensor ID of ambient-temperature sensor was assigned automatically. Confirm that it refers to the correct sensor, then restart.
+    MSG_AMBIENT_TEMP_SENSOR_ID_AUTO =  23, // Sensor ID of ambient-temperature sensor was assigned automatically. Confirm that it refers to the correct sensor, then restart.
+    MSG_TEMP_SENSOR_IDS_CLEARED =  24      // Sensor IDs of water- and ambient-temperature sensor cleared. Restart to see the effect.
   } ControlMessageEnum;
 
 
@@ -74,6 +75,11 @@
     // accumulated time in state HEATING, not including the period since last start (if heatingStartMillis != 0L)
     uint32_t heatingAccumulatedMillis = 0L;
     boolean loggingValues = false;
+
+    /*
+     * Swap sensor IDs and sensor states between water and ambient sensor.
+     */
+    void swapTempSensorIDs();
   };
 
   /*
@@ -99,9 +105,44 @@
       ControlActions(ControlContext *context) {
         this->context = context;
       }
-      virtual uint8_t setupSensors();
-      virtual void initSensorReadout();
-      virtual void completeSensorReadout();
+
+      /*
+       * Performs a search on the OneWire Bus and matches / assigns returned sensor addresses with configured sensors.
+       */
+      uint8_t setupSensors();
+
+      /*
+       * Swap the sensor IDs and states of water- and ambient-temperature sensor in the operational parameters.
+       */
+      void swapTempSensorIDs();
+
+      /*
+       * Clears the sensor IDs of water- and ambient-temperature sensors in the configuration parameters and saves the latter to EEPROM. 
+       */
+      void clearTempSensorIDs();
+      
+      /*
+       * Copies the sensor IDs of water- and ambient-temperature sensors of the the configuration parameters to the configuration parameters and saves the latter to EEPROM. 
+       * Sets the sensor status of one or both sensors to SENSOR_OK iff sensor status is SENSOR_ID_AUTO_ASSIGNED.
+       * 
+       * @return true if at lestt one ID was copied and status was changed.
+       */
+      boolean confirmTempSensorIDs();
+
+      /*
+       * Sends a command to all physical temperature sensors to trigger the conversion of physical values to a temperature.
+       * 
+       * Note: The conversion takes time (up to 750 ms depending on the precision of the returned value) and completeSensorReadout cannot be invoked before that.
+       *       See the data sheet of the DS18B20 temperature sensors for exact times.
+       */
+      void initSensorReadout();
+
+      /*
+       * Reads the temperatures from the physical sensors and assignes the value and state to the configured temperature sonsors.
+       * 
+       * Note: See the note for initSensorReadout()
+       */
+      void completeSensorReadout();
 
       /*
        * Physically turns the water heater on or off.
