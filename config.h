@@ -20,10 +20,9 @@
     PARAM_LOG_TIME_DELTA = 6,
     PARAM_TANK_CAPACITY = 7,
     PARAM_HEATER_POWER = 8,
-    PARAM_INSULATION_FACTOR = 9
   } ConfigParamEnum;
   
-  const uint8_t NUM_CONFIG_PARAMS = 10;
+  const uint8_t NUM_CONFIG_PARAMS = 9;
   
   #define DEFAULT_TARGET_TEMP                 4200 // [°C * 100]
   #define DEFAULT_WATER_TEMP_SENSOR_ID        UNDEFINED_SENSOR_ID
@@ -34,7 +33,6 @@
   #define DEFAULT_LOG_TIME_DELTA              60 // [s]
   #define DEFAULT_TANK_CAPACITY               10.0 // [litre]
   #define DEFAULT_HEATER_POWER                210 // [W]
-  #define DEFAULT_INSULATION_FACTOR           2.0 // [???]
 
   
   class ConfigParams : public AbstractConfigParams {
@@ -50,7 +48,6 @@
       uint16_t logTimeDelta; // [s]
       float tankCapacity;  // [litre]
       float heaterPower;  // [Watts]
-      float insulationFactor; // correction factor to model tank insulation charactericstis
       uint8_t  reserved[32];  // for future use
 
       void setTempSensorIDs(TempSensorID water, TempSensorID ambient);

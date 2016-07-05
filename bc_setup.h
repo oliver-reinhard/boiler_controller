@@ -4,7 +4,7 @@
   // Uncomment AT MOST ONE (!) of the following lines:
     // #define UNIT_TEST
     // #define BLE_UI
-     #define SERIAL_UI
+    // #define SERIAL_UI
   
   #ifdef UNIT_TEST
     // Comment the following line to prevent execution of STATE tests:

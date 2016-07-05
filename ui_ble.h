@@ -2,6 +2,7 @@
   #define BC_UI_BLE_H_INCLUDED
 
   #include "ui.h"
+  #include "ble_gatt/Adafruit_BluefruitLE_GATT.h"  
   
   class BLEUI : public NullUI {
     public:
@@ -12,14 +13,19 @@
       
       void processReadWriteRequests(ReadWriteRequests requests, BoilerStateAutomaton *automaton);
     
-      void notifyStatusChange(StatusNotification notification);
+      void notifyStatusChange(StatusNotification *notification);
     
       void notifyNewLogEntry(LogEntry entry);
 
     protected:
-      int32_t bcServiceId;
-      int32_t statusCharacteristicId;  // read + notify
-      int32_t logCharacteristicId;     // read + notify
-      int32_t cmdCharacteristicId;     // write
+      Adafruit_BluefruitLE_GATT ble = Adafruit_BluefruitLE_GATT();
+      int8_t controllerServiceId;
+      int8_t stateCharId;
+      int8_t timeInStateCharId;
+      int8_t timeHeatingCharId;
+      int8_t targetTempCharId;
+      int8_t waterSensorCharId;
+      int8_t ambientSensorCharId;
   };
 #endif
+

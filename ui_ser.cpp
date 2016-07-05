@@ -2,10 +2,9 @@
 #include "ui_ser.h"
 #include "config.h"
 
-#define COMMAND_BUF_SIZE 50   // Size of the read buffer for incoming data
+#define COMMAND_BUF_SIZE 24   // Size of the read buffer for incoming data
 const char COMMAND_CHARS[] = " abcdefghijklmnopqrstuvwxyz"; // includes blank (first char)
 const char INT_CHARS[] = "0123456789"; 
-const char SENSOR_ID_CHARS[] = "0123456789abcdef-"; // includes dash
 
 const char STR_CONFIG_SENSOR_ID_SWAP[] PROGMEM = "swap";
 const char STR_CONFIG_SENSOR_ID_CLR[]  PROGMEM = "clr";
@@ -16,16 +15,15 @@ const char STR_CONFIG_SENSOR_ID_ACK[]  PROGMEM = "ack";
 /*
  * CONFIG PARAMS
  */
-const char STR_PARAM_TARGET_TEMP[] PROGMEM = "Target Temperature";
-const char STR_PARAM_WATER_TEMP_SENSOR_ID[] PROGMEM = "Water Temp. Sensor ID";
-const char STR_PARAM_AMBIENT_TEMP_SENSOR_ID[] PROGMEM = "Ambient Temp. Sensor ID";
-const char STR_PARAM_HEATER_CUT_OUT_WATER_TEMP[] PROGMEM = "Heater Cut-out Temp.";
-const char STR_PARAM_HEATER_BACK_OK_WATER_TEMP[] PROGMEM = "Heater Back-ok Temp.";
-const char STR_PARAM_LOG_TEMP_DELTA[] PROGMEM = "Log Temp. Delta";
+const char STR_PARAM_TARGET_TEMP[] PROGMEM = "Target Temp";
+const char STR_PARAM_WATER_TEMP_SENSOR_ID[] PROGMEM = "Water Temp Sensor ID";
+const char STR_PARAM_AMBIENT_TEMP_SENSOR_ID[] PROGMEM = "Ambient Temp Sensor ID";
+const char STR_PARAM_HEATER_CUT_OUT_WATER_TEMP[] PROGMEM = "Heater Cut-out Temp";
+const char STR_PARAM_HEATER_BACK_OK_WATER_TEMP[] PROGMEM = "Heater Back-ok Temp";
+const char STR_PARAM_LOG_TEMP_DELTA[] PROGMEM = "Log Temp Delta";
 const char STR_PARAM_LOG_TIME_DELTA[] PROGMEM = "Log Time Delta [s]";
 const char STR_PARAM_TANK_CAPACITY[] PROGMEM = "Tank Capacity [ml]";
 const char STR_PARAM_HEATER_POWER[] PROGMEM = "Heater Power [W]";
-const char STR_PARAM_INSULATION_FACTOR[] PROGMEM = "Insulation Factor";
 const char STR_PARAM_UNDEF[] PROGMEM = "Undefined Config Param";
 
 PGM_P getConfigParamNamePtr(ConfigParamEnum literal) {
@@ -39,7 +37,6 @@ PGM_P getConfigParamNamePtr(ConfigParamEnum literal) {
     case PARAM_LOG_TIME_DELTA: return STR_PARAM_LOG_TIME_DELTA;
     case PARAM_TANK_CAPACITY: return STR_PARAM_TANK_CAPACITY;
     case PARAM_HEATER_POWER: return STR_PARAM_HEATER_POWER;
-    case PARAM_INSULATION_FACTOR: return STR_PARAM_INSULATION_FACTOR;
     default: return STR_PARAM_UNDEF;
   }
 }
@@ -82,36 +79,11 @@ String getConfigParamValue(ConfigParams *all, ConfigParamEnum p) {
       return formatFloat(all->tankCapacity);
     case PARAM_HEATER_POWER:
       return formatFloat(all->heaterPower);
-    case PARAM_INSULATION_FACTOR:
-      return formatFloat(all->insulationFactor);
     default: 
       return "";
   }
 }
 
-/*
-boolean parseTempSensorID(char *value, uint8_t *id) {
-  uint8_t len = strspn(value, SENSOR_ID_CHARS);
-  #ifdef DEBUG_UI
-    Serial.print(F("DEBUG_UI: parsing sensor ID: '"));
-    Serial.print(value);
-    Serial.print(F("', len: "));
-    Serial.println(len);
-  #endif
-  if (len == 3 * TEMP_SENSOR_ID_BYTES - 1) {
-    uint8_t pos = 0;
-    for (uint8_t i=0; i<TEMP_SENSOR_ID_BYTES; i++) {
-      int32_t n = strtol(&value[pos], NULL, 16);
-      id[i] = (uint8_t) n;
-      pos += 3;
-    }
-    return true;
-  } else {
-    Serial.println("Invalid sensor ID");
-    return false;
-  }
-}
-*/
 
 boolean setConfigParamValue(ExecutionContext *context, ConfigParamEnum p, char *value) {
   switch(p) {
@@ -155,10 +127,6 @@ boolean setConfigParamValue(ExecutionContext *context, ConfigParamEnum p, char *
       context->config->heaterPower = (float) atof(value);
       context->log->logConfigParam(p, context->config->heaterPower);
       return true;
-    case PARAM_INSULATION_FACTOR:
-      context->config->insulationFactor = (float) atof(value);
-      context->log->logConfigParam(p, context->config->insulationFactor);
-      return true;
     default:
       return false;
   }
@@ -167,7 +135,7 @@ boolean setConfigParamValue(ExecutionContext *context, ConfigParamEnum p, char *
 /*
  * STATES
  */
-const char STR_STATE_UNDEFINED[] PROGMEM = "Undefined";
+const char STR_STATE_UNDEFINED[] PROGMEM = "Undef";
 const char STR_STATE_SAME[] PROGMEM = "Same";
 const char STR_STATE_INIT[] PROGMEM = "Init";
 const char STR_STATE_SENSORS_NOK[] PROGMEM = "Sensors NOK";
@@ -219,7 +187,7 @@ const char STR_EVENT_HEAT_OFF[] PROGMEM = "Heat Off";
 const char STR_EVENT_TEMP_OVER[] PROGMEM = "Temp Over";
 const char STR_EVENT_TEMP_OK[] PROGMEM = "Temp OK";
 const char STR_EVENT_RESET[] PROGMEM = "Reset";
-const char STR_EVENT_UNDEF[] PROGMEM = "Undefined Event";
+const char STR_EVENT_UNDEF[] PROGMEM = "Undef";
     
 PGM_P getEventNamePtr(EventEnum literal) {
   switch(literal) {
@@ -262,7 +230,7 @@ const char STR_CMD_GET_STAT[] PROGMEM = "get stat";
 const char STR_CMD_HEAT_ON[] PROGMEM = "heat on";
 const char STR_CMD_HEAT_OFF[] PROGMEM = "heat off";
 const char STR_CMD_RESET[] PROGMEM = "reset";
-const char STR_CMD_UNDEF[] PROGMEM = "Undefined Command";
+const char STR_CMD_UNDEF[] PROGMEM = "Undef";
     
 PGM_P getUserCommandNamePtr(UserCommandEnum literal) {
   switch(literal) {
@@ -295,7 +263,7 @@ const char STR_SENSOR_ID_AUTO_ASSIGNED[] PROGMEM = "Auto ID";
 const char STR_SENSOR_ID_UNDEFINED[] PROGMEM = "No ID";
 const char STR_SENSOR_OK[] PROGMEM = "OK";
 const char STR_SENSOR_NOK[] PROGMEM = "NOK";
-const char STR_SENSOR_UNDEF[] PROGMEM = "Undefined Sensor Status";
+const char STR_SENSOR_UNDEF[] PROGMEM = "Undef";
     
 PGM_P getSensorStatusNamePtr(SensorStatusEnum literal) {
   switch(literal) {
@@ -620,7 +588,7 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, BoilerStateA
 }
 
   
-void SerialUI::notifyStatusChange(StatusNotification) {
+void SerialUI::notifyStatusChange(StatusNotification *) {
   Serial.println(F("* status notification"));
 }
 

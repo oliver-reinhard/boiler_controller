@@ -13,7 +13,7 @@
       
       void processReadWriteRequests(ReadWriteRequests requests, BoilerStateAutomaton *automaton);
     
-      void notifyStatusChange(StatusNotification notification);
+      void notifyStatusChange(StatusNotification *notification);
     
       void notifyNewLogEntry(LogEntry entry);
   };

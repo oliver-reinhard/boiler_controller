@@ -46,11 +46,6 @@ void ConfigParams::initParams(boolean &updated) {
     updated = true;
   }
 
-  if (insulationFactor == 0.0) {
-    insulationFactor = DEFAULT_INSULATION_FACTOR;
-    updated = true;
-  }
-
   // *** Initialise new config parameters here:
 }
 
@@ -66,6 +61,5 @@ void ConfigParams::print() {
   Serial.println(logTimeDelta);
   Serial.println(tankCapacity);
   Serial.println(heaterPower);
-  Serial.println(insulationFactor);
 }
 

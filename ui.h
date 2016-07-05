@@ -3,17 +3,31 @@
 
   #include "control.h"
   #include "state.h"
-      
+
+  typedef enum {
+    NOTIFY_NONE = 0x0,
+    NOTIFY_STATE = 0x1,
+    NOTIFY_TIME_IN_STATE = 0x2,
+    NOTIFY_TIME_HEATING = 0x4,
+    NOTIFY_WATER_SENSOR = 0x8,
+    NOTIFY_AMBIENT_SENSOR = 0x10
+  } NotifyPropertyEnum;
+
+  // bitwise "OR" of NotifyPropertyEnum literals:
+  typedef uint16_t NotifyProperties;
+  
   struct StatusNotification {
+    // the bits of notifyProperties tell which values have changed:
+    NotifyProperties notifyProperties;
     StateID state;
     // time [s] since most recent transition to current state:
     uint32_t timeInState = 0L;
+    // accumulated heating time [s] up to now:
+    uint32_t heatingTime = 0L;
     SensorStatusID waterSensorStatus = SENSOR_INITIALISING;
     Temperature waterTemp = UNDEFINED_TEMPERATURE;
     SensorStatusID ambientSensorStatus = SENSOR_INITIALISING;
     Temperature ambientTemp = UNDEFINED_TEMPERATURE;
-    // accumulated heating time [s] up to now:
-    uint32_t heatingTime = 0L;
   };
 
 
@@ -31,7 +45,7 @@
       
       virtual void processReadWriteRequests(ReadWriteRequests, BoilerStateAutomaton *) {  }
     
-      virtual void notifyStatusChange(StatusNotification) { }
+      virtual void notifyStatusChange(StatusNotification *) { }
     
       virtual void notifyNewLogEntry(LogEntry) { }
    
@@ -39,27 +53,4 @@
       ExecutionContext *context;
   };  
 
-  
-  #ifdef BLE_UI
-  
-    class BLEUI : public NullUI {
-      public:
-        BLEUI(ExecutionContext *context) : NullUI(context) { }
-        void setup();
-      
-        void readUserCommand();
-        
-        void processReadWriteRequests(ReadWriteRequests requests, BoilerStateAutomaton *automaton);
-      
-        void notifyStatusChange(StatusNotification notification);
-      
-        void notifyNewLogEntry(LogEntry entry);
-
-      protected:
-        int32_t bcServiceId;
-        int32_t statusCharacteristicId;  // read + notify
-        int32_t logCharacteristicId;     // read + notify
-        int32_t cmdCharacteristicId;     // write
-    };
-  #endif
 #endif

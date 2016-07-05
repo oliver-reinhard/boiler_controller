@@ -204,13 +204,13 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
   static uint32_t notificationTimeMillis;
   static StatusNotification notification;
 
-  boolean notify = false;
+  NotifyProperties notify = NOTIFY_NONE;
 
   if (now - notificationTimeMillis >= MAX_USER_NOTIFICATION_INTERVAL) {
     #ifdef DEBUG_MAIN
       Serial.println(F("DEBUG_MAIN: notify status case 1"));
     #endif
-    notify = true;
+    notify |= NOTIFY_TIME_IN_STATE | NOTIFY_TIME_HEATING;
   }
   
   if (notification.state != automaton->state()->id()) {
@@ -218,7 +218,7 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
     #ifdef DEBUG_MAIN
       Serial.println(F("DEBUG_MAIN: notify status case 2"));
     #endif
-    notify = true;
+    notify |= NOTIFY_STATE;
   }
 
   if (notification.waterSensorStatus != context->op->water.sensorStatus
@@ -229,7 +229,7 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
     #ifdef DEBUG_MAIN
       Serial.println(F("DEBUG_MAIN: notify status case 3"));
     #endif
-    notify = true;
+    notify |= NOTIFY_WATER_SENSOR;
   }
 
   if (notification.ambientSensorStatus != context->op->ambient.sensorStatus
@@ -240,14 +240,16 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
     #ifdef DEBUG_MAIN
       Serial.println(F("DEBUG_MAIN: notify status case 4"));
     #endif
-    notify = true;
+    notify |= NOTIFY_AMBIENT_SENSOR;
   }
 
   if (notify) {
     notification.timeInState = now - context->op->currentStateStartMillis / 1000L;
     notification.heatingTime = heatingTotalMillis(context->op) / 1000L;
+    notify |= NOTIFY_TIME_IN_STATE | NOTIFY_TIME_HEATING;
+    
     notificationTimeMillis = now;
-    ui.notifyStatusChange(notification);
+    ui.notifyStatusChange(&notification);
   }
 }
 
