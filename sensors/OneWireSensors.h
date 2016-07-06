@@ -20,11 +20,11 @@
    * States of a DS18B20 Temperature Sensor.
    */
   typedef enum {
-    SENSOR_INITIALISING = 1,
-    SENSOR_ID_AUTO_ASSIGNED = 2, // a physical sensor was assigned to the logical sensor but it may not correspond to the intended sensor
-    SENSOR_ID_UNDEFINED = 3,     // no physical sensor could be found for the logical sensor
-    SENSOR_OK = 4,               // temperature value is defined and within the given range
-    SENSOR_NOK = 5               // temperature value could not be obtained or is outside the given range
+    SENSOR_INITIALISING = 0x1,
+    SENSOR_ID_AUTO_ASSIGNED = 0x2, // a physical sensor was assigned to the logical sensor but it may not correspond to the intended sensor
+    SENSOR_ID_UNDEFINED = 0x4,     // no physical sensor could be found for the logical sensor
+    SENSOR_OK = 0x8,               // temperature value is defined and within the given range
+    SENSOR_NOK = 0x10              // temperature value could not be obtained or is outside the given range
   } SensorStatusEnum;
 
   typedef uint8_t SensorStatusID;
@@ -174,14 +174,19 @@
       TemperatureReadout getCelcius(uint8_t data[]);
   };
 
+  #define MAX_TEMPERATURE_STR_LEN 9
+  
   /**
    * Returns the temperature in a dotted notation, 8 chars + terminal '\0': ["-"]dd.ff"°C" (optional "-", d = degrees Celsius (2 digits), f = fraction (1 digit))
    */
-  String formatTemperature(Temperature t);
+  char *formatTemperature(Temperature t, char buf[MAX_TEMPERATURE_STR_LEN]);
 
+
+  #define MAX_TEMP_SENSOR_ID_STR_LEN (3*TEMP_SENSOR_ID_BYTES)
+  
   /*
-   * Returns the ID in a dashed hex notation, e.g."28-8C-8C-79-6-0-0-89"
+   * Returns the ID in a dashed hex notation, e.g."28-8C-8C-79-6-00-00-89"
    */
-  String formatTempSensorID(TempSensorID id);
+  char *formatTempSensorID(TempSensorID id, char buf[MAX_TEMP_SENSOR_ID_STR_LEN]);
 
 #endif

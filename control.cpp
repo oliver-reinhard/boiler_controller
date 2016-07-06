@@ -24,41 +24,51 @@ uint32_t heatingTotalMillis(OperationalParams *op) {
 
 
 uint8_t ControlActions::setupSensors() {
-  context->op->water.setId(context->config->waterTempSensorId);
-  context->op->water.rangeMin = WATER_MIN_TEMP;
-  context->op->water.rangeMax = WATER_MAX_TEMP;
+  DS18B20TemperatureSensor *waterSensor = &context->op->water;
+  waterSensor->setId(context->config->waterTempSensorId);
+  waterSensor->rangeMin = WATER_MIN_TEMP;
+  waterSensor->rangeMax = WATER_MAX_TEMP;
   
-  context->op->ambient.setId(context->config->ambientTempSensorId);
-  context->op->ambient.rangeMin = AMBIENT_MIN_TEMP;
-  context->op->ambient.rangeMax = AMBIENT_MAX_TEMP;
+  DS18B20TemperatureSensor *ambientSensor = &context->op->ambient;
+  ambientSensor->setId(context->config->ambientTempSensorId);
+  ambientSensor->rangeMin = AMBIENT_MIN_TEMP;
+  ambientSensor->rangeMax = AMBIENT_MAX_TEMP;
   
   uint8_t matched = context->controller->setupSensors();
   
-  if (context->op->water.sensorStatus == SENSOR_ID_UNDEFINED) {
-   context->log->logMessage(MSG_WATER_TEMP_SENSOR_ID_UNDEF, 0, 0); 
-   #ifdef DEBUG_CONTROL
-     Serial.println(F("DEBUG_CONTROL: Water temp sensor ID undefined"));
-   #endif
-  } else if (context->op->water.sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
-   context->log->logMessage(MSG_WATER_TEMP_SENSOR_ID_AUTO, 0, 0); 
-   #ifdef DEBUG_CONTROL
-     Serial.println(F("DEBUG_CONTROL: Water temp sensor ID assigned automatically."));
-   #endif
+  if (waterSensor->sensorStatus == SENSOR_INITIALISING) {
+    logSensorSetupIssue(waterSensor, MSG_WATER_TEMP_SENSOR_SILENT); 
+  } else if (waterSensor->sensorStatus == SENSOR_ID_UNDEFINED) {
+    logSensorSetupIssue(waterSensor, MSG_WATER_TEMP_SENSOR_ID_UNDEF); 
+  } else if (waterSensor->sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
+    logSensorSetupIssue(waterSensor, MSG_WATER_TEMP_SENSOR_ID_AUTO); 
   }
   
-  if (context->op->ambient.sensorStatus == SENSOR_ID_UNDEFINED) {
-   context->log->logMessage(MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF, 0, 0); 
-   #ifdef DEBUG_CONTROL
-     Serial.println(F("DEBUG_CONTROL: Ambient temp sensor ID undefined"));
-   #endif
-  } else if (context->op->ambient.sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
-   context->log->logMessage(MSG_AMBIENT_TEMP_SENSOR_ID_AUTO, 0, 0); 
-   #ifdef DEBUG_CONTROL
-     Serial.println(F("DEBUG_CONTROL: Ambient temp sensor ID assigned automatically."));
-   #endif
-  }
+  if (ambientSensor->sensorStatus == SENSOR_INITIALISING) {
+    logSensorSetupIssue(ambientSensor, MSG_AMBIENT_TEMP_SENSOR_SILENT); 
+  } else if (ambientSensor->sensorStatus == SENSOR_ID_UNDEFINED) {
+    logSensorSetupIssue(ambientSensor, MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF); 
+  } else if (ambientSensor->sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
+   logSensorSetupIssue(ambientSensor, MSG_AMBIENT_TEMP_SENSOR_ID_AUTO); 
+  } 
 
+   #ifdef DEBUG_CONTROL
+     Serial.print(F("DEBUG_CONTROL: Sensors matched or found = "));
+     Serial.println(matched);
+   #endif
   return matched;
+}
+
+void ControlActions::logSensorSetupIssue(DS18B20TemperatureSensor *sensor, ControlMessageEnum msg) {
+  context->log->logMessage(msg, 0, 0); 
+  #ifdef DEBUG_CONTROL
+    Serial.print(F("DEBUG_CONTROL: "));
+    Serial.print(sensor->label);
+    Serial.print(F(" sensor status = "));
+    Serial.println(sensor->sensorStatus);
+  #else
+    if (sensor != NULL) { } // prevent 'unused parameter' warning
+  #endif
 }
 
 void ControlActions::swapTempSensorIDs() {

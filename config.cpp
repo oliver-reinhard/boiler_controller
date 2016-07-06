@@ -51,13 +51,14 @@ void ConfigParams::initParams(boolean &updated) {
 
 
 void ConfigParams::print() {
+  char buf[max(MAX_TEMPERATURE_STR_LEN, MAX_TEMP_SENSOR_ID_STR_LEN)];
   AbstractConfigParams::print();
-  Serial.println(formatTemperature(targetTemp));
-  Serial.println(formatTempSensorID(waterTempSensorId));
-  Serial.println(formatTempSensorID(ambientTempSensorId));
-  Serial.println(formatTemperature(heaterCutOutWaterTemp));
-  Serial.println(formatTemperature(heaterBackOkWaterTemp));
-  Serial.println(formatTemperature(logTempDelta));
+  Serial.println(formatTemperature(targetTemp, buf));
+  Serial.println(formatTempSensorID(waterTempSensorId, buf));
+  Serial.println(formatTempSensorID(ambientTempSensorId, buf));
+  Serial.println(formatTemperature(heaterCutOutWaterTemp, buf));
+  Serial.println(formatTemperature(heaterBackOkWaterTemp, buf));
+  Serial.println(formatTemperature(logTempDelta, buf));
   Serial.println(logTimeDelta);
   Serial.println(tankCapacity);
   Serial.println(heaterPower);

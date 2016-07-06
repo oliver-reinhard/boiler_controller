@@ -1,7 +1,7 @@
 #include <assert.h>
 #include "LogTime.h"
 
-//#define DEBUG_LOG_TIME
+// #define DEBUG_LOG_TIME
 
 #define ASCII_0 48  // char(48)
 
@@ -32,7 +32,8 @@ Timestamp LogTime::timestamp() {
   Timestamp ts = t.sec << TIMESTAMP_ID_BITS | timestampCount;
   #ifdef DEBUG_LOG_TIME
     Serial.print(F("DEBUG_LOG_TIME: Timestamp "));
-    Serial.println(format(ts));
+    char buf[MAX_TIMESTAMP_STR_LEN];
+    Serial.println(formatTimestamp(ts, buf));
   #endif
   return ts;
 }
@@ -56,8 +57,7 @@ void LogTime::reset() {
 }
 
 
-String formatTimestamp(Timestamp t) {
-  char s[13];
+char *formatTimestamp(Timestamp t, char s[MAX_TIMESTAMP_STR_LEN]) {
   uint32_t sec = t >> TIMESTAMP_ID_BITS;
   uint8_t timestampCount = t % 16;
   s[12] = '\0';

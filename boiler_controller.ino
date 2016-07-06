@@ -74,7 +74,7 @@ void setup() {
     pinMode(HEATER_PIN, OUTPUT);
     controlActions.setupSensors();
     
-    Serial.println(F("Ready."));
+    Serial.println(F("Starting."));
   #endif
  
 }

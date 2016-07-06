@@ -9,11 +9,13 @@
   #define ONE_WIRE_PIN 10 // Temperature sensors
 
   typedef enum {
-    MSG_WATER_TEMP_SENSOR_ID_UNDEF = 20,   // Sensor ID of water-temperature sensor could not be obtained. Check wiring and sensor, then restart.
-    MSG_WATER_TEMP_SENSOR_ID_AUTO =  21,   // Sensor ID of water-temperature sensor was assigned automatically. Confirm that it refers to the correct sensor, then restart.
-    MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF = 22, // Sensor ID of ambient-temperature sensor could not be obtained. Check wiring and sensor, then restart.
-    MSG_AMBIENT_TEMP_SENSOR_ID_AUTO =  23, // Sensor ID of ambient-temperature sensor was assigned automatically. Confirm that it refers to the correct sensor, then restart.
-    MSG_TEMP_SENSOR_IDS_CLEARED =  24      // Sensor IDs of water- and ambient-temperature sensor cleared. Restart to see the effect.
+    MSG_WATER_TEMP_SENSOR_SILENT = 20,      // Water-temperature sensor not responding. Check wiring and sensor, then restart.
+    MSG_WATER_TEMP_SENSOR_ID_UNDEF = 21,    // Sensor ID of water-temperature sensor could not be obtained. Check wiring and sensor, then restart.
+    MSG_WATER_TEMP_SENSOR_ID_AUTO =  22,    // Sensor ID of water-temperature sensor was assigned automatically. Confirm that it refers to the correct sensor, then restart.
+    MSG_AMBIENT_TEMP_SENSOR_SILENT = 23,    // Ambient-temperature sensor not responding. Check wiring and sensor, then restart.
+    MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF = 24,  // Sensor ID of ambient-temperature sensor could not be obtained. Check wiring and sensor, then restart.
+    MSG_AMBIENT_TEMP_SENSOR_ID_AUTO =  25,  // Sensor ID of ambient-temperature sensor was assigned automatically. Confirm that it refers to the correct sensor, then restart.
+    MSG_TEMP_SENSOR_IDS_CLEARED =  26       // Sensor IDs of water- and ambient-temperature sensor cleared. Restart to see the effect.
   } ControlMessageEnum;
 
 
@@ -160,6 +162,8 @@
     protected:
       ControlContext *context;
       ReadWriteRequests pendingRequests = READ_WRITE_NONE;
+
+      void logSensorSetupIssue(DS18B20TemperatureSensor *sensor, ControlMessageEnum msg);
   };
   
 #endif

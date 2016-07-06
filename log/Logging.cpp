@@ -125,7 +125,8 @@ LogEntry AbstractLog::addLogEntry(LogDataTypeID type, LogData *data) {
     Serial.print(F("DEBUG_LOG: createLogEntry: type "));
     Serial.print(entry.type);
     Serial.print(F(" => timestamp: "));
-    Serial.println(logTime.format(entry.timestamp));
+    char buf[MAX_TIMESTAMP_STR_LEN];
+    Serial.println(formatTimestamp(entry.timestamp, buf));
   #endif
   memcpy(&(entry.data), data, sizeof(LogData));
   
@@ -180,9 +181,10 @@ boolean AbstractLog::nextLogEntry(LogEntry &entry) {
     EEPROM.get(entryOffset(reader.nextIndex), entry); 
     #ifdef DEBUG_LOG
       Serial.print(F("DEBUG_LOG: getLogEntry: timestamp: "));
-      Serial.print(logTime.format(entry->timestamp));
+      char buf[MAX_TIMESTAMP_STR_LEN];
+      Serial.print(formatTimestamp(entry.timestamp, buf));
       Serial.print(F(", type: "));
-      Serial.println(entry->type);
+      Serial.println(entry.type);
     #endif
     reader.read++;
     if (reader.kind == LOG_READER_MOST_RECENT) {
@@ -206,8 +208,9 @@ void AbstractLog::S_O_S(MessageID id, int16_t param1, int16_t param2) {
   Timestamp ts = logMessage(id, param1, param2);
   ts = ts; // prevents warning: unused variable
   #ifdef DEBUG_LOG
+    char buf[MAX_TIMESTAMP_STR_LEN];
     Serial.print(F("DEBUG_LOG: S.O.S. : See log message "));
-    Serial.println(logTime.format(ts));
+    Serial.println(formatTimestamp(ts, buf));
   #endif
   S_O_S(NULL);
 }

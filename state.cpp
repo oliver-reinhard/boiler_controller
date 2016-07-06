@@ -1,6 +1,6 @@
 #include "state.h"
 
-//#define DEBUG_STATE
+// #define DEBUG_STATE
 
 /*
  * ABSTRACT STATE
@@ -23,8 +23,7 @@ EventCandidates AbstractState::eval() {
   }
 }
 
-StateEnum AbstractState::transAction(EventEnum event) {
-  if (event == EVENT_NONE) { }  // prevent compiler warning "unused parameter"
+StateEnum AbstractState::transAction(EventEnum) {
   // default implementation: empty
   return STATE_UNDEFINED;
 }
@@ -117,14 +116,10 @@ void AbstractCompositeState::exit(EventEnum event, StateEnum next) {
 
 EventCandidates Init::eval() {
   EventCandidates result = AbstractState::eval();
-  if (context->op->water.sensorStatus == SENSOR_NOK 
-    || context->op->water.sensorStatus == SENSOR_ID_UNDEFINED
-    || context->op->water.sensorStatus == SENSOR_ID_AUTO_ASSIGNED
-    || context->op->ambient.sensorStatus == SENSOR_ID_UNDEFINED
-    || context->op->ambient.sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
-    result |= EVENT_SENSORS_NOK;
-  } else if (context->op->water.sensorStatus == SENSOR_OK) {
+  if (context->op->water.sensorStatus == SENSOR_OK) {
     result |= EVENT_READY;
+  } else {
+    result |= EVENT_SENSORS_NOK;
   } 
   return result;
 }
@@ -429,7 +424,14 @@ UserCommands BoilerStateAutomaton::userCommands() {
 }
   
 EventCandidates BoilerStateAutomaton::evaluate() {
-  return currentState->eval();
+  EventCandidates cand = currentState->eval();
+  #ifdef DEBUG_STATE
+    Serial.print(F("DEBUG_STATE: eval in state "));
+    Serial.print(currentState->id());
+    Serial.print(F(": candidates = "));
+    Serial.println(cand, HEX);
+  #endif
+  return cand;
 }
 
 void BoilerStateAutomaton::transition(EventEnum event) {

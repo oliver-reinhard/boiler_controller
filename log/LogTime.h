@@ -70,10 +70,11 @@
       uint8_t timestampCount = 0;
   };
 
-  
-/**
- * Returns the timestamp in a 13-character dotted notation, terminated by '\0': sssssssss.cc  (s = seconds: 2^28 = 268435456 (9 digits), cc = count: 0..15 (2 digits))
- */
-String formatTimestamp(Timestamp t);
+
+  #define MAX_TIMESTAMP_STR_LEN 13
+  /**
+   * Returns the timestamp in a 13-character dotted notation, terminated by '\0': sssssssss.cc  (s = seconds: 2^28 = 268435456 (9 digits), cc = count: 0..15 (2 digits))
+   */
+  char *formatTimestamp(Timestamp t, char buf[MAX_TIMESTAMP_STR_LEN]);
   
 #endif

@@ -21,6 +21,11 @@ uint8_t DS18B20Controller::setupSensors() {
   for(uint8_t i=0; i<numSensors; i++) {
     if(sensors[i]->idUndefined()) {
       sensors[i]->sensorStatus = SENSOR_ID_UNDEFINED;
+      #ifdef DEBUG_SENSORS
+        Serial.print(F("DEBUG_SENSORS: Sensor "));
+        Serial.print(sensors[i]->label);
+        Serial.println(F(": setting to status ID undefined"));
+      #endif
     }
   }
   
@@ -90,6 +95,7 @@ void DS18B20Controller::completeSensorReadout() {
     
     DS18B20TemperatureSensor *sensor = getSensor(addr);
     if (sensor != NULL) {
+      TemperatureReadout readout = getCelcius(data);
       #ifdef DEBUG_SENSORS
         Serial.print(F("DEBUG_SENSORS: Sensor "));
         Serial.print(sensor->label);
@@ -97,23 +103,23 @@ void DS18B20Controller::completeSensorReadout() {
       
       // only set temperature and state for NOK sensors and AUTO_ASSIGNED sensors (leave others untouched):
       if (sensor->sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
-        TemperatureReadout readout = getCelcius(data);
         sensor->currentTemp  = readout.celcius;
         #ifdef DEBUG_SENSORS
+          char buf[MAX_TEMP_SENSOR_ID_STR_LEN];
           Serial.print(F(": ID AUTO ASSIGNED, "));
-          Serial.println(formatTemperature(readout.celcius));
+          Serial.println(formatTemperature(readout.celcius, buf));
         #endif
         
       } else if (sensor->sensorStatus == SENSOR_NOK) {
-        TemperatureReadout readout = getCelcius(data);
         // Ensure temperature is plausible:
         if((sensor->rangeMin == UNDEFINED_TEMPERATURE || readout.celcius >= sensor->rangeMin) 
             && (sensor->rangeMax == UNDEFINED_TEMPERATURE || readout.celcius <= sensor->rangeMax)) {
           sensor->sensorStatus = SENSOR_OK;
           sensor->currentTemp  = readout.celcius;
           #ifdef DEBUG_SENSORS
+            char buf[MAX_TEMP_SENSOR_ID_STR_LEN];
             Serial.print(F(": OK, "));
-            Serial.println(formatTemperature(readout.celcius));
+            Serial.println(formatTemperature(readout.celcius, buf));
           #endif
         } else {
           #ifdef DEBUG_SENSORS
@@ -195,8 +201,7 @@ TemperatureReadout DS18B20Controller::getCelcius(uint8_t data[]) {
 }
 
 
-String formatTemperature(Temperature t) {
-  char s[9];
+char *formatTemperature(Temperature t, char s[MAX_TEMPERATURE_STR_LEN]) {
   uint8_t deg = t / 100;
   uint8_t frac = t % 100;
   s[8] = '\0';
@@ -211,8 +216,7 @@ String formatTemperature(Temperature t) {
   return s;
 }
 
-String formatTempSensorID(TempSensorID id) {
-  char s[3*TEMP_SENSOR_ID_BYTES];
+char *formatTempSensorID(TempSensorID id, char s[MAX_TEMP_SENSOR_ID_STR_LEN]) {
   uint8_t pos = 0;
   for (uint8_t i=0; i<TEMP_SENSOR_ID_BYTES; i++) {
     sprintf(&s[pos], "%02X", id[i]);

@@ -15,7 +15,7 @@
  *  *******       - virtual void reset_search();
  *  *******       - virtual uint8_t search(uint8_t *newAddr, bool search_mode = true);
  */
-#define MOCK_ONE_WIRE
+// #define MOCK_ONE_WIRE
 
 //#define DEBUG_SENSORS_MAIN
 
@@ -70,7 +70,7 @@ test(a_sensor_setup) {
   #endif
   uint8_t matched = controller.setupSensors();
   #ifndef MOCK_ONE_WIRE
-    if (matched < 2) }
+    if (matched < 2) {
       Serial.println(F("Cannot access one or more physical sensors -> check wiring."));
     }
   #endif
@@ -122,8 +122,9 @@ test(b_single_sensor_readout) {
   #ifdef MOCK_ONE_WIRE
     assertEqual(s1.currentTemp, 2300);
   #else
+    char buf[MAX_TEMP_SENSOR_ID_STR_LEN];
     Serial.print(F("Temperature readout S1: "));
-    Serial.println(formatTemperature(s1.currentTemp));
+    Serial.println(formatTemperature(s1.currentTemp, buf));
     // assumed room temperature between 0 and 40°C:
     assertTrue(s1.currentTemp > 0);
     assertTrue(s1.currentTemp < 4000);
@@ -184,13 +185,14 @@ test(c_twin_sensor_readout) {
     assertEqual(s1.currentTemp, 2300);
     assertEqual(s2.currentTemp, 2400);
   #else
+    char buf[MAX_TEMP_SENSOR_ID_STR_LEN];
     Serial.print(F("Temperature readout S1: "));
-    Serial.println(formatTemperature(s1.currentTemp));
+    Serial.println(formatTemperature(s1.currentTemp, buf));
     // assumed room temperature between 0 and 40°C:
     assertTrue(s1.currentTemp > 0);
     assertTrue(s1.currentTemp < 4000);
     Serial.print(F("Temperature readout S2: "));
-    Serial.println(formatTemperature(s2.currentTemp));
+    Serial.println(formatTemperature(s2.currentTemp, buf));
     // assumed room temperature between 0 and 40°C:
     assertTrue(s2.currentTemp > 0);
     assertTrue(s2.currentTemp < 4000);
