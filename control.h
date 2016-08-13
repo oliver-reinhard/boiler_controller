@@ -23,7 +23,7 @@
   #define WATER_MIN_TEMP -2000 // [°C * 100]
   #define WATER_MAX_TEMP 10000 // [°C * 100]
   
-  // Water min and max values used to check that ambient-temperature readout is plausible:
+  // Ambient min and max values used to check that ambient-temperature readout is plausible:
   #define AMBIENT_MIN_TEMP -3000 // [°C * 100]
   #define AMBIENT_MAX_TEMP 5000 // [°C * 100]
   

@@ -13,9 +13,11 @@ const char INT_CHARS[] = "0123456789";
 const char STR_NONE[] PROGMEM = "None";
 const char STR_ILLEGAL[] PROGMEM = "Illegal";
 
-const char STR_CONFIG_SENSOR_ID_SWAP[] PROGMEM = "swap";
-const char STR_CONFIG_SENSOR_ID_CLR[]  PROGMEM = "clr";
-const char STR_CONFIG_SENSOR_ID_ACK[]  PROGMEM = "ack";
+const char STR_CONFIG_SET_VALUES[]     PROGMEM = "set";
+const char STR_CONFIG_RESET_VALUES[]   PROGMEM = "reset";
+const char STR_CONFIG_SENSOR_ID_SWAP[] PROGMEM = "swap ids";
+const char STR_CONFIG_SENSOR_ID_CLR[]  PROGMEM = "clr ids";
+const char STR_CONFIG_SENSOR_ID_ACK[]  PROGMEM = "ack ids";
 
 /*
  * CONFIG PARAM NAMES
@@ -171,28 +173,27 @@ const __FlashStringHelper *getEventName(EventEnum literal) {
 /*
  * COMMANDS
  */
-const char STR_CMD_SET_CONFIG[] PROGMEM = "set config";
-const char STR_CMD_REC_ON[] PROGMEM = "rec on";
-const char STR_CMD_REC_OFF[] PROGMEM = "rec off";
-const char STR_CMD_HELP[] PROGMEM = "help";
-const char STR_CMD_GET_LOG[] PROGMEM = "get log";
-const char STR_CMD_GET_CONFIG[] PROGMEM = "get config";
-const char STR_CMD_GET_STAT[] PROGMEM = "get stat";
-const char STR_CMD_HEAT_ON[] PROGMEM = "heat on";
+const char STR_CMD_CONFIG[]   PROGMEM = "config";
+const char STR_CMD_REC_ON[]   PROGMEM = "rec on";
+const char STR_CMD_REC_OFF[]  PROGMEM = "rec off";
+const char STR_CMD_HELP[]     PROGMEM = "help";
+const char STR_CMD_GET_LOG[]  PROGMEM = "log";
+const char STR_CMD_GET_STAT[] PROGMEM = "stat";
+const char STR_CMD_HEAT_ON[]  PROGMEM = "heat on";
 const char STR_CMD_HEAT_OFF[] PROGMEM = "heat off";
-const char STR_CMD_RESET[] PROGMEM = "reset";
+const char STR_CMD_RESET[]    PROGMEM = "reset";
 
 #define MAX_CMD_NAME_LEN 12
 
 PGM_P getUserCommandNamePtr(UserCommandEnum literal) {
   switch(literal) {
     case CMD_NONE: return STR_NONE;
-    case CMD_SET_CONFIG: return STR_CMD_SET_CONFIG;
+    case CMD_HELP: return STR_CMD_HELP;
+    case CMD_SET_CONFIG: return STR_CMD_CONFIG;
+    case CMD_GET_CONFIG: return STR_CMD_CONFIG;
     case CMD_REC_ON: return STR_CMD_REC_ON;
     case CMD_REC_OFF: return STR_CMD_REC_OFF;
-    case CMD_HELP: return STR_CMD_HELP;
     case CMD_GET_LOG: return STR_CMD_GET_LOG;
-    case CMD_GET_CONFIG: return STR_CMD_GET_CONFIG;
     case CMD_GET_STAT: return STR_CMD_GET_STAT;
     case CMD_HEAT_ON: return STR_CMD_HEAT_ON;
     case CMD_HEAT_OFF: return STR_CMD_HEAT_OFF;
@@ -223,50 +224,52 @@ const __FlashStringHelper *getSensorStatusName(SensorStatusEnum literal) {
 /*
  * USER COMMANDS
  */
-UserCommandEnum parseUserCommand(char buf[], uint8_t bufSize) {
-  switch (bufSize) {
+UserCommandEnum parseUserCommand(char cmd[], uint8_t cmdLen, char args[]) {
+  switch (cmdLen) {
     case 1:
-      if (!strcmp(buf, "?")) {
+      if (!strcmp(cmd, "?")) {
         return CMD_HELP;
       } 
       break;
+    case 3:
+      if (!strcmp_P(cmd, STR_CMD_GET_LOG)) {
+        return CMD_GET_LOG;
+      }
+      break;
     case 4:
-      if (!strcmp_P(buf, STR_CMD_HELP)) {
+      if (!strcmp_P(cmd, STR_CMD_HELP)) {
         return CMD_HELP;
+      } else if (!strcmp_P(cmd, STR_CMD_GET_STAT)) {
+        return CMD_GET_STAT;
       } 
       break;
     case 5:
-      if (!strcmp_P(buf, STR_CMD_RESET)) {
+      if (!strcmp_P(cmd, STR_CMD_RESET)) {
         return CMD_RESET;
       } 
       break;
     case 6:
-      if (!strcmp_P(buf, STR_CMD_REC_ON)) {
+      if (!strcmp_P(cmd, STR_CMD_REC_ON)) {
         return CMD_REC_ON;
+      } else if (!strcmp_P(cmd, STR_CMD_CONFIG)) {
+        if (strlen(args) > 0) {
+          return CMD_GET_CONFIG;
+        } else {
+          return CMD_SET_CONFIG;
+        }
       } 
       break;
     case 7:
-      if (!strcmp_P(buf, STR_CMD_REC_OFF)) {
+      if (!strcmp_P(cmd, STR_CMD_REC_OFF)) {
         return CMD_REC_OFF;
-      } else if (!strcmp_P(buf, STR_CMD_HEAT_ON)) {
+      } else if (!strcmp_P(cmd, STR_CMD_HEAT_ON)) {
         return CMD_HEAT_ON;
-      } else if (!strcmp_P(buf, STR_CMD_GET_LOG)) {
-        return CMD_GET_LOG;
       }
       break;
     case 8:      
-      if (!strcmp_P(buf, STR_CMD_HEAT_OFF)) {
+      if (!strcmp_P(cmd, STR_CMD_HEAT_OFF)) {
         return CMD_HEAT_OFF;
-      } else if (!strcmp_P(buf, STR_CMD_GET_STAT)) {
-        return CMD_GET_STAT;
       } 
-      break;
-    case 10:
-      if (!strcmp_P(buf, STR_CMD_SET_CONFIG)) {
-        return CMD_SET_CONFIG;
-      } if (!strcmp_P(buf, STR_CMD_GET_CONFIG)) {
-        return CMD_GET_CONFIG;
-      }
       break;
     default:
       break; 
@@ -287,9 +290,9 @@ void SerialUI::setup() {
 }
       
 void SerialUI::readUserCommand() {
-  char buf[COMMAND_BUF_SIZE+1];
+  char cmd[COMMAND_BUF_SIZE+1];
   // fill buffer with 0's => always \0-terminated!
-  memset(buf, 0, COMMAND_BUF_SIZE);
+  memset(cmd, 0, COMMAND_BUF_SIZE);
   if( Serial.peek() < 0 ) {
     return;
   }
@@ -297,12 +300,12 @@ void SerialUI::readUserCommand() {
 
   uint8_t count = 0;
   do {
-    count += Serial.readBytes(&buf[count], COMMAND_BUF_SIZE);
+    count += Serial.readBytes(&cmd[count], COMMAND_BUF_SIZE);
     delay(2);
   } while( (count < COMMAND_BUF_SIZE) && !(Serial.peek() < 0) );
   #ifdef DEBUG_UI
     Serial.print(F("DEBUG_UI: read cmd string: '"));
-    Serial.print(buf);
+    Serial.print(cmd);
     Serial.print(F("', len: "));
     Serial.println(count);
   #endif
@@ -311,30 +314,30 @@ void SerialUI::readUserCommand() {
   uint8_t len = 0;
   boolean prevSpace = false;
   for (uint8_t i = 0; i< count; i++) {
-     if (isspace(buf[i]) && prevSpace) {
+     if (isspace(cmd[i]) && prevSpace) {
         // skip
      } else {
-      buf[len++] = buf[i];
+      cmd[len++] = cmd[i];
      }
-     prevSpace = isspace(buf[i]);
+     prevSpace = isspace(cmd[i]);
   }
-  buf[len] = '\0';
+  cmd[len] = '\0';
   
   // convert to lower case:
-  char *lower = strlwr(buf);
+  char *lower = strlwr(cmd);
   
   OperationalParams *op = context->op;
   // count the command characters up to the trailing numeric arguments (if any):
-  uint8_t commandLength = strspn(lower, COMMAND_CHARS);
-  if (len > commandLength) {
-    strcpy(op->command->args, &lower[commandLength]);
+  uint8_t cmdLen = strspn(lower, COMMAND_CHARS);
+  if (len > cmdLen) {
+    strcpy(op->command->args, &lower[cmdLen]);
   }
   
-  if (isspace(lower[commandLength - 1])) {
-    commandLength--;
+  if (isspace(lower[cmdLen - 1])) {
+    cmdLen--;
   }
-  lower[commandLength] = '\0';
-  op->command->command = parseUserCommand(buf, commandLength);  
+  lower[cmdLen] = '\0';
+  op->command->command = parseUserCommand(cmd, cmdLen, op->command->args);  
   
   #ifdef DEBUG_UI
     Serial.print(F("DEBUG_UI: parsed cmd: 0x"));
@@ -434,7 +437,11 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, BoilerStateA
     for(uint8_t i=0; i< NUM_USER_COMMANDS; i++) {
       if (commands & cmd) {
         Serial.print("  - ");
-        Serial.println(getUserCommandName((UserCommandEnum) cmd, buf));
+        Serial.print(getUserCommandName((UserCommandEnum) cmd, buf));
+        if (cmd == CMD_SET_CONFIG) {
+          Serial.print(F(" <modifiers>"));
+        }
+        Serial.println();
       }
       cmd = cmd << 1;
     }

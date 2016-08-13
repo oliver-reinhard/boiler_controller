@@ -1,5 +1,5 @@
 #include "bc_setup.h"
-#include "math.h"
+#include "log.h"
 #include "control.h"
 #include "state.h"
 #include "ui.h"

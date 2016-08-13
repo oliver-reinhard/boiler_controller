@@ -2,11 +2,12 @@
   #define BC_UI_BLE_H_INCLUDED
 
   #include "ui.h"
-  #include "ble_gatt/Adafruit_BluefruitLE_GATT.h"  
+  #include "src/ble_gatt/Adafruit_BluefruitLE_GATT.h"  
   
   class BLEUI : public NullUI {
     public:
       BLEUI(ExecutionContext *context) : NullUI(context) { }
+      
       void setup();
     
       void readUserCommand();

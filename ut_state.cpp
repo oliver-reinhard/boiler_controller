@@ -86,29 +86,26 @@
   }
   
   
-  Timestamp MockLog::logMessage(MessageID msg, int16_t param1, int16_t param2) {    
+  Timestamp MockLog::logMessage(MessageID, int16_t, int16_t) {    
     #ifdef DEBUG_UT_STATE
       Serial.println(F("DEBUG_UT_STATE: logMessage(...)"));
     #endif
-    if (msg == 0 || param1 == 0 || param2 == 0) { } // prevent warning "unused parameter ..."
     logMessageCount++;
     return logTime.timestamp();
   }
   
-  Timestamp MockLog::logValues(Temperature water, Temperature ambient, Flags flags) {
+  Timestamp MockLog::logValues(Temperature, Temperature, Flags) {
     #ifdef DEBUG_UT_STATE
       Serial.println(F("DEBUG_UT_STATE: logValues(...)"));
     #endif
-    if (water == 0 || ambient == 0 || flags == 0) { } // prevent warning "unused parameter ..."
     logValuesCount++;
     return logTime.timestamp();
   }
   
-  Timestamp MockLog::logState(StateID previous, StateID current, EventID event) {
+  Timestamp MockLog::logState(StateID, StateID, EventID) {
     #ifdef DEBUG_UT_STATE
       Serial.println(F("DEBUG_UT_STATE: logState(...)"));
     #endif
-    if (previous == 0 || current == 0 || event == 0) { } // prevent warning "unused parameter ..."
     logStateCount++;
     return logTime.timestamp();
   }

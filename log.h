@@ -2,7 +2,7 @@
   #define BC_LOG_H_INCLUDED
 
   #include "config.h"
-  #include "log/Logging.h"
+  #include "src/log/Logging.h"
 
   
   /*

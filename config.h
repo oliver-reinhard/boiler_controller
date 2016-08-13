@@ -1,8 +1,8 @@
 #ifndef BC_CONFIG_H_INCLUDED
   #define BC_CONFIG_H_INCLUDED
   
-  #include "config/Configuration.h"
-  #include "sensors/OneWireSensors.h"
+  #include "src/config/Configuration.h"
+  #include "src/sensors/OneWireSensors.h"
   
   /*
    * ID values are defined by ConfigParamEnum.
