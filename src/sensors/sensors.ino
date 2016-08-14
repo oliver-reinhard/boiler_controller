@@ -43,17 +43,17 @@ void loop() {
 
 #if defined MOCK_ONE_WIRE
   MockOneWire oneWire = MockOneWire(ONE_WIRE_PIN);
+  /* 
+   *  The IDs do not have to match phyisical sensor ROM addresses, however, the last byte has to be a crc8
+   *  of the previous 7 bytes.
+   */
+  const uint8_t MOCK_SENSOR_IDS[][TEMP_SENSOR_ID_BYTES] = { {0x28, 0x8C, 0x8C, 0x79, 0x06, 0x00, 0x00, 0x89}, 
+                                                     {0x28, 0x7C, 0x28, 0x79, 0x06, 0x00, 0x00, 0xD7} };
+
+
 #else
   OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor to +5V is necessary)
 #endif
-
-/* 
- *  The IDs do not have to match phyisical sensor ROM addresses, however, the last byte has to be a crc8
- *  of the previous 7 bytes.
- */
-const uint8_t SENSOR_IDS[][TEMP_SENSOR_ID_BYTES] = { {0x28, 0x8C, 0x8C, 0x79, 0x06, 0x00, 0x00, 0x89}, 
-                                                     {0x28, 0x7C, 0x28, 0x79, 0x06, 0x00, 0x00, 0xD7} };
-
 
 test(a_sensor_setup) {
   DS18B20TemperatureSensor s1 = DS18B20TemperatureSensor("S1");
@@ -66,7 +66,7 @@ test(a_sensor_setup) {
   DS18B20Controller controller = DS18B20Controller(&oneWire, sensors, 3);
 
   #ifdef MOCK_ONE_WIRE
-    oneWire._setSearchResults((uint8_t *) SENSOR_IDS, 2);
+    oneWire._setSearchResults((uint8_t *) MOCK_SENSOR_IDS, 2);
   #endif
   uint8_t matched = controller.setupSensors();
   #ifndef MOCK_ONE_WIRE
@@ -80,8 +80,8 @@ test(a_sensor_setup) {
   assertEqual(s3.sensorStatus, SENSOR_ID_UNDEFINED);
   #ifdef MOCK_ONE_WIRE
     // check that the sensor IDs were "recognized" (mocking) correctly:
-    assertTrue(! memcmp(s1.id, SENSOR_IDS[0], TEMP_SENSOR_ID_BYTES));
-    assertTrue(! memcmp(s2.id, SENSOR_IDS[1], TEMP_SENSOR_ID_BYTES));
+    assertTrue(! memcmp(s1.id, MOCK_SENSOR_IDS[0], TEMP_SENSOR_ID_BYTES));
+    assertTrue(! memcmp(s2.id, MOCK_SENSOR_IDS[1], TEMP_SENSOR_ID_BYTES));
   #else
     assertTrue(! s1.idUndefined());
     assertTrue(! s2.idUndefined());
@@ -99,7 +99,7 @@ test(b_single_sensor_readout) {
   DS18B20Controller controller = DS18B20Controller(&oneWire, sensors, 1);
   
   #ifdef MOCK_ONE_WIRE
-    oneWire._setSearchResults((uint8_t *) SENSOR_IDS, 1);
+    oneWire._setSearchResults((uint8_t *) MOCK_SENSOR_IDS, 1);
   #endif
   uint8_t matched = controller.setupSensors();
   assertEqual(matched, 1);
@@ -160,7 +160,7 @@ test(c_twin_sensor_readout) {
   DS18B20Controller controller = DS18B20Controller(&oneWire, sensors, 2);
   
   #ifdef MOCK_ONE_WIRE
-    oneWire._setSearchResults((uint8_t *) SENSOR_IDS, 2);
+    oneWire._setSearchResults((uint8_t *) MOCK_SENSOR_IDS, 2);
   #endif
   uint8_t matched = controller.setupSensors();
   assertEqual(matched, 2);

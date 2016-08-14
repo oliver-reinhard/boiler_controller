@@ -116,9 +116,15 @@ void AbstractCompositeState::exit(EventEnum event, StateEnum next) {
 
 EventCandidates Init::eval() {
   EventCandidates result = AbstractState::eval();
-  if (context->op->water.sensorStatus == SENSOR_OK) {
+  #ifdef UT_STATE
+    Serial.print(F("State class Init: context UNDEFINED ****"));
+    Serial.println(this->context->op->water.sensorStatus, HEX);
+  #endif
+  if (context->op->water.sensorStatus == SENSOR_INITIALISING) {
+    result |= EVENT_NONE;  // = wait
+  } else if (context->op->water.sensorStatus == SENSOR_OK) {
     result |= EVENT_READY;
-  } else {
+  } else  {
     result |= EVENT_SENSORS_NOK;
   } 
   return result;
@@ -138,7 +144,7 @@ StateEnum Init::transAction(EventEnum event) {
  */
 
 UserCommands SensorsNOK::userCommands() {
-  return AbstractState::userCommands() | CMD_HELP | CMD_SET_CONFIG | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
+  return AbstractState::userCommands() | CMD_HELP | CMD_SET_CONFIG | CMD_RESET_CONFIG | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
 }
 
 EventCandidates SensorsNOK::eval() {
@@ -147,6 +153,8 @@ EventCandidates SensorsNOK::eval() {
     result |= EVENT_HELP;
   } else if (context->op->command->command == CMD_SET_CONFIG) {
     result |= EVENT_SET_CONFIG;
+  } else if (context->op->command->command == CMD_RESET_CONFIG) {
+    result |= EVENT_RESET_CONFIG;
   } else if (context->op->command->command == CMD_GET_CONFIG) {
     result |= EVENT_GET_CONFIG;
   } else if (context->op->command->command == CMD_GET_LOG) {
@@ -196,8 +204,6 @@ EventCandidates Ready::eval() {
   } 
   if (context->op->command->command == CMD_HELP) {
     result |= EVENT_HELP;
-  } else if (context->op->command->command == CMD_SET_CONFIG) {
-    result |= EVENT_SET_CONFIG;
   } else if (context->op->command->command == CMD_GET_CONFIG) {
     result |= EVENT_GET_CONFIG;
   } else if (context->op->command->command == CMD_GET_LOG) {
@@ -236,15 +242,16 @@ StateEnum Ready::transAction(EventEnum event) {
  */
 
 UserCommands Idle::userCommands() {
-  return AbstractState::userCommands() | CMD_SET_CONFIG | CMD_REC_ON;
+  return AbstractState::userCommands() | CMD_SET_CONFIG | CMD_RESET_CONFIG | CMD_REC_ON;
 }
 
 EventCandidates Idle::eval() {
   EventCandidates result = AbstractState::eval();
   if (context->op->command->command == CMD_SET_CONFIG) {
     result |= EVENT_SET_CONFIG;
-  }
-  if (context->op->command->command == CMD_REC_ON) {
+  } else if (context->op->command->command == CMD_RESET_CONFIG) {
+    result |= EVENT_RESET_CONFIG;
+  } else  if (context->op->command->command == CMD_REC_ON) {
     result |= EVENT_REC_ON;
   }
   return result;
@@ -254,6 +261,11 @@ StateEnum Idle::transAction(EventEnum event) {
   if (event == EVENT_SET_CONFIG) {
     context->control->setConfigParam();
     return STATE_SAME;
+    
+  } else if (event == EVENT_RESET_CONFIG) {
+    context->config->reset();
+    context->control->setupSensors();
+    return STATE_SENSORS_NOK;
     
   } else if (event == EVENT_REC_ON) {
     return STATE_RECORDING;
@@ -360,13 +372,13 @@ void Heating::exitAction(){
  */
 
 UserCommands Overheated::userCommands() {
-  return AbstractState::userCommands() | CMD_RESET;
+  return AbstractState::userCommands() | CMD_HEAT_RESET;
 }
 
 EventCandidates Overheated::eval() {
   EventCandidates result = AbstractState::eval();
-  if (context->op->command->command == CMD_RESET) {
-    result |= EVENT_RESET;
+  if (context->op->command->command == CMD_HEAT_RESET) {
+    result |= EVENT_HEAT_RESET;
   }
   if (context->op->water.currentTemp <= context->config->heaterBackOkWaterTemp) {
     result |= EVENT_TEMP_OK;
@@ -375,7 +387,7 @@ EventCandidates Overheated::eval() {
 }
 
 StateEnum Overheated::transAction(EventEnum event) {
-  if (event == EVENT_RESET) {
+  if (event == EVENT_HEAT_RESET) {
     return STATE_STANDBY;
     
   } else if (event == EVENT_TEMP_OK) {

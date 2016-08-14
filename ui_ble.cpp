@@ -6,7 +6,7 @@ const char BC_DEVICE_NAME[] = "Boiler Controller";
 const char BC_CONTROLLER_SERVICE_ID[] = "4C-EF-DD-58-CB-95-44-50-90-FB-F4-04-DC-20-2F-7C";
 
 void BLEUI::setup() {
-  ble.assertOK(ble.begin(DEBUG_BLE), F("Couldn't find Bluefruit, make sure it's in CoMmanD mode & check wiring?"));
+  ble.assertOK(ble.begin(DEBUG_BLE), F("Couldn't find Bluefruit, make sure it's in CMD mode & check wiring?"));
 
   /* Perform a factory reset to make sure everything is in a known state */
   ble.assertOK(ble.factoryReset(), F("Could not factory reset"));

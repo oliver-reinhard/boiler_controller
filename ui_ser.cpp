@@ -4,7 +4,7 @@
 // #define DEBUG_UI
 
 #define COMMAND_BUF_SIZE 24   // Size of the read buffer for incoming data
-const char COMMAND_CHARS[] = " abcdefghijklmnopqrstuvwxyz"; // includes blank (first char)
+const char COMMAND_CHARS[] = " abcdefghijklmnopqrstuvwxyz?"; // includes blank (first char)
 const char INT_CHARS[] = "0123456789"; 
 
 // See the original definition of F(.) in WString.h
@@ -13,7 +13,7 @@ const char INT_CHARS[] = "0123456789";
 const char STR_NONE[] PROGMEM = "None";
 const char STR_ILLEGAL[] PROGMEM = "Illegal";
 
-const char STR_CONFIG_SET_VALUES[]     PROGMEM = "set";
+const char STR_CONFIG_SET_VALUE[]      PROGMEM = "set";
 const char STR_CONFIG_RESET_VALUES[]   PROGMEM = "reset";
 const char STR_CONFIG_SENSOR_ID_SWAP[] PROGMEM = "swap ids";
 const char STR_CONFIG_SENSOR_ID_CLR[]  PROGMEM = "clr ids";
@@ -155,6 +155,7 @@ const __FlashStringHelper *getEventName(EventEnum literal) {
     case EVENT_READY: return F("Ready");
     case EVENT_SENSORS_NOK: return F("Sensors NOK");
     case EVENT_SET_CONFIG: return F("Set Config");
+    case EVENT_RESET_CONFIG: return F("Reset Config");
     case EVENT_REC_ON: return F("Rec On");
     case EVENT_REC_OFF: return F("Rec Off");
     case EVENT_GET_CONFIG: return F("Get Config");
@@ -164,7 +165,7 @@ const __FlashStringHelper *getEventName(EventEnum literal) {
     case EVENT_HEAT_OFF: return F("Heat Off");
     case EVENT_TEMP_OVER: return F("Temp Over");
     case EVENT_TEMP_OK: return F("Temp OK");
-    case EVENT_RESET: return F("Reset");
+    case EVENT_HEAT_RESET: return F("Heat Reset");
     default: return FP(STR_ILLEGAL);
   } 
 }
@@ -173,15 +174,17 @@ const __FlashStringHelper *getEventName(EventEnum literal) {
 /*
  * COMMANDS
  */
-const char STR_CMD_CONFIG[]   PROGMEM = "config";
-const char STR_CMD_REC_ON[]   PROGMEM = "rec on";
-const char STR_CMD_REC_OFF[]  PROGMEM = "rec off";
-const char STR_CMD_HELP[]     PROGMEM = "help";
-const char STR_CMD_GET_LOG[]  PROGMEM = "log";
-const char STR_CMD_GET_STAT[] PROGMEM = "stat";
-const char STR_CMD_HEAT_ON[]  PROGMEM = "heat on";
-const char STR_CMD_HEAT_OFF[] PROGMEM = "heat off";
-const char STR_CMD_RESET[]    PROGMEM = "reset";
+const char STR_CMD_HELP[]         PROGMEM = "help";
+const char STR_CMD_GET_CONFIG[]   PROGMEM = "config";
+const char STR_CMD_SET_CONFIG[]   PROGMEM = "config set";
+const char STR_CMD_RESET_CONFIG[] PROGMEM = "config reset";
+const char STR_CMD_REC_ON[]       PROGMEM = "rec on";
+const char STR_CMD_REC_OFF[]      PROGMEM = "rec off";
+const char STR_CMD_GET_LOG[]      PROGMEM = "log";
+const char STR_CMD_GET_STAT[]     PROGMEM = "stat";
+const char STR_CMD_HEAT_ON[]      PROGMEM = "heat on";
+const char STR_CMD_HEAT_OFF[]     PROGMEM = "heat off";
+const char STR_CMD_HEAT_RESET[]   PROGMEM = "heat reset";
 
 #define MAX_CMD_NAME_LEN 12
 
@@ -189,15 +192,16 @@ PGM_P getUserCommandNamePtr(UserCommandEnum literal) {
   switch(literal) {
     case CMD_NONE: return STR_NONE;
     case CMD_HELP: return STR_CMD_HELP;
-    case CMD_SET_CONFIG: return STR_CMD_CONFIG;
-    case CMD_GET_CONFIG: return STR_CMD_CONFIG;
+    case CMD_GET_CONFIG: return STR_CMD_GET_CONFIG;
+    case CMD_SET_CONFIG: return STR_CMD_SET_CONFIG;
+    case CMD_RESET_CONFIG: return STR_CMD_RESET_CONFIG;
     case CMD_REC_ON: return STR_CMD_REC_ON;
     case CMD_REC_OFF: return STR_CMD_REC_OFF;
     case CMD_GET_LOG: return STR_CMD_GET_LOG;
     case CMD_GET_STAT: return STR_CMD_GET_STAT;
     case CMD_HEAT_ON: return STR_CMD_HEAT_ON;
     case CMD_HEAT_OFF: return STR_CMD_HEAT_OFF;
-    case CMD_RESET: return STR_CMD_RESET;
+    case CMD_HEAT_RESET: return STR_CMD_HEAT_RESET;
     default: return STR_ILLEGAL;
   }
 }
@@ -224,7 +228,7 @@ const __FlashStringHelper *getSensorStatusName(SensorStatusEnum literal) {
 /*
  * USER COMMANDS
  */
-UserCommandEnum parseUserCommand(char cmd[], uint8_t cmdLen, char args[]) {
+UserCommandEnum parseUserCommand(char cmd[], uint8_t cmdLen) {
   switch (cmdLen) {
     case 1:
       if (!strcmp(cmd, "?")) {
@@ -244,19 +248,15 @@ UserCommandEnum parseUserCommand(char cmd[], uint8_t cmdLen, char args[]) {
       } 
       break;
     case 5:
-      if (!strcmp_P(cmd, STR_CMD_RESET)) {
-        return CMD_RESET;
+      if (!strcmp_P(cmd, STR_CMD_HEAT_RESET)) {
+        return CMD_HEAT_RESET;
       } 
       break;
     case 6:
       if (!strcmp_P(cmd, STR_CMD_REC_ON)) {
         return CMD_REC_ON;
-      } else if (!strcmp_P(cmd, STR_CMD_CONFIG)) {
-        if (strlen(args) > 0) {
-          return CMD_GET_CONFIG;
-        } else {
-          return CMD_SET_CONFIG;
-        }
+      } else if (!strcmp_P(cmd, STR_CMD_GET_CONFIG)) {
+        return CMD_GET_CONFIG;
       } 
       break;
     case 7:
@@ -269,6 +269,16 @@ UserCommandEnum parseUserCommand(char cmd[], uint8_t cmdLen, char args[]) {
     case 8:      
       if (!strcmp_P(cmd, STR_CMD_HEAT_OFF)) {
         return CMD_HEAT_OFF;
+      } 
+      break;
+    case 10:      
+      if (!strcmp_P(cmd, STR_CMD_SET_CONFIG)) {
+        return CMD_SET_CONFIG;
+      } 
+      break;
+    case 12:      
+      if (!strcmp_P(cmd, STR_CMD_RESET_CONFIG)) {
+        return CMD_RESET_CONFIG;
       } 
       break;
     default:
@@ -329,15 +339,16 @@ void SerialUI::readUserCommand() {
   OperationalParams *op = context->op;
   // count the command characters up to the trailing numeric arguments (if any):
   uint8_t cmdLen = strspn(lower, COMMAND_CHARS);
+  // set command args as anything following the command:
   if (len > cmdLen) {
     strcpy(op->command->args, &lower[cmdLen]);
   }
-  
+  // ignore trailing space (if any):
   if (isspace(lower[cmdLen - 1])) {
     cmdLen--;
   }
   lower[cmdLen] = '\0';
-  op->command->command = parseUserCommand(cmd, cmdLen, op->command->args);  
+  op->command->command = parseUserCommand(cmd, cmdLen);  
   
   #ifdef DEBUG_UI
     Serial.print(F("DEBUG_UI: parsed cmd: 0x"));
@@ -439,9 +450,10 @@ void SerialUI::processReadWriteRequests(ReadWriteRequests requests, BoilerStateA
         Serial.print("  - ");
         Serial.print(getUserCommandName((UserCommandEnum) cmd, buf));
         if (cmd == CMD_SET_CONFIG) {
-          Serial.print(F(" <modifiers>"));
+          Serial.print(F(" <id> (<value> | (swap ids | clr ids | ack ids)"));
         }
         Serial.println();
+
       }
       cmd = cmd << 1;
     }

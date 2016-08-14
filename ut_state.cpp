@@ -113,9 +113,9 @@
   /*
    * Tests
    */
-  test(state_automaton) {
-    MockLog logger = MockLog();
+  test(state_automaton_sensors_ok) {
     MockConfig config = MockConfig();
+    MockLog logger = MockLog();
     boolean updated;
     config.initParams(updated);
     #ifdef DEBUG_UT_STATE
@@ -123,27 +123,30 @@
     #endif
     assertEqual(config.heaterCutOutWaterTemp, DEFAULT_HEATER_CUT_OUT_WATER_TEMP); 
     
-    OperationalParams op;
     UserCommand cmd;
     memset(cmd.args, 0, CMD_ARG_BUF_SIZE);
+    
+    OperationalParams op;
     op.command = &cmd;
     
     ExecutionContext context;
-    
     MockControlActions control = MockControlActions(&context);
 
     context.log = &logger;
     context.config = &config;
     context.op = &op;
     context.control = &control;
-
+    
     BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
 
     assertEqual(automaton.state()->id(), STATE_INIT);
     assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_NONE));
     assertEqual(control.totalInvocations(), 0);
 
-    // water sensor NOT OK YET => evaluate => no event
+    // water sensor = SENSOR_INITIALISING => evaluate => no event
+  Serial.print(F("WARNING: CONTEXT NOT INITIALISED IN STATE CLASSE Init: "));
+  Serial.println(context.op->water.sensorStatus, HEX);
+    assertEqual(int16_t(context.op->water.sensorStatus), int16_t(SENSOR_INITIALISING));
     EventCandidates cand = automaton.evaluate();
     assertEqual(int16_t(cand), int16_t(EVENT_NONE));
     assertEqual(automaton.state()->id(), STATE_INIT);
@@ -313,6 +316,50 @@
     assertEqual(int16_t(op.loggingValues), int16_t(true));
     assertEqual(int16_t(op.heating), int16_t(false));
     control.resetCounters();
+  }
+
+  
+  test(state_automaton_sensors_nok) {
+    MockLog logger = MockLog();
+    MockConfig config = MockConfig();
+    boolean updated;
+    config.initParams(updated);
+    
+    OperationalParams op;
+    UserCommand cmd;
+    memset(cmd.args, 0, CMD_ARG_BUF_SIZE);
+    op.command = &cmd;
+    
+    ExecutionContext context;
+    
+    MockControlActions control = MockControlActions(&context);
+
+    context.log = &logger;
+    context.config = &config;
+    context.op = &op;
+    context.control = &control;
+
+    BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
+
+    assertEqual(automaton.state()->id(), STATE_INIT);
+    assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_NONE));
+    assertEqual(control.totalInvocations(), 0);
+
+    //
+    // set water sensor NOK => evaluate => event SENSORS_NOK
+    //
+    op.water.sensorStatus = SENSOR_NOK;
+    EventCandidates cand = automaton.evaluate();
+    assertEqual(int16_t(cand), int16_t(EVENT_SENSORS_NOK));
+    
+    // transition state INIT => event EVENT_SENSORS_NOK => state STATE_SENSORS_NOK
+    automaton.transition(EVENT_SENSORS_NOK);
+    assertEqual(automaton.state()->id(), STATE_SENSORS_NOK);
+    assertEqual(control.totalInvocations(), 0);
+    // state logging
+    assertEqual(logger.logStateCount, 1);
+    assertEqual(logger.totalInvocations(), 1);
+    logger.resetCounters();
   }
   
 #endif

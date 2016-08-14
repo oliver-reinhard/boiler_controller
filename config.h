@@ -51,6 +51,9 @@
       uint8_t  reserved[32];  // for future use
 
       void setTempSensorIDs(TempSensorID water, TempSensorID ambient);
+
+      /* Clears als parameter values (see clear()), then initialises all values (see initParams(.)). */
+      void reset();
       
       /* Override. */
       void print();

@@ -6,6 +6,14 @@ void ConfigParams::setTempSensorIDs(TempSensorID water, TempSensorID ambient) {
   memcpy(this->ambientTempSensorId, ambient, TEMP_SENSOR_ID_BYTES);
 }
 
+
+void ConfigParams::reset() {
+  clear();
+  boolean updated;
+  initParams(updated);
+}
+
+
 void ConfigParams::initParams(boolean &updated) {
   updated = false;
   

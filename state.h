@@ -26,42 +26,44 @@
   
   typedef enum { 
     EVENT_NONE = 0,
-    EVENT_READY = 0x1,       // 1
-    EVENT_SENSORS_NOK = 0x2, // 2
-    EVENT_SET_CONFIG = 0x4,  // 3     (4) user command
-    EVENT_REC_ON = 0x8,      // 4     (8) user command
-    EVENT_REC_OFF = 0x10,    // 5    (16) user command
-    EVENT_HELP = 0x20,       // 6    (32) user command
-    EVENT_GET_CONFIG = 0x40, // 7    (64) user command
-    EVENT_GET_LOG = 0x80,    // 8   (128) user command
-    EVENT_GET_STAT = 0x100,  // 9   (256) user command
-    EVENT_HEAT_ON = 0x200,   // 10  (512) user command
-    EVENT_HEAT_OFF = 0x400,  // 11 (1024) user command
-    EVENT_TEMP_OVER = 0x800, // 12 (2048)
-    EVENT_TEMP_OK = 0x1000,  // 13 (4096)
-    EVENT_RESET = 0x2000     // 14 (8192) user command
+    EVENT_READY = 0x1,        // 1
+    EVENT_SENSORS_NOK = 0x2,  // 2
+    EVENT_SET_CONFIG = 0x4,   // 3     (4) user command
+    EVENT_RESET_CONFIG = 0x8, // 4     (8) user command
+    EVENT_REC_ON = 0x10,      // 5    (16) user command
+    EVENT_REC_OFF = 0x20,     // 6    (32) user command
+    EVENT_HELP = 0x40,        // 7    (64) user command
+    EVENT_GET_CONFIG = 0x80,  // 8   (128) user command
+    EVENT_GET_LOG = 0x100,    // 9   (256) user command
+    EVENT_GET_STAT = 0x200,   // 10  (512) user command
+    EVENT_HEAT_ON = 0x400,    // 11 (1024) user command
+    EVENT_HEAT_OFF = 0x800,   // 12 (2048) user command
+    EVENT_TEMP_OVER = 0x1000, // 13 (4096)
+    EVENT_TEMP_OK = 0x2000,   // 14 (8192)
+    EVENT_HEAT_RESET = 0x4000 // 15 (16384) user command
   } EventEnum;
 
-  const uint16_t NUM_EVENTS = 14;
+  const uint16_t NUM_EVENTS = 15;
   
   /*
    * All events (except EVENT_NONE) ordered by descending priority, i.e. most urgent first.
    */
   const EventEnum EVENT_PRIORITIES[NUM_EVENTS] = {
-    EVENT_TEMP_OVER,   // 1
-    EVENT_TEMP_OK,     // 2
-    EVENT_READY,       // 3
-    EVENT_SENSORS_NOK, // 4
-    EVENT_HEAT_OFF,    // 5
-    EVENT_HEAT_ON,     // 6
-    EVENT_REC_OFF,     // 7
-    EVENT_REC_ON,      // 8
-    EVENT_RESET,       // 9
-    EVENT_GET_STAT,    // 10
-    EVENT_HELP,        // 11
-    EVENT_SET_CONFIG,  // 12
-    EVENT_GET_CONFIG,  // 13
-    EVENT_GET_LOG      // 14
+    EVENT_TEMP_OVER,    // 1
+    EVENT_TEMP_OK,      // 2
+    EVENT_READY,        // 3
+    EVENT_SENSORS_NOK,  // 4
+    EVENT_HEAT_OFF,     // 5
+    EVENT_HEAT_ON,      // 6
+    EVENT_REC_OFF,      // 7
+    EVENT_REC_ON,       // 8
+    EVENT_HEAT_RESET,   // 9
+    EVENT_GET_STAT,     // 10
+    EVENT_HELP,         // 11
+    EVENT_SET_CONFIG,   // 12
+    EVENT_RESET_CONFIG, // 13
+    EVENT_GET_CONFIG,   // 14
+    EVENT_GET_LOG       // 15
   };
     
   /*
@@ -99,7 +101,9 @@
        * Constructor.
        */
       AbstractState(ExecutionContext *context) {
-        this->context = context;
+         this->context = context;
+  Serial.print("AbstractState=");
+  Serial.println(this->context->op->water.sensorStatus, HEX);
       }
 
       /*

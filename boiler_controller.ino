@@ -72,7 +72,7 @@ void setup() {
     context.control = &controlActions;
 
     pinMode(HEATER_PIN, OUTPUT);
-    controlActions.setupSensors();
+    context.control->setupSensors();
     
     Serial.println(F("Starting."));
   #endif
