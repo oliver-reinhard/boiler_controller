@@ -13,6 +13,8 @@
     #define BLUEFRUIT_SPI_RST   4    // Optional but recommended, set to -1 if unused
   #endif
 
+  #define UNDEFINED_ID -1
+  
   typedef enum {
     CHAR_PROP_NONE = 0,                  // 1
     CHAR_PROP_READ = 0x02,               // 2
@@ -30,6 +32,10 @@
 
     public:
       void assertOK(boolean condition, const __FlashStringHelper *err);
+      /*
+       * @param id pass UNDEFINED_ID if id is unknown
+       */
+      void assertOK(boolean condition, const __FlashStringHelper *err, int8_t id);
 
       Adafruit_BluefruitLE_GATT() : Adafruit_BluefruitLE_SPI(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST) { };
       Adafruit_BluefruitLE_GATT(int8_t csPin, int8_t irqPin, int8_t rstPin = -1) : Adafruit_BluefruitLE_SPI(csPin, irqPin, rstPin) { };

@@ -3,7 +3,7 @@
 
 #define CONTROL_CYCLE_DURATION         6000L // [ms]
 
-#define BLE_VERBOSE_MODE               true  // If set to 'true' enables debug output
+#define BLE_VERBOSE_MODE               false  // If set to 'true' enables debug output
 
 /*
  * Create the bluefruit object using hardware SPI (SCK/MOSI/MISO hardware SPI pins and then user selected CS/IRQ/RST)
@@ -43,7 +43,7 @@ void setup(void) {
   // anyways for the super long lines ahead!
   // ble.setInterCharWriteDelay(5); // 5 ms
 
-  ble.setGattDeviceName("Boiler Controller");
+  ble.setGattDeviceName("Boiler Controller Test");
   controllerServiceId =      ble.addGattService("4C-EF-DD-58-CB-95-44-50-90-FB-F4-04-DC-20-2F-7C");
   waterTempMeasureCharId =   ble.addGattCharacteristic(0x0001, CHAR_PROP_NOTIFY, 2, 2);
   ambientTempMeasureCharId = ble.addGattCharacteristic(0x0002, CHAR_PROP_READ,   4, 4);

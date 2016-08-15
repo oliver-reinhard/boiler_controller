@@ -11,7 +11,7 @@
   #include <ArduinoUnit.h>
 #endif
 
-//#define DEBUG_MAIN
+// #define DEBUG_MAIN
 
 #define CONTROL_CYCLE_DURATION          5000L// [ms]
 #define TEMP_SENSOR_READOUT_WAIT         800L // [ms] = 750 ms + safety margin
@@ -75,6 +75,8 @@ void setup() {
     
     pinMode(HEATER_PIN, OUTPUT);
     context.control->setupSensors();
+
+    ui.setup();
     
     Serial.println(F("Starting."));
   #endif
@@ -249,6 +251,7 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
     notification.timeInState = now - context->op->currentStateStartMillis / 1000L;
     notification.heatingTime = heatingTotalMillis(context->op) / 1000L;
     notify |= NOTIFY_TIME_IN_STATE | NOTIFY_TIME_HEATING;
+    notification.notifyProperties = notify;
     
     notificationTimeMillis = now;
     ui.notifyStatusChange(&notification);

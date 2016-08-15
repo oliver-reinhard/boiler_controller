@@ -7,8 +7,6 @@
     public:
       SerialUI(ExecutionContext *context) : NullUI(context) { }
       
-      void setup();
-      
       void readUserCommand();
       
       void processReadWriteRequests(ReadWriteRequests requests, BoilerStateAutomaton *automaton);

@@ -13,9 +13,19 @@ const char fmt_bintohex[]       PROGMEM = "%02X-";
 
 void Adafruit_BluefruitLE_GATT::assertOK(boolean condition, const __FlashStringHelper *err) {
   if (condition) return;
+  assertOK(condition, err, UNDEFINED_ID);
+}
   
-  Serial.print(F("### S.O.S. ### "));
-  Serial.println(err);
+void Adafruit_BluefruitLE_GATT::assertOK(boolean condition, const __FlashStringHelper *err, int8_t id) {
+  if (condition) return;
+  
+  Serial.print(F("### S.O.S. ### : "));
+  Serial.print(err);
+  if (id != UNDEFINED_ID) {
+    Serial.print(", id=");
+    Serial.print(id);
+  }
+  Serial.println();
   Serial.flush();
   int pulse = 300; // [ms]
   while(1) {
@@ -34,7 +44,7 @@ void Adafruit_BluefruitLE_GATT::assertOK(boolean condition, const __FlashStringH
 void Adafruit_BluefruitLE_GATT::setGattDeviceName(const char *name) {
   char cmd[strlen_P(fmt_gapdevname) + strlen(name) + 1];
   sprintf_P(cmd, fmt_gapdevname, name);
-  assertOK(sendCommandCheckOK(cmd), F("Could not set device name?"));
+  assertOK(sendCommandCheckOK(cmd), F("Could not set device name?"), UNDEFINED_ID);
 }
 
 
@@ -42,7 +52,7 @@ int8_t Adafruit_BluefruitLE_GATT::addGattService(const char *uuid128) {
   char cmd[strlen_P(fmt_gattaddservice) + strlen(uuid128) + 1];
   sprintf_P(cmd, fmt_gattaddservice, uuid128);
   int32_t pos;
-  assertOK(sendCommandWithIntReply(cmd, &pos), F("Could not add service"));
+  assertOK(sendCommandWithIntReply(cmd, &pos), F("Could not add service"), UNDEFINED_ID);
   return (int8_t) pos;
 }
 
@@ -59,7 +69,7 @@ int8_t Adafruit_BluefruitLE_GATT::addGattCharacteristic(uint16_t uuid16, Charact
   char cmd[strlen_P(fmt_gattaddchar) + 2 + 1 + 1 + maxLen*3];
   sprintf_P(cmd, fmt_gattaddchar, uuid16, props, minLen, maxLen, zeros);
   int32_t pos;
-  assertOK(sendCommandWithIntReply(cmd, &pos), F("Could not add characteristic"));
+  assertOK(sendCommandWithIntReply(cmd, &pos), F("Could not add characteristic"), UNDEFINED_ID);
   return (int8_t) pos;
 }
 
@@ -76,7 +86,7 @@ void Adafruit_BluefruitLE_GATT::setGattCharacteristicValue(int8_t id, byte *valu
   
   char cmd[strlen_P(fmt_gattsetchar) + len*3];
   sprintf_P(cmd, fmt_gattsetchar, id, str);
-  assertOK(sendCommandCheckOK(cmd), F("Could not set characteristic value"));
+  assertOK(sendCommandCheckOK(cmd), F("Could not set characteristic value"), id);
 }
 
 
@@ -123,7 +133,7 @@ uint16_t Adafruit_BluefruitLE_GATT::getGattCharacteristicValue(int8_t id, byte *
   // AT+GATTCHAR returns each byte in hex separated by a dash, e.g. 4 bytes: xx-xx-xx-xx (= 11 characters)
   char replyStr[maxLen*3];  // includes terminating '\0'
   uint16_t strLen;
-  assertOK(sendCommandWithStringReply(cmd, replyStr, &strLen), F("Could not get characteristic value"));
+  assertOK(sendCommandWithStringReply(cmd, replyStr, &strLen), F("Could not get characteristic value"), id);
   
   if (strLen == 0 || (strLen + 1) % 3 != 0) {
     return 0;

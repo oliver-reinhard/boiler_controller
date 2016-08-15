@@ -2,8 +2,8 @@
   #define BC_SETUP_H_INCLUDED
   
   // Uncomment AT MOST ONE (!) of the following lines:
-     #define UNIT_TEST
-    // #define BLE_UI
+    // #define UNIT_TEST
+     #define BLE_UI
     // #define SERIAL_UI
   
   #ifdef UNIT_TEST

@@ -292,12 +292,6 @@ void printError(const __FlashStringHelper *err) {
   Serial.print(err);
   Serial.println(F("."));
 }
-
-
-void SerialUI::setup() {
-  if (context != NULL) { } // prevent 'unused parameter' warning
-  // empty
-}
       
 void SerialUI::readUserCommand() {
   char cmd[COMMAND_BUF_SIZE+1];
