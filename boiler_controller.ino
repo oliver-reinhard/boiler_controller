@@ -39,7 +39,7 @@ DS18B20Controller controller = DS18B20Controller(&oneWire, sensors, 2);
 
 ExecutionContext context;
 ControlActions controlActions = ControlActions(&context);
-BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
+BoilerStateAutomaton automaton;
 
 #if defined BLE_UI
   BLEUI ui = BLEUI(&context);
@@ -71,6 +71,8 @@ void setup() {
     context.controller = &controller;
     context.control = &controlActions;
 
+    automaton.init(&context);
+    
     pinMode(HEATER_PIN, OUTPUT);
     context.control->setupSensors();
     

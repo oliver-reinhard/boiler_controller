@@ -100,11 +100,12 @@
       /*
        * Constructor.
        */
-      AbstractState(ExecutionContext *context) {
-         this->context = context;
-  Serial.print("AbstractState=");
-  Serial.println(this->context->op->water.sensorStatus, HEX);
-      }
+      AbstractState() { }
+
+      /*
+       * Mandatory initialisation. This method has to be invoked before any other methods on a state are invoked.
+       */
+      void init(ExecutionContext *context);
 
       /*
        * The non-object ID of the state.
@@ -181,7 +182,7 @@
 
   class AbstractSimpleState : public AbstractState {
     public:
-      AbstractSimpleState(ExecutionContext *context) : AbstractState(context) { };
+      AbstractSimpleState() : AbstractState() { };
       
       virtual StateEnum enter();
       
@@ -197,7 +198,9 @@
   
   class AbstractCompositeState : public AbstractState {
     public:
-      AbstractCompositeState(ExecutionContext *context, AbstractState **substates, uint16_t numSubstates);
+      AbstractCompositeState()  : AbstractState() { }
+      
+      void init(ExecutionContext *context, AbstractState **substates, uint16_t numSubstates);
       
       AbstractState *initialSubstate();
       
@@ -222,7 +225,6 @@
   
   class Init : public AbstractSimpleState {
     public:
-      Init(ExecutionContext *context) : AbstractSimpleState(context) { };
       StateEnum id() { return STATE_INIT; }
       // No user commands for this state.
       EventCandidates eval();
@@ -234,7 +236,6 @@
   
   class SensorsNOK : public AbstractSimpleState {
     public:
-      SensorsNOK(ExecutionContext *context) : AbstractSimpleState(context) { };
       StateEnum id() { return STATE_SENSORS_NOK; }
       UserCommands userCommands();
       EventCandidates eval();
@@ -245,9 +246,7 @@
 
   
   class Ready : public AbstractCompositeState {
-    public:
-      Ready(ExecutionContext *context, AbstractState **substates, uint16_t numSubstates) : AbstractCompositeState(context, substates, numSubstates) { };
-      
+    public:      
       StateEnum id() { return STATE_READY; }
       UserCommands userCommands();
       EventCandidates eval();
@@ -259,7 +258,6 @@
   
   class Idle : public AbstractSimpleState {
     public:
-      Idle(ExecutionContext *context) : AbstractSimpleState(context) { };
       StateEnum id() { return STATE_IDLE; }
       UserCommands userCommands();
       EventCandidates eval();
@@ -271,8 +269,6 @@
   
   class Recording : public AbstractCompositeState {
     public:
-      Recording(ExecutionContext *context, AbstractState **substates, uint16_t numSubstates) : AbstractCompositeState(context, substates, numSubstates) { };
-      
       StateEnum id() { return STATE_RECORDING; }
       UserCommands userCommands();
       EventCandidates eval();
@@ -290,7 +286,6 @@
   
   class Standby : public AbstractSimpleState {
     public:
-      Standby(ExecutionContext *context) : AbstractSimpleState(context) { };
       StateEnum id() { return STATE_STANDBY; }
       UserCommands userCommands();
       EventCandidates eval();
@@ -302,7 +297,6 @@
   
   class Heating : public AbstractSimpleState {
     public:
-      Heating(ExecutionContext *context) : AbstractSimpleState(context) { };
       StateEnum id() { return STATE_HEATING; }
       UserCommands userCommands();
       EventCandidates eval();
@@ -320,7 +314,6 @@
   
   class Overheated : public AbstractSimpleState {
     public:
-      Overheated(ExecutionContext *context) : AbstractSimpleState(context) { };
       StateEnum id() { return STATE_OVERHEATED; }
       UserCommands userCommands();
       EventCandidates eval();
@@ -335,7 +328,7 @@
    */
   class BoilerStateAutomaton {
     public:
-      BoilerStateAutomaton(ExecutionContext *context);
+      void init(ExecutionContext *context);
       
       /*
        * Returns the current state.
@@ -364,6 +357,17 @@
     private:
       ExecutionContext *context;
       
+      Init INIT;
+      Idle IDLE;
+      SensorsNOK SENSORS_NOK;
+      Standby STANDBY;
+      Heating HEATING;
+      Overheated OVERHEATED;
+      Recording RECORDING;
+      AbstractState *RECORDING_SUBSTATES[3] = {&STANDBY, &HEATING, &OVERHEATED};
+      Ready READY;
+      AbstractState *READY_SUBSTATES[2] = {&IDLE, &RECORDING};
+
       AbstractState *ALL_STATES[STATE_OVERHEATED + 1];
       AbstractState *currentState;
       

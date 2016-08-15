@@ -5,6 +5,10 @@
 /*
  * ABSTRACT STATE
  */
+void AbstractState::init(ExecutionContext *context) {
+   this->context = context;
+}
+      
 UserCommands AbstractState::userCommands() {
   // default implementation: delegate to containing state (if any):
   if(containingState != NULL) { 
@@ -66,8 +70,8 @@ void AbstractSimpleState::exit(EventEnum event, StateEnum next) {
 /*
  * COMPOSITE STATE
  */
-// Constructor
-AbstractCompositeState::AbstractCompositeState(ExecutionContext *context, AbstractState **substates, uint16_t numSubstates) : AbstractState(context) {
+void AbstractCompositeState::init(ExecutionContext *context, AbstractState **substates, uint16_t numSubstates) {
+  AbstractState::init(context);
   this->substates = substates;
   this->numSubstates = numSubstates;
   // set containingStates of the subtates to "this":
@@ -116,10 +120,6 @@ void AbstractCompositeState::exit(EventEnum event, StateEnum next) {
 
 EventCandidates Init::eval() {
   EventCandidates result = AbstractState::eval();
-  #ifdef UT_STATE
-    Serial.print(F("State class Init: context UNDEFINED ****"));
-    Serial.println(this->context->op->water.sensorStatus, HEX);
-  #endif
   if (context->op->water.sensorStatus == SENSOR_INITIALISING) {
     result |= EVENT_NONE;  // = wait
   } else if (context->op->water.sensorStatus == SENSOR_OK) {
@@ -399,21 +399,17 @@ StateEnum Overheated::transAction(EventEnum event) {
 /*
  * STATE AUTOMATON
  */
-BoilerStateAutomaton::BoilerStateAutomaton(ExecutionContext *context) {
+void BoilerStateAutomaton::init(ExecutionContext *context) {
   this->context = context;
   
-  static Init INIT(context);
-  static Idle IDLE(context);
-  static SensorsNOK SENSORS_NOK(context);
-  static Standby STANDBY(context);
-  static Heating HEATING(context);
-  static Overheated OVERHEATED(context);
-
-  static AbstractState *RECORDING_SUBSTATES[] = {&STANDBY, &HEATING, &OVERHEATED};
-  static Recording RECORDING(context, RECORDING_SUBSTATES, 3);
-
-  static AbstractState *READY_SUBSTATES[] = {&IDLE, &RECORDING};
-  static Ready READY(context, READY_SUBSTATES, 2);
+  INIT.init(context);
+  IDLE.init(context);
+  SENSORS_NOK.init(context);
+  STANDBY.init(context);
+  HEATING.init(context);
+  OVERHEATED.init(context);
+  RECORDING.init(context, RECORDING_SUBSTATES, 3);
+  READY.init(context, READY_SUBSTATES, 2);
 
   ALL_STATES[STATE_INIT] = &INIT;
   ALL_STATES[STATE_SENSORS_NOK] = &SENSORS_NOK;

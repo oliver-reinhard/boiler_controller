@@ -137,15 +137,14 @@
     context.op = &op;
     context.control = &control;
     
-    BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
+    BoilerStateAutomaton automaton;
+    automaton.init(&context);
 
     assertEqual(automaton.state()->id(), STATE_INIT);
     assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_NONE));
     assertEqual(control.totalInvocations(), 0);
 
     // water sensor = SENSOR_INITIALISING => evaluate => no event
-  Serial.print(F("WARNING: CONTEXT NOT INITIALISED IN STATE CLASSE Init: "));
-  Serial.println(context.op->water.sensorStatus, HEX);
     assertEqual(int16_t(context.op->water.sensorStatus), int16_t(SENSOR_INITIALISING));
     EventCandidates cand = automaton.evaluate();
     assertEqual(int16_t(cand), int16_t(EVENT_NONE));
@@ -191,7 +190,7 @@
     //
     // user command SET_CONFIG in state IDLE
     //
-    assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_SET_CONFIG | CMD_REC_ON));
+    assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_SET_CONFIG | CMD_RESET_CONFIG | CMD_REC_ON));
     op.command->command = CMD_SET_CONFIG;
     cand = automaton.evaluate();
     assertEqual(int16_t(cand), int16_t(EVENT_SET_CONFIG));
@@ -339,7 +338,8 @@
     context.op = &op;
     context.control = &control;
 
-    BoilerStateAutomaton automaton = BoilerStateAutomaton(&context);
+    BoilerStateAutomaton automaton;
+    automaton.init(&context);
 
     assertEqual(automaton.state()->id(), STATE_INIT);
     assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_NONE));
