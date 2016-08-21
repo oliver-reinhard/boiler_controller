@@ -8,7 +8,7 @@
 #elif defined BLE_UI
   #include "ui_ble.h"
 #elif defined UNIT_TEST
-  #include <ArduinoUnit.h>
+  #include <ArduinoUnitX.h>
 #endif
 
 // #define DEBUG_MAIN
@@ -219,6 +219,7 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
   
   if (notification.state != automaton->state()->id()) {
     notification.state = automaton->state()->id();
+    notification.userCommands = automaton->userCommands();
     #ifdef DEBUG_MAIN
       Serial.println(F("DEBUG_MAIN: notify status case 2"));
     #endif

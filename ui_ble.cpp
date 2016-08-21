@@ -1,14 +1,16 @@
 #include "ui_ble.h"
 
-#define DEBUG_BLE false
+#define DEBUG_BLE_MODULE false
 
-//#define DEBUG_NOTIFICATION
+#define DEBUG_BLE_UI
 
 const char BC_DEVICE_NAME[] = "Boiler Controller";
 const char BC_CONTROLLER_SERVICE_ID[] = "4C-EF-DD-58-CB-95-44-50-90-FB-F4-04-DC-20-2F-7C";
 
+const int8_t USER_CMD_MAX_SIZE = sizeof(UserCommandID) + USER_CMD_PARAMETER_MAX_SIZE;
+
 void BLEUI::setup() {
-  ble.assertOK(ble.begin(DEBUG_BLE), F("Couldn't find Bluefruit, make sure it's in CMD mode & check wiring?"));
+  ble.assertOK(ble.begin(DEBUG_BLE_MODULE), F("Couldn't find Bluefruit, make sure it's in CMD mode & check wiring?"));
 
   /* Perform a factory reset to make sure everything is in a known state */
   ble.assertOK(ble.factoryReset(), F("Could not factory reset"));
@@ -23,16 +25,27 @@ void BLEUI::setup() {
   // ble.setInterCharWriteDelay(5); // 5 ms
 
   ble.setGattDeviceName(BC_DEVICE_NAME);
-  
-  controllerServiceId =   ble.addGattService(BC_CONTROLLER_SERVICE_ID);
-  stateCharId =           ble.addGattCharacteristic(0x0001, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 1, 1);
-  timeInStateCharId =     ble.addGattCharacteristic(0x0002, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);  // milliseconds
-  timeHeatingCharId =     ble.addGattCharacteristic(0x0003, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);
-  targetTempCharId =      ble.addGattCharacteristic(0x0004, CHAR_PROP_READ | CHAR_PROP_WRITE,  2, 2);
-  waterSensorCharId =     ble.addGattCharacteristic(0x0005, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);
-  ambientSensorCharId =   ble.addGattCharacteristic(0x0006, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);
 
-  ble.assertOK(waterSensorCharId > 0, F("waterSensorCharId undefined"));
+  // service
+  controllerSID =           ble.addGattService(BC_CONTROLLER_SERVICE_ID);
+
+  // status
+  stateCID =                ble.addGattCharacteristic(0x0001, CHAR_PROP_READ | CHAR_PROP_NOTIFY, sizeof(StateID), sizeof(StateID));
+  timeInStateCID =          ble.addGattCharacteristic(0x0002, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);  // milliseconds
+  timeHeatingCID =          ble.addGattCharacteristic(0x0003, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);  // milliseconds
+  acceptedUserCommandsCID = ble.addGattCharacteristic(0x0004, CHAR_PROP_READ | CHAR_PROP_NOTIFY, sizeof(UserCommands), sizeof(UserCommands));
+  userCommandCID =          ble.addGattCharacteristic(0x0005, CHAR_PROP_WRITE,  sizeof(UserCommandID), USER_CMD_MAX_SIZE); 
+  waterSensorCID =          ble.addGattCharacteristic(0x0006, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);
+  ambientSensorCID =        ble.addGattCharacteristic(0x0007, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);
+  
+  // configuration
+  configChangedCID =        ble.addGattCharacteristic(0x1000, CHAR_PROP_WRITE,  4, 4); // a random number; its change indicates that one of the config params was changed
+  targetTempCID =           ble.addGattCharacteristic(0x1001, CHAR_PROP_READ | CHAR_PROP_WRITE,  sizeof(Temperature), sizeof(Temperature));
+  
+  // logs
+  logEntryCID =             ble.addGattCharacteristic(0x2000, CHAR_PROP_NOTIFY, sizeof(LogEntry), sizeof(LogEntry));
+
+  ble.assertOK(waterSensorCID > 0, F("waterSensorCID undefined"));
   
   /* Add the Heart Rate Service to the advertising data (needed for Nordic apps to detect the service) */
   ble.assertOK(ble.sendCommandCheckOK( F("AT+GAPSETADVDATA=02-01-06-05-02-0d-18-0a-18")), F("Could not set advertising data"));
@@ -42,7 +55,44 @@ void BLEUI::setup() {
 }
 
 void BLEUI::readUserCommand() {
-  if (context != NULL) { } // prevent 'unused parameter' warning
+  byte cmd[USER_CMD_MAX_SIZE];
+  uint16_t len = ble.getGattCharacteristicValue(userCommandCID, cmd, USER_CMD_MAX_SIZE);
+  UserCommandID cmdId;
+  memcpy(&cmdId, cmd, sizeof(UserCommandID));
+  if (cmdId != CMD_NONE) {
+    context->op->command->command = (UserCommandEnum) cmdId;
+
+    if (len > sizeof(UserCommandID)) {
+      // 
+      // TODO get params and store somehow as context->op->command->args
+      //
+    }
+
+    // reset characteristic value to CMD_NONE:
+    ble.setGattCharacteristicValue(userCommandCID, CMD_NONE);
+    
+    #ifdef DEBUG_BLE_UI
+      Serial.print(F("DEBUG_BLE_UI: user command received: "));
+      Serial.println(cmdId);
+    #endif
+    
+  } else {
+    uint32_t configChangedStamp;
+    ble.getGattCharacteristicValue(configChangedCID, &configChangedStamp);
+    if (configChangedStamp != lastConfigChangedStamp) {
+      // 
+      // TODO check all config characteristics and store new value in config
+      //
+
+      // store new stamp:
+      lastConfigChangedStamp = configChangedStamp;
+
+      #ifdef DEBUG_BLE_UI
+        Serial.print(F("DEBUG_BLE_UI: new config-changed stamp: "));
+        Serial.println(configChangedStamp);
+      #endif
+    }
+  }
 }
 
 void BLEUI::processReadWriteRequests(ReadWriteRequests requests, BoilerStateAutomaton *automaton) {
@@ -53,37 +103,42 @@ void BLEUI::notifyStatusChange(StatusNotification *notification) {
   boolean notified = false;
 
   if (notification->notifyProperties & NOTIFY_STATE) {
-    ble.setGattCharacteristicValue(stateCharId, notification->state);
+    ble.setGattCharacteristicValue(stateCID, notification->state);
+    ble.setGattCharacteristicValue(acceptedUserCommandsCID, notification->userCommands);
     notified = true;
   }
   if (notification->notifyProperties & NOTIFY_TIME_IN_STATE) {
-    ble.setGattCharacteristicValue(timeInStateCharId, notification->timeInState);
+    ble.setGattCharacteristicValue(timeInStateCID, notification->timeInState);
     notified = true;
   }
   if (notification->notifyProperties & NOTIFY_TIME_HEATING) {
-    ble.setGattCharacteristicValue(timeHeatingCharId, notification->heatingTime);
+    ble.setGattCharacteristicValue(timeHeatingCID, notification->heatingTime);
     notified = true;
   }
   if (notification->notifyProperties & NOTIFY_WATER_SENSOR) {
     int32_t waterSensor = notification->waterTemp;
     waterSensor = (waterSensor << 8) | notification->waterSensorStatus;
-    ble.setGattCharacteristicValue(waterSensorCharId, waterSensor);
+    ble.setGattCharacteristicValue(waterSensorCID, waterSensor);
     notified = true;
   }
   if (notification->notifyProperties & NOTIFY_AMBIENT_SENSOR) {
     int32_t ambientSensor = notification->ambientTemp;
     ambientSensor = (ambientSensor << 8) | notification->ambientSensorStatus;
-    ble.setGattCharacteristicValue(ambientSensorCharId, ambientSensor);
+    ble.setGattCharacteristicValue(ambientSensorCID, ambientSensor);
     notified = true;
   }
   if (notified) {
-    Serial.println(F("* status notified via BLE"));
+    #ifdef DEBUG_BLE_UI
+      Serial.println(F("DEBUG_BLE_UI: status notified via BLE"));
+    #endif
   }
 }
 
 
 void BLEUI::notifyNewLogEntry(LogEntry entry) {
-  if (entry.timestamp != UNDEFINED_TIMESTAMP) { } // prevent 'unused parameter' warning
-  Serial.println(F("* new log entry"));
+  ble.setGattCharacteristicValue(logEntryCID, (byte *) &entry, sizeof(LogEntry));
+  #ifdef DEBUG_BLE_UI
+    Serial.println(F("DEBUG_BLE_UI: new log entry notified via BLE"));
+  #endif
 }
 

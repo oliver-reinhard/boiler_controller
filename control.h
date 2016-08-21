@@ -46,6 +46,11 @@
   
   const uint16_t NUM_USER_COMMANDS = 12;
 
+  /*
+   * ID for enum type.
+   */
+  typedef uint16_t UserCommandID;
+
   // bitwise OR combination ("|") of UserCommandEnum(s):
   typedef uint16_t UserCommands;
 

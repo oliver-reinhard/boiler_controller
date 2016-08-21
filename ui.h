@@ -20,6 +20,7 @@
     // the bits of notifyProperties tell which values have changed:
     NotifyProperties notifyProperties;
     StateID state;
+    UserCommands userCommands;
     // time [s] since most recent transition to current state:
     uint32_t timeInState = 0L;
     // accumulated heating time [s] up to now:
@@ -39,7 +40,7 @@
       
       virtual void setup() { }
       /*
-       * Reads one user command and stores them in context->op.userCommand.
+       * Read one user command and store it in the context->op->command struct
        */
       virtual void readUserCommand() { }
       
