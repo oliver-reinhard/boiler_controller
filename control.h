@@ -28,72 +28,96 @@
   #define AMBIENT_MAX_TEMP 5000 // [°C * 100]
   
   #define CMD_ARG_BUF_SIZE 30   // Size of the read buffer for incoming data
+  #define CMD_ARG_VALUE_SIZE 4  // Size of command argument values
   
   typedef enum {
-    CMD_NONE = 0,           // 1
-    CMD_HELP = 0x1,         // 2
-    CMD_SET_CONFIG = 0x2,   // 3
-    CMD_RESET_CONFIG = 0x4, // 4
-    CMD_REC_ON = 0x8,       // 5
-    CMD_REC_OFF = 0x10,     // 6  (16)
-    CMD_GET_LOG = 0x20,     // 7  (32)
-    CMD_GET_CONFIG = 0x40,  // 8  (64)
-    CMD_GET_STAT = 0x80,    // 9  (128)
-    CMD_HEAT_ON = 0x100,    // 10 (256)
-    CMD_HEAT_OFF = 0x200,   // 11 (512)
-    CMD_HEAT_RESET = 0x400, // 12 (1024)
+    CMD_NONE             = 0,       // 1
+    CMD_INFO_HELP        = 0x1,     // 2
+    CMD_INFO_STAT        = 0x2,     // 3
+    CMD_INFO_CONFIG      = 0x4,     // 4
+    CMD_INFO_LOG         = 0x8,     // 5
+    CMD_CONFIG_SET_VALUE = 0x10,    // 6   (16)
+    CMD_CONFIG_SWAP_IDS  = 0x20,    // 7   (32)
+    CMD_CONFIG_CLEAR_IDS = 0x40,    // 8   (64)
+    CMD_CONFIG_ACK_IDS   = 0x80,    // 9   (128)
+    CMD_CONFIG_RESET_ALL = 0x100,   // 10  (256)
+    CMD_REC_ON           = 0x200,   // 11  (512)
+    CMD_REC_OFF          = 0x400,   // 12  (1024)
+    CMD_HEAT_ON          = 0x800,   // 13  (2048)
+    CMD_HEAT_OFF         = 0x1000,  // 14  (4096)
+    CMD_HEAT_RESET       = 0x2000,  // 15  (8192)
   } UserCommandEnum;
   
-  const uint16_t NUM_USER_COMMANDS = 12;
+  const uint8_t NUM_USER_COMMANDS = 15;
 
   /*
    * ID for enum type.
    */
   typedef uint16_t UserCommandID;
 
-  // bitwise OR combination ("|") of UserCommandEnum(s):
+  // Bitwise OR combination ("|") of UserCommandEnum(s):
   typedef uint16_t UserCommands;
 
-  typedef enum {
-    READ_WRITE_NONE = 0,
-    READ_HELP = 0x1,
-    READ_STAT = 0x2,
-    READ_LOG = 0x4,
-    READ_CONFIG = 0x8,
-    WRITE_CONFIG = 0x10
-  } ReadWriteRequestEnum;
+  /*
+   * Representation of a user control request via a command:
+   */
+  struct UserRequest {
+    UserCommandEnum command;
+    ConfigParamEnum param;
+    int32_t intValue;
+    float floatValue;
+    EventID event;  // event that corresponds to command
 
-  // bitwise OR combination ("|") of ReadWriteRequestEnum(s)
-  typedef uint8_t ReadWriteRequests;
+    void clear() {
+      command = CMD_NONE;
+      param = PARAM_NONE;
+      intValue = INT32_MIN;
+      floatValue = -999999;
+      event = 0;
+    }
+  };
 
-  struct UserCommand {
-    UserCommandEnum command = CMD_NONE;
-    char args[CMD_ARG_BUF_SIZE]; // always '\0' terminated
+  class UserFeedback {
+    public:
+      virtual void commandExecuted(boolean /* success */) { }
   };
   
+  
   struct OperationalParams {
-    // timepoint [ms] of most recent transition to current state:
+    
+    /* Timepoint [ms] of most recent transition to current state.  */
     uint32_t currentStateStartMillis = 0L;
+
+    /* Representation of the physical water-temperature sensor. */
     DS18B20TemperatureSensor water = DS18B20TemperatureSensor("Water");
+    
+    /* Representation of the physical ambient-temperature sensor.*/
     DS18B20TemperatureSensor ambient = DS18B20TemperatureSensor("Ambient");
-    UserCommand *command;
+
+    /* A control request made by the user. */
+    UserRequest request;
+
+    /* Is the boiler heating element on or off? */
     boolean heating = false;
-    // time [ms] of most recent transition to state HEATING:
+    
+    /*  Time [ms] of most recent transition to state HEATING.*/
     uint32_t heatingStartMillis = 0L;
-    // accumulated time in state HEATING, not including the period since last start (if heatingStartMillis != 0L)
+    
+    /* Accumulated time in state HEATING, not including the period since last start (if heatingStartMillis != 0L). */
     uint32_t heatingAccumulatedMillis = 0L;
+    
+    /* Are we logging value changes such as measured temperatures? */
     boolean loggingValues = false;
 
-    /*
-     * Swap sensor IDs and sensor states between water and ambient sensor.
-     */
+    /* Swap sensor IDs and sensor states between water and ambient sensor. */
     void swapTempSensorIDs();
   };
 
   /*
-   * Calculates current heating time.
+   * Calculates the accumulated heating time.
    */
   uint32_t heatingTotalMillis(OperationalParams *op);
+  
 
   class ControlContext {
     public:
@@ -110,32 +134,21 @@
    */
   class ControlActions {
     public:
-      ControlActions(ControlContext *context) {
+      ControlActions(ControlContext *context, UserFeedback *feedback) {
         this->context = context;
+        this->userFeedback = feedback;
       }
 
+      /*
+       * Changes config parameters based on user requests (context->op->request).
+       * Provides feedback about the success of the modification via the UserFeedback object.
+       */
+      virtual void modifyConfig();
+      
       /*
        * Performs a search on the OneWire Bus and matches / assigns returned sensor addresses with configured sensors.
        */
       uint8_t setupSensors();
-
-      /*
-       * Swap the sensor IDs and states of water- and ambient-temperature sensor in the operational parameters.
-       */
-      void swapTempSensorIDs();
-
-      /*
-       * Clears the sensor IDs of water- and ambient-temperature sensors in the configuration parameters and saves the latter to EEPROM. 
-       */
-      void clearTempSensorIDs();
-      
-      /*
-       * Copies the sensor IDs of water- and ambient-temperature sensors of the the configuration parameters to the configuration parameters and saves the latter to EEPROM. 
-       * Sets the sensor status of one or both sensors to SENSOR_OK iff sensor status is SENSOR_ID_AUTO_ASSIGNED.
-       * 
-       * @return true if at lestt one ID was copied and status was changed.
-       */
-      boolean confirmTempSensorIDs();
 
       /*
        * Sends a command to all physical temperature sensors to trigger the conversion of physical values to a temperature.
@@ -156,20 +169,39 @@
        * Physically turns the water heater on or off.
        */
       virtual void heat(boolean on);
-  
-      virtual void setConfigParam();
-      virtual void requestHelp();
-      virtual void requestLog();
-      virtual void requestConfig();
-      virtual void requestStat();
-      ReadWriteRequests getPendingReadWriteRequests();
-      void clearPendingReadWriteRequests();
       
     protected:
       ControlContext *context;
-      ReadWriteRequests pendingRequests = READ_WRITE_NONE;
+      UserFeedback *userFeedback;
 
+      /*
+       * Logs a problem that arose during sensor setup.
+       */
       void logSensorSetupIssue(DS18B20TemperatureSensor *sensor, ControlMessageEnum msg);
+      
+      /*
+       * Sets a config param value and logs the change.
+       * @return true if value was set and logged, false else
+       */
+      boolean setConfigParamValue(ConfigParamEnum p, int32_t intValue, float floatValue);
+
+      /*
+       * Swap the sensor IDs and states of water- and ambient-temperature sensor in the operational parameters.
+       */
+      void swapTempSensorIDs();
+
+      /*
+       * Clears the sensor IDs of water- and ambient-temperature sensors in the configuration parameters and saves the latter to EEPROM. 
+       */
+      void clearTempSensorIDs();
+      
+      /*
+       * Copies the sensor IDs of water- and ambient-temperature sensors of the the configuration parameters to the configuration parameters and saves the latter to EEPROM. 
+       * Sets the sensor status of one or both sensors to SENSOR_OK iff sensor status is SENSOR_ID_AUTO_ASSIGNED.
+       * 
+       * @return true if at lestt one ID was copied and status was changed.
+       */
+      boolean confirmTempSensorIDs();
   };
   
 #endif

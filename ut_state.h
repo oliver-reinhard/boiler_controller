@@ -9,29 +9,21 @@
   
     class MockControlActions : public ControlActions {
       public:
-        MockControlActions(ControlContext *context) : ControlActions(context) { }
-        
+        MockControlActions(ControlContext *context, UserFeedback *feedback) : ControlActions(context, feedback) { }
+         
         // Mocked methods:
+        void modifyConfig();
+        
         uint8_t setupSensors() { return 0; }
         void initSensorReadout() { }
         void completeSensorReadout() { }
     
         void heat(boolean on);
-    
-        void setConfigParam();
-        void requestHelp();
-        void requestLog();
-        void requestConfig();
-        void requestStat();
         
         // Mock counters:
         uint16_t heatTrueCount = 0;
         uint16_t heatFalseCount = 0;
-        uint16_t setConfigParamCount = 0;
-        uint16_t requestHelpCount = 0;
-        uint16_t requestLogCount = 0;
-        uint16_t requestConfigCount = 0;
-        uint16_t requestStatCount = 0;
+        uint16_t modifyConfigCount = 0;
         
         uint16_t totalInvocations();
         void resetCounters();

@@ -25,47 +25,67 @@
   const uint16_t NUM_STATES = STATE_OVERHEATED + 1;
   
   typedef enum { 
-    EVENT_NONE = 0,
-    EVENT_READY = 0x1,        // 1
-    EVENT_SENSORS_NOK = 0x2,  // 2
-    EVENT_SET_CONFIG = 0x4,   // 3     (4) user command
-    EVENT_RESET_CONFIG = 0x8, // 4     (8) user command
-    EVENT_REC_ON = 0x10,      // 5    (16) user command
-    EVENT_REC_OFF = 0x20,     // 6    (32) user command
-    EVENT_HELP = 0x40,        // 7    (64) user command
-    EVENT_GET_CONFIG = 0x80,  // 8   (128) user command
-    EVENT_GET_LOG = 0x100,    // 9   (256) user command
-    EVENT_GET_STAT = 0x200,   // 10  (512) user command
-    EVENT_HEAT_ON = 0x400,    // 11 (1024) user command
-    EVENT_HEAT_OFF = 0x800,   // 12 (2048) user command
-    EVENT_TEMP_OVER = 0x1000, // 13 (4096)
-    EVENT_TEMP_OK = 0x2000,   // 14 (8192)
-    EVENT_HEAT_RESET = 0x4000 // 15 (16384) user command
+    EVENT_NONE          = 0,      // 1
+    EVENT_READY         = 0x1,    // 2
+    EVENT_SENSORS_NOK   = 0x2,    // 3
+    EVENT_INFO          = 0x4,    // 4
+    EVENT_CONFIG_MODIFY = 0x8,    // 5     (8)
+    EVENT_CONFIG_RESET  = 0x10,   // 6    (16)
+    EVENT_REC_ON        = 0x20,   // 7    (32)
+    EVENT_REC_OFF       = 0x40,   // 8    (64)
+    EVENT_HEAT_ON       = 0x80,   // 9   (128)
+    EVENT_HEAT_OFF      = 0x100,  // 10  (256)
+    EVENT_HEAT_RESET    = 0x200,  // 11  (512)
+    EVENT_TEMP_OVER     = 0x400,  // 12 (1024)
+    EVENT_TEMP_OK       = 0x800   // 13 (2048)
   } EventEnum;
 
-  const uint16_t NUM_EVENTS = 15;
+  const uint16_t NUM_EVENTS = 13;
+  
+  /*
+   * Maps state-automaton events to user commands.
+   * Note: not all events have corresponding user commands (=> CMD_NONE), but all user commands map to an event
+   */
+  const UserCommands EVENT_CMD_MAP [NUM_EVENTS] = {
+    CMD_NONE,                                                                               // 1 - EVENT_NONE
+    CMD_NONE,                                                                               // 2 - EVENT_READY
+    CMD_NONE,                                                                               // 3 - EVENT_SENSORS_NOK
+    CMD_INFO_HELP | CMD_INFO_STAT | CMD_INFO_CONFIG | CMD_INFO_LOG,                         // 4 - EVENT_INFO
+    CMD_CONFIG_SET_VALUE | CMD_CONFIG_SWAP_IDS | CMD_CONFIG_CLEAR_IDS | CMD_CONFIG_ACK_IDS, // 5 - EVENT_CONFIG_MODIFY
+    CMD_CONFIG_RESET_ALL,                                                                   // 6 - EVENT_CONFIG_RESET
+    CMD_REC_ON,                                                                             // 7 - EVENT_REC_ON
+    CMD_REC_OFF,                                                                            // 8 - EVENT_REC_OFF
+    CMD_HEAT_ON,                                                                            // 9 - EVENT_HEAT_ON
+    CMD_HEAT_OFF,                                                                           // 10 - EVENT_HEAT_OFF
+    CMD_HEAT_RESET,                                                                         // 11 - EVENT_HEAT_RESET
+    CMD_NONE,                                                                               // 12 - EVENT_TEMP_OVER
+    CMD_NONE                                                                                // 13 - EVENT_TEMP_OK
+  };
   
   /*
    * All events (except EVENT_NONE) ordered by descending priority, i.e. most urgent first.
    */
-  const EventEnum EVENT_PRIORITIES[NUM_EVENTS] = {
-    EVENT_TEMP_OVER,    // 1
-    EVENT_TEMP_OK,      // 2
-    EVENT_READY,        // 3
-    EVENT_SENSORS_NOK,  // 4
-    EVENT_HEAT_OFF,     // 5
-    EVENT_HEAT_ON,      // 6
-    EVENT_REC_OFF,      // 7
-    EVENT_REC_ON,       // 8
-    EVENT_HEAT_RESET,   // 9
-    EVENT_GET_STAT,     // 10
-    EVENT_HELP,         // 11
-    EVENT_SET_CONFIG,   // 12
-    EVENT_RESET_CONFIG, // 13
-    EVENT_GET_CONFIG,   // 14
-    EVENT_GET_LOG       // 15
+  const EventEnum EVENT_PRIORITIES [NUM_EVENTS] = {
+    EVENT_TEMP_OVER,     // 1
+    EVENT_TEMP_OK,       // 2
+    EVENT_READY,         // 3
+    EVENT_SENSORS_NOK,   // 4
+    EVENT_HEAT_OFF,      // 5
+    EVENT_HEAT_ON,       // 6
+    EVENT_REC_OFF,       // 7
+    EVENT_REC_ON,        // 8
+    EVENT_HEAT_RESET,    // 9
+    EVENT_CONFIG_RESET,  // 10
+    EVENT_CONFIG_MODIFY, // 11
+    EVENT_INFO,          // 12
+    EVENT_NONE           // 13
   };
-    
+  
+  /*
+   * The set of events accepted in a given stated as or'ed ("|") together.
+   */
+  typedef uint16_t AcceptedEvents;
+  
   /*
    * The result of the evaluation of the operational parameters by a state.
    * Denotes all possible events that result from the evaluation by a state as or'ed ("|") together.
@@ -115,11 +135,11 @@
       /*
        * Calculates and returns the set of user commands supported by the current state at the time of invocation of this method.
        * 
-       * The default implementation invokes the containing state's userCommands() method first, then adds its own commands to the result.
+       * The default implementation invokes the containing state's acceptedUserEvents() method first, then adds its own commands to the result.
        * 
        * Returns CMD_NONE if there should be no user commands available at the time.
        */
-      virtual UserCommands userCommands();
+      virtual AcceptedEvents acceptedUserEvents();
 
       /*
        * Enters a state by invoking its entryAction() method, then triggers the enter() method of its initial substate (if any).
@@ -237,8 +257,7 @@
   class SensorsNOK : public AbstractSimpleState {
     public:
       StateEnum id() { return STATE_SENSORS_NOK; }
-      UserCommands userCommands();
-      EventCandidates eval();
+      AcceptedEvents acceptedUserEvents();
       
     protected:
       StateEnum transAction(EventEnum event);
@@ -248,8 +267,7 @@
   class Ready : public AbstractCompositeState {
     public:      
       StateEnum id() { return STATE_READY; }
-      UserCommands userCommands();
-      EventCandidates eval();
+      AcceptedEvents acceptedUserEvents();
       
     protected:
       StateEnum transAction(EventEnum event);
@@ -259,8 +277,7 @@
   class Idle : public AbstractSimpleState {
     public:
       StateEnum id() { return STATE_IDLE; }
-      UserCommands userCommands();
-      EventCandidates eval();
+      AcceptedEvents acceptedUserEvents();
       
     protected:
       StateEnum transAction(EventEnum event);
@@ -270,8 +287,7 @@
   class Recording : public AbstractCompositeState {
     public:
       StateEnum id() { return STATE_RECORDING; }
-      UserCommands userCommands();
-      EventCandidates eval();
+      AcceptedEvents acceptedUserEvents();
       
     protected:
       StateEnum transAction(EventEnum event);
@@ -287,8 +303,7 @@
   class Standby : public AbstractSimpleState {
     public:
       StateEnum id() { return STATE_STANDBY; }
-      UserCommands userCommands();
-      EventCandidates eval();
+      AcceptedEvents acceptedUserEvents();
       
     protected:
       StateEnum transAction(EventEnum event);
@@ -298,7 +313,7 @@
   class Heating : public AbstractSimpleState {
     public:
       StateEnum id() { return STATE_HEATING; }
-      UserCommands userCommands();
+      AcceptedEvents acceptedUserEvents();
       EventCandidates eval();
       
     protected:
@@ -315,7 +330,7 @@
   class Overheated : public AbstractSimpleState {
     public:
       StateEnum id() { return STATE_OVERHEATED; }
-      UserCommands userCommands();
+      AcceptedEvents acceptedUserEvents();
       EventCandidates eval();
       
     protected:
@@ -338,7 +353,7 @@
       /*
        * Returns the set of user commands supported by the current state of the automaton.
        */
-      UserCommands userCommands();
+      UserCommands acceptedUserCommands();
     
       /*
        * Returns all possible transitions from the current state, or EVENT_NONE if there is none. 
@@ -353,6 +368,12 @@
        * Execute the transition for the given event from the current state. This includes entering the new state, if there is a transition to a new state at all.
        */
       void transition(EventEnum event);
+
+      /*
+       * Map a user command to its corresponding event using EVENT_CMD_MAP.
+       * @return EVENT_NONE if no mapping is found
+       */
+      EventEnum commandToEvent(UserCommandEnum command);
     
     private:
       ExecutionContext *context;
@@ -372,6 +393,16 @@
       AbstractState *currentState;
       
       AbstractState *getState(StateEnum id);
+
+  #ifdef UNIT_TEST
+    public:
+  #endif
+      
+      /*
+       * Map a set of events ot their corresponding user commands using EVENT_CMD_MAP.
+       * @return CMD_NONE if no mapping is found
+       */
+      UserCommands eventsToCommands(AcceptedEvents events);
   };
   
 #endif

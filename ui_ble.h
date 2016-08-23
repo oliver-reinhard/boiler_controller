@@ -12,9 +12,11 @@
       
       void setup();
     
-      void readUserCommand();
+      void readUserRequest();
       
-      void processReadWriteRequests(ReadWriteRequests requests, BoilerStateAutomaton *automaton);
+      void commandExecuted(boolean success);
+      
+      void provideUserInfo(BoilerStateAutomaton *automaton);
     
       void notifyStatusChange(StatusNotification *notification);
     
@@ -30,7 +32,7 @@
       int8_t timeInStateCID;
       int8_t timeHeatingCID;
       int8_t acceptedUserCommandsCID;
-      int8_t userCommandCID;
+      int8_t userRequestCID;
       int8_t waterSensorCID;
       int8_t ambientSensorCID;
       

@@ -6,6 +6,9 @@
   #include "ut_state.h"
 
   //#define DEBUG_UT_STATE
+
+  static const UserCommands ALL_CMD_INFO = CMD_INFO_HELP | CMD_INFO_CONFIG |  CMD_INFO_LOG | CMD_INFO_STAT;
+  static const UserCommands ALL_CMD_CONFIG_MODIFY = CMD_CONFIG_SET_VALUE | CMD_CONFIG_SWAP_IDS | CMD_CONFIG_CLEAR_IDS | CMD_CONFIG_ACK_IDS | CMD_CONFIG_RESET_ALL;
   
   /*
    * Class MockControlActions
@@ -14,21 +17,13 @@
     return 
       heatTrueCount +
       heatFalseCount +
-      setConfigParamCount +
-      requestHelpCount +
-      requestLogCount +
-      requestConfigCount +
-      requestStatCount;
+      modifyConfigCount;
   }
    
   void MockControlActions::resetCounters() {
     heatTrueCount = 0;
     heatFalseCount = 0;
-    setConfigParamCount = 0;
-    requestHelpCount = 0;
-    requestLogCount = 0;
-    requestConfigCount = 0;
-    requestStatCount = 0;
+    modifyConfigCount = 0;
   }
 
 
@@ -44,29 +39,9 @@
     }
   }
 
-  void MockControlActions::setConfigParam() {
-    ControlActions::setConfigParam();
-    setConfigParamCount++;
-  }
-  
-  void MockControlActions::requestHelp() {
-    ControlActions::requestHelp();
-    requestHelpCount++;
-  }
-  
-  void MockControlActions::requestLog() {
-    ControlActions::requestLog();
-    requestLogCount++;
-  }
-  
-  void MockControlActions::requestConfig() {
-    ControlActions::requestConfig();
-    requestConfigCount++;
-  }
-  
-  void MockControlActions::requestStat() {
-    ControlActions::requestStat();
-    requestStatCount++;
+  void MockControlActions::modifyConfig() {
+    ControlActions::modifyConfig();
+    modifyConfigCount++;
   }
 
   /*
@@ -123,14 +98,12 @@
     #endif
     assertEqual(config.heaterCutOutWaterTemp, DEFAULT_HEATER_CUT_OUT_WATER_TEMP); 
     
-    UserCommand cmd;
-    memset(cmd.args, 0, CMD_ARG_BUF_SIZE);
-    
     OperationalParams op;
-    op.command = &cmd;
+    op.request.clear();
     
     ExecutionContext context;
-    MockControlActions control = MockControlActions(&context);
+    UserFeedback feedback;
+    MockControlActions control = MockControlActions(&context, &feedback);
 
     context.log = &logger;
     context.config = &config;
@@ -141,7 +114,7 @@
     automaton.init(&context);
 
     assertEqual(automaton.state()->id(), STATE_INIT);
-    assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_NONE));
+    assertEqual(int16_t(automaton.acceptedUserCommands()), int16_t(CMD_NONE));
     assertEqual(control.totalInvocations(), 0);
 
     // water sensor = SENSOR_INITIALISING => evaluate => no event
@@ -152,7 +125,7 @@
     assertEqual(control.totalInvocations(), 0);
 
     // transition (INVALID event) => stay in state INIT
-    automaton.transition(EVENT_SET_CONFIG); 
+    automaton.transition(EVENT_CONFIG_MODIFY); 
     assertEqual(automaton.state()->id(), STATE_INIT);
     assertEqual(control.totalInvocations(), 0);
     // invalid event logging
@@ -161,7 +134,7 @@
     logger.resetCounters();
 
     // transition again (INVALID event) => must NOT LOG again
-    automaton.transition(EVENT_SET_CONFIG); 
+    automaton.transition(EVENT_CONFIG_MODIFY); 
     assertEqual(logger.totalInvocations(), 0);
 
     //
@@ -188,28 +161,30 @@
     logger.resetCounters();
 
     //
-    // user command SET_CONFIG in state IDLE
+    // user command CONFIG_MODIFY in state IDLE
     //
-    assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_SET_CONFIG | CMD_RESET_CONFIG | CMD_REC_ON));
-    op.command->command = CMD_SET_CONFIG;
+    assertEqual(int16_t(automaton.acceptedUserCommands()), int16_t(ALL_CMD_INFO | ALL_CMD_CONFIG_MODIFY | CMD_CONFIG_RESET_ALL | CMD_REC_ON));
+    op.request.command = CMD_CONFIG_SET_VALUE;
+    op.request.event = EVENT_CONFIG_MODIFY;
     cand = automaton.evaluate();
-    assertEqual(int16_t(cand), int16_t(EVENT_SET_CONFIG));
-    op.command->command = CMD_NONE;
+    assertEqual(int16_t(cand), int16_t(EVENT_CONFIG_MODIFY));
+    op.request.command = CMD_NONE;
     
-    // transition state IDLE => event SET_CONFIG => stay in state IDLE
-    automaton.transition(EVENT_SET_CONFIG); 
+    // transition state IDLE => event CONFIG_MODIFY => stay in state IDLE
+    automaton.transition(EVENT_CONFIG_MODIFY); 
     assertEqual(automaton.state()->id(), STATE_IDLE);
-    assertEqual(control.setConfigParamCount, 1);
+    assertEqual(control.modifyConfigCount, 1);
     assertEqual(control.totalInvocations(), 1);
     control.resetCounters();
 
     //
     // user command REC ON in state IDLE
     //
-    op.command->command = CMD_REC_ON;
+    op.request.command = CMD_REC_ON;
+    op.request.event = EVENT_REC_ON;
     cand = automaton.evaluate();
     assertEqual(int16_t(cand), int16_t(EVENT_REC_ON));
-    op.command->command = CMD_NONE;
+    op.request.command = CMD_NONE;
     
     // transition state IDLE => event REC_ON => state STANDBY
     assertEqual(int16_t(op.loggingValues), int16_t(false));
@@ -222,11 +197,12 @@
     //
     // user command REC OFF in state STANDBY
     //
-    assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT | CMD_REC_OFF | CMD_HEAT_ON));
-    op.command->command = CMD_REC_OFF;
+    assertEqual(int16_t(automaton.acceptedUserCommands()), int16_t(ALL_CMD_INFO | CMD_REC_OFF | CMD_HEAT_ON));
+    op.request.command = CMD_REC_OFF;
+    op.request.event = EVENT_REC_OFF;
     cand = automaton.evaluate();
     assertEqual(int16_t(cand), int16_t(EVENT_REC_OFF));
-    op.command->command = CMD_NONE;
+    op.request.command = CMD_NONE;
     
     // transition state STANDBY => event REC_OFF => state IDLE
     automaton.transition(EVENT_REC_OFF); 
@@ -242,10 +218,11 @@
     //
     // user command HEAT ON in state STANDBY
     //
-    op.command->command = CMD_HEAT_ON;
+    op.request.command = CMD_HEAT_ON;
+    op.request.event = EVENT_HEAT_ON;
     cand = automaton.evaluate();
     assertEqual(int16_t(cand), int16_t(EVENT_HEAT_ON));
-    op.command->command = CMD_NONE;
+    op.request.command = CMD_NONE;
     
     // transition state STANDBY => event HEAT_ON => state HEATING
     automaton.transition(EVENT_HEAT_ON); 
@@ -302,10 +279,12 @@
     //
     // user command HEAT OFF in state HEATING
     //
-    op.command->command = CMD_HEAT_OFF;
+    op.request.command = CMD_HEAT_OFF;
+    op.request.event = EVENT_HEAT_OFF;
     cand = automaton.evaluate();
     assertEqual(int16_t(cand), int16_t(EVENT_HEAT_OFF));
-    op.command->command = CMD_NONE;
+    op.request.command = CMD_NONE;
+    op.request.event = EVENT_NONE;
     
     // transition state HEATING => event HEAT_OFF => state STANDBY
     automaton.transition(EVENT_HEAT_OFF); 
@@ -325,13 +304,11 @@
     config.initParams(updated);
     
     OperationalParams op;
-    UserCommand cmd;
-    memset(cmd.args, 0, CMD_ARG_BUF_SIZE);
-    op.command = &cmd;
+    op.request.clear();
     
     ExecutionContext context;
-    
-    MockControlActions control = MockControlActions(&context);
+    UserFeedback feedback;
+    MockControlActions control = MockControlActions(&context, &feedback);
 
     context.log = &logger;
     context.config = &config;
@@ -342,7 +319,7 @@
     automaton.init(&context);
 
     assertEqual(automaton.state()->id(), STATE_INIT);
-    assertEqual(int16_t(automaton.userCommands()), int16_t(CMD_NONE));
+    assertEqual(int16_t(automaton.acceptedUserCommands()), int16_t(CMD_NONE));
     assertEqual(control.totalInvocations(), 0);
 
     //
@@ -355,6 +332,7 @@
     // transition state INIT => event EVENT_SENSORS_NOK => state STATE_SENSORS_NOK
     automaton.transition(EVENT_SENSORS_NOK);
     assertEqual(automaton.state()->id(), STATE_SENSORS_NOK);
+    assertEqual(int16_t(automaton.acceptedUserCommands()), int16_t(ALL_CMD_INFO | ALL_CMD_CONFIG_MODIFY | CMD_CONFIG_RESET_ALL));
     assertEqual(control.totalInvocations(), 0);
     // state logging
     assertEqual(logger.logStateCount, 1);

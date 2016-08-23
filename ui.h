@@ -20,7 +20,7 @@
     // the bits of notifyProperties tell which values have changed:
     NotifyProperties notifyProperties;
     StateID state;
-    UserCommands userCommands;
+    UserCommands acceptedUserCommands;
     // time [s] since most recent transition to current state:
     uint32_t timeInState = 0L;
     // accumulated heating time [s] up to now:
@@ -32,7 +32,7 @@
   };
 
 
-  class NullUI {
+  class NullUI : public UserFeedback {
     public:
       NullUI(ExecutionContext *context) {
         this->context = context;
@@ -40,15 +40,15 @@
       
       virtual void setup() { }
       /*
-       * Read one user command and store it in the context->op->command struct
+       * Read one user request and store it in the context->op->request struct
        */
-      virtual void readUserCommand() { }
+      virtual void readUserRequest() { }
       
-      virtual void processReadWriteRequests(ReadWriteRequests, BoilerStateAutomaton *) {  }
-    
-      virtual void notifyStatusChange(StatusNotification *) { }
+      virtual void provideUserInfo(BoilerStateAutomaton *) {  }
     
       virtual void notifyNewLogEntry(LogEntry) { }
+      
+      virtual void notifyStatusChange(StatusNotification *) { }
    
     protected:
       ExecutionContext *context;

@@ -16,8 +16,8 @@
 #define CONTROL_CYCLE_DURATION          5000L// [ms]
 #define TEMP_SENSOR_READOUT_WAIT         800L // [ms] = 750 ms + safety margin
 #define MIN_USER_NOTIFICATION_INTERVAL  1000L // [ms] (notification only happens if relevant changes occurred)
-#define MAX_USER_NOTIFICATION_INTERVAL 10000L // [ms] notify user after this period at latest
-#define NOTIFICATION_TEMP_DELTA           20  // [°C * 100]
+#define MAX_USER_NOTIFICATION_INTERVAL 10000L // [ms] notify user after this period at the latest
+#define NOTIFICATION_TEMP_DELTA           20  // [°C / 100]
 
 typedef enum {
   CYCLE_STAGE_0 = 0,
@@ -38,8 +38,6 @@ OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor 
 DS18B20Controller controller = DS18B20Controller(&oneWire, sensors, 2);
 
 ExecutionContext context;
-ControlActions controlActions = ControlActions(&context);
-BoilerStateAutomaton automaton;
 
 #if defined BLE_UI
   BLEUI ui = BLEUI(&context);
@@ -49,6 +47,8 @@ BoilerStateAutomaton automaton;
   NullUI ui = NullUI(&context);
 #endif
 
+ControlActions controlActions = ControlActions(&context, &ui);
+BoilerStateAutomaton automaton;
 
 void setup() {
   Serial.begin(115200);
@@ -63,6 +63,15 @@ void setup() {
   #else
     logger.init();
     logger.logMessage(MSG_SYSTEM_INIT, 0, 0);
+    //
+    // If the controller doesn't want to proceed out of state INIT (0), then uncomment the 'configParams.reset()' line, then
+    // - 'stat' to see that sensor ids are 'Auto'
+    // - 'config ack ids'
+    // - 'stat' to see that sensor ids are 'OK'
+    // - 'config' to see that sensor ids are not 00-00-00...
+    //
+    // configParams.reset(); 
+    //
     configParams.load(); 
 
     context.log = &logger;
@@ -75,7 +84,8 @@ void setup() {
     
     pinMode(HEATER_PIN, OUTPUT);
     context.control->setupSensors();
-
+    
+    context.op->request.clear();
     ui.setup();
     
     Serial.println(F("Starting."));
@@ -113,22 +123,29 @@ void loop() {
       cycleStage = CYCLE_STAGE_3;
       logTemperatureValues(&context);
     }
-    
-    UserCommand command;  
-    memset(command.args, 0, CMD_ARG_BUF_SIZE);
-    context.op->command = &command;
-    ui.readUserCommand();
+
+    if (context.op->request.command == CMD_NONE) {
+      ui.readUserRequest();
+      context.op->request.event = automaton.commandToEvent(context.op->request.command);
+    }
   
     EventCandidates cand = automaton.evaluate();
     if (cand != EVENT_NONE) {
       EventEnum event = processEventCandidates(cand);
       if (event != EVENT_NONE) {
         automaton.transition(event);
-        
-        ui.processReadWriteRequests(context.control->getPendingReadWriteRequests(), &automaton);
-        context.control->clearPendingReadWriteRequests();
+
+        if (event == context.op->request.event) {
+          // the user's command was chosen as the event with the highest priority
+          
+          if (context.op->request.event == EVENT_INFO) {
+            ui.provideUserInfo(&automaton);
+          }
+        }
       }
     }
+    
+    context.op->request.clear();
 
     if (now - lastUserNotificationCheck >= MIN_USER_NOTIFICATION_INTERVAL) {
       checkForStatusChange(&context, &automaton, now);
@@ -219,7 +236,7 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
   
   if (notification.state != automaton->state()->id()) {
     notification.state = automaton->state()->id();
-    notification.userCommands = automaton->userCommands();
+    notification.acceptedUserCommands = automaton->acceptedUserCommands();
     #ifdef DEBUG_MAIN
       Serial.println(F("DEBUG_MAIN: notify status case 2"));
     #endif

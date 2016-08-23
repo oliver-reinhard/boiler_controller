@@ -34,7 +34,7 @@ void BLEUI::setup() {
   timeInStateCID =          ble.addGattCharacteristic(0x0002, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);  // milliseconds
   timeHeatingCID =          ble.addGattCharacteristic(0x0003, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);  // milliseconds
   acceptedUserCommandsCID = ble.addGattCharacteristic(0x0004, CHAR_PROP_READ | CHAR_PROP_NOTIFY, sizeof(UserCommands), sizeof(UserCommands));
-  userCommandCID =          ble.addGattCharacteristic(0x0005, CHAR_PROP_WRITE,  sizeof(UserCommandID), USER_CMD_MAX_SIZE); 
+  userRequestCID =          ble.addGattCharacteristic(0x0005, CHAR_PROP_WRITE,  sizeof(UserCommandID), USER_CMD_MAX_SIZE); 
   waterSensorCID =          ble.addGattCharacteristic(0x0006, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);
   ambientSensorCID =        ble.addGattCharacteristic(0x0007, CHAR_PROP_READ | CHAR_PROP_NOTIFY, 4, 4);
   
@@ -54,25 +54,25 @@ void BLEUI::setup() {
   ble.reset();
 }
 
-void BLEUI::readUserCommand() {
+void BLEUI::readUserRequest() {
   byte cmd[USER_CMD_MAX_SIZE];
-  uint16_t len = ble.getGattCharacteristicValue(userCommandCID, cmd, USER_CMD_MAX_SIZE);
+  uint16_t len = ble.getGattCharacteristicValue(userRequestCID, cmd, USER_CMD_MAX_SIZE);
   UserCommandID cmdId;
   memcpy(&cmdId, cmd, sizeof(UserCommandID));
   if (cmdId != CMD_NONE) {
-    context->op->command->command = (UserCommandEnum) cmdId;
+    context->op->request.command = (UserCommandEnum) cmdId;
 
     if (len > sizeof(UserCommandID)) {
       // 
-      // TODO get params and store somehow as context->op->command->args
+      // TODO get params and store somehow as context->op->request->args
       //
     }
 
     // reset characteristic value to CMD_NONE:
-    ble.setGattCharacteristicValue(userCommandCID, CMD_NONE);
+    ble.setGattCharacteristicValue(userRequestCID, CMD_NONE);
     
     #ifdef DEBUG_BLE_UI
-      Serial.print(F("DEBUG_BLE_UI: user command received: "));
+      Serial.print(F("DEBUG_BLE_UI: user request received: "));
       Serial.println(cmdId);
     #endif
     
@@ -95,16 +95,30 @@ void BLEUI::readUserCommand() {
   }
 }
 
-void BLEUI::processReadWriteRequests(ReadWriteRequests requests, BoilerStateAutomaton *automaton) {
-  if (requests != READ_WRITE_NONE || context != NULL || automaton != NULL) { } // prevent 'unused parameter' warning
+void BLEUI::provideUserInfo(BoilerStateAutomaton *automaton) {
+  if (automaton != NULL) { } // prevent 'unused parameter' warning
+  /*
+   * ***** TODO ******3
+   */
 }
 
+void BLEUI::commandExecuted(boolean success) { 
+  /*
+   * ***** TODO ******3
+   */
+  if (success) {
+    Serial.println(F("* command ok."));
+  } else {
+    Serial.println(F("* command failed."));
+  }
+}
+      
 void BLEUI::notifyStatusChange(StatusNotification *notification) {
   boolean notified = false;
 
   if (notification->notifyProperties & NOTIFY_STATE) {
     ble.setGattCharacteristicValue(stateCID, notification->state);
-    ble.setGattCharacteristicValue(acceptedUserCommandsCID, notification->userCommands);
+    ble.setGattCharacteristicValue(acceptedUserCommandsCID, notification->acceptedUserCommands);
     notified = true;
   }
   if (notification->notifyProperties & NOTIFY_TIME_IN_STATE) {

@@ -9,18 +9,20 @@ void AbstractState::init(ExecutionContext *context) {
    this->context = context;
 }
       
-UserCommands AbstractState::userCommands() {
+AcceptedEvents AbstractState::acceptedUserEvents() {
   // default implementation: delegate to containing state (if any):
   if(containingState != NULL) { 
-    return containingState->userCommands();
+    return containingState->acceptedUserEvents();
   } else {
-    return CMD_NONE;
+    return EVENT_NONE;
   }
 }
 
 EventCandidates AbstractState::eval() {
   // default implementation: delegate to containing state (if any):
-  if(containingState != NULL) { 
+  if (context->op->request.event & acceptedUserEvents()) {
+    return context->op->request.event;
+  } else if(containingState != NULL) { 
     return containingState->eval();
   } else {
     return EVENT_NONE;
@@ -116,7 +118,7 @@ void AbstractCompositeState::exit(EventEnum event, StateEnum next) {
  * INIT
  */
 
-// No user commands available.
+// No user events available => use super.acceptedUserEvents()
 
 EventCandidates Init::eval() {
   EventCandidates result = AbstractState::eval();
@@ -143,48 +145,24 @@ StateEnum Init::transAction(EventEnum event) {
  * SENSORS NOK
  */
 
-UserCommands SensorsNOK::userCommands() {
-  return AbstractState::userCommands() | CMD_HELP | CMD_SET_CONFIG | CMD_RESET_CONFIG | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
+AcceptedEvents SensorsNOK::acceptedUserEvents() {
+  return AbstractState::acceptedUserEvents() | EVENT_INFO | EVENT_CONFIG_MODIFY | EVENT_CONFIG_RESET;
 }
 
-EventCandidates SensorsNOK::eval() {
-  EventCandidates result = AbstractState::eval();
-  if (context->op->command->command == CMD_HELP) {
-    result |= EVENT_HELP;
-  } else if (context->op->command->command == CMD_SET_CONFIG) {
-    result |= EVENT_SET_CONFIG;
-  } else if (context->op->command->command == CMD_RESET_CONFIG) {
-    result |= EVENT_RESET_CONFIG;
-  } else if (context->op->command->command == CMD_GET_CONFIG) {
-    result |= EVENT_GET_CONFIG;
-  } else if (context->op->command->command == CMD_GET_LOG) {
-    result |= EVENT_GET_LOG;
-  } else if (context->op->command->command == CMD_GET_STAT) {
-    result |= EVENT_GET_STAT;
-  }
-  return result;
-}
+// No events or conditions other than user-requested transitions => user super.eval();
 
 StateEnum SensorsNOK::transAction(EventEnum event) {
-  if (event == EVENT_HELP) {
-    context->control->requestHelp();
+  if (event == EVENT_INFO) {
     return STATE_SAME;
     
-  } else if (event == EVENT_SET_CONFIG) {
-    context->control->setConfigParam();
+  } else if (event == EVENT_CONFIG_MODIFY) {
+    context->control->modifyConfig();
     return STATE_SAME;
     
-  } else if (event == EVENT_GET_CONFIG) {
-    context->control->requestConfig();
-    return STATE_SAME;
-    
-  } else if (event == EVENT_GET_LOG) {
-    context->control->requestLog();
-    return STATE_SAME;
-    
-  } else if (event == EVENT_GET_STAT) {
-    context->control->requestStat();
-    return STATE_SAME;
+  } else if (event == EVENT_CONFIG_RESET) {
+    context->config->reset();
+    context->control->setupSensors();
+    return STATE_SAME;   
   }
   return AbstractState::transAction(event);
 }
@@ -193,46 +171,18 @@ StateEnum SensorsNOK::transAction(EventEnum event) {
  * READY
  */
 
-UserCommands Ready::userCommands() {
-  return AbstractState::userCommands() | CMD_HELP | CMD_GET_CONFIG |  CMD_GET_LOG | CMD_GET_STAT;
+AcceptedEvents Ready::acceptedUserEvents() {
+  return AbstractState::acceptedUserEvents() | EVENT_INFO;
 }
 
-EventCandidates Ready::eval() {
-  EventCandidates result = AbstractState::eval();
-  if (context->op->water.sensorStatus == SENSOR_NOK) {
-    result |= EVENT_SENSORS_NOK;
-  } 
-  if (context->op->command->command == CMD_HELP) {
-    result |= EVENT_HELP;
-  } else if (context->op->command->command == CMD_GET_CONFIG) {
-    result |= EVENT_GET_CONFIG;
-  } else if (context->op->command->command == CMD_GET_LOG) {
-    result |= EVENT_GET_LOG;
-  } else if (context->op->command->command == CMD_GET_STAT) {
-    result |= EVENT_GET_STAT;
-  }
-  return result;
-}
+// No events or conditions other than user-requested transitions => user super.eval();
 
 StateEnum Ready::transAction(EventEnum event) {
-  if (event == EVENT_SENSORS_NOK) {
+  if (event == EVENT_INFO) {
+    return STATE_SAME;
+    
+  } else if (event == EVENT_SENSORS_NOK) {
     return STATE_SENSORS_NOK;
-    
-  } else if (event == EVENT_HELP) {
-    context->control->requestHelp();
-    return STATE_SAME;
-    
-  } else if (event == EVENT_GET_CONFIG) {
-    context->control->requestConfig();
-    return STATE_SAME;
-    
-  } else if (event == EVENT_GET_LOG) {
-    context->control->requestLog();
-    return STATE_SAME;
-    
-  } else if (event == EVENT_GET_STAT) {
-    context->control->requestStat();
-    return STATE_SAME;
   }
   return AbstractState::transAction(event);
 }
@@ -241,28 +191,18 @@ StateEnum Ready::transAction(EventEnum event) {
  * IDLE
  */
 
-UserCommands Idle::userCommands() {
-  return AbstractState::userCommands() | CMD_SET_CONFIG | CMD_RESET_CONFIG | CMD_REC_ON;
+AcceptedEvents Idle::acceptedUserEvents() {
+  return AbstractState::acceptedUserEvents() | EVENT_CONFIG_MODIFY | EVENT_CONFIG_RESET | EVENT_REC_ON;
 }
 
-EventCandidates Idle::eval() {
-  EventCandidates result = AbstractState::eval();
-  if (context->op->command->command == CMD_SET_CONFIG) {
-    result |= EVENT_SET_CONFIG;
-  } else if (context->op->command->command == CMD_RESET_CONFIG) {
-    result |= EVENT_RESET_CONFIG;
-  } else  if (context->op->command->command == CMD_REC_ON) {
-    result |= EVENT_REC_ON;
-  }
-  return result;
-}
+// No events or conditions other than user-requested transitions => user super.eval();
 
 StateEnum Idle::transAction(EventEnum event) {
-  if (event == EVENT_SET_CONFIG) {
-    context->control->setConfigParam();
+  if (event == EVENT_CONFIG_MODIFY) {
+    context->control->modifyConfig();
     return STATE_SAME;
     
-  } else if (event == EVENT_RESET_CONFIG) {
+  } else if (event == EVENT_CONFIG_RESET) {
     context->config->reset();
     context->control->setupSensors();
     return STATE_SENSORS_NOK;
@@ -277,18 +217,11 @@ StateEnum Idle::transAction(EventEnum event) {
  * RECORDING
  */
 
-UserCommands Recording::userCommands() {
-  return AbstractState::userCommands() | CMD_REC_OFF;
+AcceptedEvents Recording::acceptedUserEvents() {
+  return AbstractState::acceptedUserEvents() | EVENT_REC_OFF;
 }
 
-
-EventCandidates Recording::eval() {
-  EventCandidates result = AbstractState::eval();
-  if (context->op->command->command == CMD_REC_OFF) {
-    result |= EVENT_REC_OFF;
-  }
-  return result;
-}
+// No events or conditions other than user-requested transitions => user super.eval();
 
 StateEnum Recording::transAction(EventEnum event) {
   if (event == EVENT_REC_OFF) {
@@ -309,17 +242,11 @@ void Recording::exitAction(){
  * STANDBY
  */
 
-UserCommands Standby::userCommands() {
-  return AbstractState::userCommands() | CMD_HEAT_ON;
+AcceptedEvents Standby::acceptedUserEvents() {
+  return AbstractState::acceptedUserEvents() | EVENT_HEAT_ON;
 }
 
-EventCandidates Standby::eval() {
-  EventCandidates result = AbstractState::eval();
-  if (context->op->command->command == CMD_HEAT_ON) {
-    result |= EVENT_HEAT_ON;
-  }
-  return result;
-}
+// No events or conditions other than user-requested transitions => user super.eval();
 
 StateEnum Standby::transAction(EventEnum event) {
   if (event == EVENT_HEAT_ON) {
@@ -332,15 +259,12 @@ StateEnum Standby::transAction(EventEnum event) {
  * HEATING
  */
 
-UserCommands Heating::userCommands() {
-  return AbstractState::userCommands() | CMD_HEAT_OFF;
+AcceptedEvents Heating::acceptedUserEvents() {
+  return AbstractState::acceptedUserEvents() | EVENT_HEAT_OFF;
 }
 
 EventCandidates Heating::eval() {
-  EventCandidates result = AbstractState::eval();
-  if (context->op->command->command == CMD_HEAT_OFF) {
-    result |= EVENT_HEAT_OFF;
-  }
+  EventCandidates result = AbstractState::eval(); // handles user-requested events
   if (context->op->water.currentTemp >= context->config->heaterCutOutWaterTemp) {
     result |= EVENT_TEMP_OVER;
   }
@@ -371,15 +295,12 @@ void Heating::exitAction(){
  * OVERHEATED
  */
 
-UserCommands Overheated::userCommands() {
-  return AbstractState::userCommands() | CMD_HEAT_RESET;
+AcceptedEvents Overheated::acceptedUserEvents() {
+  return AbstractState::acceptedUserEvents() | EVENT_HEAT_RESET;
 }
 
 EventCandidates Overheated::eval() {
-  EventCandidates result = AbstractState::eval();
-  if (context->op->command->command == CMD_HEAT_RESET) {
-    result |= EVENT_HEAT_RESET;
-  }
+  EventCandidates result = AbstractState::eval();  // handles user-requested events
   if (context->op->water.currentTemp <= context->config->heaterBackOkWaterTemp) {
     result |= EVENT_TEMP_OK;
   }
@@ -427,8 +348,9 @@ AbstractState *BoilerStateAutomaton::state() {
   return currentState;
 }
   
-UserCommands BoilerStateAutomaton::userCommands() {
-  return currentState->userCommands();
+UserCommands BoilerStateAutomaton::acceptedUserCommands() {
+  AcceptedEvents acceptedEvents = currentState->acceptedUserEvents();
+  return eventsToCommands(acceptedEvents);
 }
   
 EventCandidates BoilerStateAutomaton::evaluate() {
@@ -489,4 +411,31 @@ AbstractState *BoilerStateAutomaton::getState(StateEnum id) {
   context->log->S_O_S(MSG_UNKNOWN_STATE, id, 0);  // function NEVER RETURNS
   abort();
 }
+
+
+EventEnum BoilerStateAutomaton::commandToEvent(UserCommandEnum command) {
+  EventID event = EVENT_NONE;
+  // Skip event EVENT_NONE (index i=0):
+  for(uint8_t i=1; i<NUM_EVENTS; i++) {
+    if (command & EVENT_CMD_MAP[i]) {
+      event = 1 << (i-1);
+    }
+  }
+  return (EventEnum) event;
+}
+
+UserCommands BoilerStateAutomaton::eventsToCommands(AcceptedEvents events) {
+  UserCommands commands = CMD_NONE;
+  // Skip event EVENT_NONE (index i=0):
+  EventID eventId = 1;
+  for(uint8_t i=1; i<NUM_EVENTS; i++) {
+    if (eventId & events) {
+      commands |= EVENT_CMD_MAP[i];
+    }
+    eventId = eventId << 1;
+  }
+  return commands;
+}
+
+
 
