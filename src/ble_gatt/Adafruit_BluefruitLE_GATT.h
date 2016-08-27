@@ -47,8 +47,6 @@
       int8_t addGattCharacteristic(uint16_t uuid16, CharacteristicProperties props, byte minLen, byte maxLen);
       
       void setGattCharacteristicValue(int8_t id, byte    *value, uint16_t len);
-      void setGattCharacteristicValue(int8_t id, int16_t  value);
-      void setGattCharacteristicValue(int8_t id, uint16_t value);
       void setGattCharacteristicValue(int8_t id, int32_t  value);
       void setGattCharacteristicValue(int8_t id, uint32_t value);
       void setGattCharacteristicValue(int8_t id, float    value);
@@ -57,8 +55,6 @@
        * Returns the number of bytes in reply; bytes exceeding maxLen will be read but will not be returned.as reply.
        */
       uint16_t getGattCharacteristicValue(int8_t id, byte *reply, uint16_t maxLen);
-      void getGattCharacteristicValue(int8_t id, int16_t  *reply);
-      void getGattCharacteristicValue(int8_t id, uint16_t *reply);
       void getGattCharacteristicValue(int8_t id, int32_t  *reply);
       void getGattCharacteristicValue(int8_t id, uint32_t *reply);
       void getGattCharacteristicValue(int8_t id, float    *reply);

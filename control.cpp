@@ -62,38 +62,73 @@ boolean ControlActions::setConfigParamValue(ConfigParamEnum p, int32_t intValue,
   Log *log = context->log;
   switch(p) {
     case PARAM_TARGET_TEMP: 
-      config->targetTemp = (Temperature) intValue;
-      log->logConfigParam(p, (float) config->targetTemp);
+      {
+        Temperature targetTemp = (Temperature) intValue;
+        if (config->targetTemp != targetTemp) {
+          config->targetTemp = targetTemp;
+          log->logConfigParam(p, (float) config->targetTemp);
+        }
+      }
       return true;
       
     case PARAM_HEATER_CUT_OUT_WATER_TEMP: 
-      config->heaterCutOutWaterTemp = (Temperature) intValue;
-      log->logConfigParam(p, (float) config->heaterCutOutWaterTemp);
+      {
+        Temperature heaterCutOutWaterTemp = (Temperature) intValue;
+        if (config->heaterCutOutWaterTemp != heaterCutOutWaterTemp) {
+          config->heaterCutOutWaterTemp = heaterCutOutWaterTemp;
+          log->logConfigParam(p, (float) config->heaterCutOutWaterTemp);
+        }
+      }
       return true;
       
     case PARAM_HEATER_BACK_OK_WATER_TEMP: 
-      config->heaterBackOkWaterTemp = (Temperature)intValue;
-      log->logConfigParam(p, (float) config->heaterBackOkWaterTemp);
+      {
+        Temperature heaterBackOkWaterTemp = (Temperature) intValue;
+        if (config->heaterBackOkWaterTemp != heaterBackOkWaterTemp) {
+          config->heaterBackOkWaterTemp = heaterBackOkWaterTemp;
+          log->logConfigParam(p, (float) config->heaterBackOkWaterTemp);
+        }
+      }
       return true;
       
     case PARAM_LOG_TEMP_DELTA: 
-      config->logTempDelta = (Temperature) intValue;
-      log->logConfigParam(p, (float) config->logTempDelta);
+      {
+        Temperature logTempDelta = (Temperature) intValue;
+        if (config->logTempDelta != logTempDelta) {
+          config->logTempDelta = logTempDelta;
+          log->logConfigParam(p, (float) config->logTempDelta);
+        }
+      }
       return true;
       
     case PARAM_LOG_TIME_DELTA:
-      config->logTimeDelta = (uint16_t) intValue;
-      log->logConfigParam(p, (float) config->logTimeDelta);
+      {
+        uint16_t logTimeDelta = (uint16_t) intValue;
+        if (config->logTimeDelta != logTimeDelta) {
+          config->logTimeDelta = logTimeDelta;
+          log->logConfigParam(p, (float) config->logTimeDelta);
+        }
+      }
       return true;
       
     case PARAM_TANK_CAPACITY:
-      config->tankCapacity = floatValue;
-      log->logConfigParam(p, config->tankCapacity);
+      {
+        float tankCapacity = floatValue;
+        if (config->tankCapacity != tankCapacity) {
+          config->tankCapacity = tankCapacity;
+          log->logConfigParam(p, config->tankCapacity);
+        }
+      }
       return true;
       
     case PARAM_HEATER_POWER:
-      config->heaterPower = floatValue;
-      log->logConfigParam(p, config->heaterPower);
+      {
+        float heaterPower = floatValue;
+        if (config->heaterPower != heaterPower) {
+          config->heaterPower = floatValue;
+          log->logConfigParam(p, config->heaterPower);
+        }
+      }
       return true;
       
     default:

@@ -65,7 +65,7 @@ void setup() {
     logger.logMessage(MSG_SYSTEM_INIT, 0, 0);
     //
     // If the controller doesn't want to proceed out of state INIT (0), then uncomment the 'configParams.reset()' line, then
-    // - 'stat' to see that sensor ids are 'Auto'
+    // - 'stat' to see that sensor ids are 'Auto-Assigned'
     // - 'config ack ids'
     // - 'stat' to see that sensor ids are 'OK'
     // - 'config' to see that sensor ids are not 00-00-00...

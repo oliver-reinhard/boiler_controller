@@ -45,9 +45,9 @@ void setup(void) {
 
   ble.setGattDeviceName("Boiler Controller Test");
   controllerServiceId =      ble.addGattService("4C-EF-DD-58-CB-95-44-50-90-FB-F4-04-DC-20-2F-7C");
-  waterTempMeasureCharId =   ble.addGattCharacteristic(0x0001, CHAR_PROP_NOTIFY, 2, 2);
+  waterTempMeasureCharId =   ble.addGattCharacteristic(0x0001, CHAR_PROP_NOTIFY, 4, 4);
   ambientTempMeasureCharId = ble.addGattCharacteristic(0x0002, CHAR_PROP_READ,   4, 4);
-  targetTempCharId =         ble.addGattCharacteristic(0x0003, CHAR_PROP_READ | CHAR_PROP_WRITE, 2, 4);
+  targetTempCharId =         ble.addGattCharacteristic(0x0003, CHAR_PROP_READ | CHAR_PROP_WRITE, 4, 4);
   tankCapacityCharId =       ble.addGattCharacteristic(0x0004, CHAR_PROP_READ | CHAR_PROP_WRITE, 4, 4);
 
   /* Add the Heart Rate Service to the advertising data (needed for Nordic apps to detect the service) */
@@ -71,10 +71,10 @@ void loop(void) {
 
   if (elapsed == 0L) {
     
-    int waterTemp = random(20, 42); 
+    int32_t waterTemp = random(20, 42); 
     ble.setGattCharacteristicValue(waterTempMeasureCharId, waterTemp);
   
-    long ambientTemp = random(13, 28);
+    int32_t ambientTemp = random(13, 28);
     ble.setGattCharacteristicValue(ambientTempMeasureCharId, ambientTemp);
 
     Serial.print(F("New water temp = 0x"));
@@ -83,8 +83,8 @@ void loop(void) {
     Serial.println(ambientTemp, HEX);
   }
 
-  static long previousTargetTemp = 0;
-  long targetTemp;  
+  static int32_t previousTargetTemp = 0;
+  int32_t targetTemp;  
   ble.getGattCharacteristicValue(targetTempCharId, &targetTemp);
   if(targetTemp != previousTargetTemp) {
     previousTargetTemp = targetTemp;

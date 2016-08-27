@@ -19,10 +19,10 @@ void Adafruit_BluefruitLE_GATT::assertOK(boolean condition, const __FlashStringH
 void Adafruit_BluefruitLE_GATT::assertOK(boolean condition, const __FlashStringHelper *err, int8_t id) {
   if (condition) return;
   
-  Serial.print(F("### S.O.S. ### : "));
+  Serial.print(F("### S.O.S. ### : Could not "));
   Serial.print(err);
   if (id != UNDEFINED_ID) {
-    Serial.print(", id=");
+    Serial.print(F(", id="));
     Serial.print(id);
   }
   Serial.println();
@@ -44,7 +44,7 @@ void Adafruit_BluefruitLE_GATT::assertOK(boolean condition, const __FlashStringH
 void Adafruit_BluefruitLE_GATT::setGattDeviceName(const char *name) {
   char cmd[strlen_P(fmt_gapdevname) + strlen(name) + 1];
   sprintf_P(cmd, fmt_gapdevname, name);
-  assertOK(sendCommandCheckOK(cmd), F("Could not set device name?"), UNDEFINED_ID);
+  assertOK(sendCommandCheckOK(cmd), F("set device name"), UNDEFINED_ID);
 }
 
 
@@ -52,7 +52,7 @@ int8_t Adafruit_BluefruitLE_GATT::addGattService(const char *uuid128) {
   char cmd[strlen_P(fmt_gattaddservice) + strlen(uuid128) + 1];
   sprintf_P(cmd, fmt_gattaddservice, uuid128);
   int32_t pos;
-  assertOK(sendCommandWithIntReply(cmd, &pos), F("Could not add service"), UNDEFINED_ID);
+  assertOK(sendCommandWithIntReply(cmd, &pos), F("add service"), UNDEFINED_ID);
   return (int8_t) pos;
 }
 
@@ -69,7 +69,7 @@ int8_t Adafruit_BluefruitLE_GATT::addGattCharacteristic(uint16_t uuid16, Charact
   char cmd[strlen_P(fmt_gattaddchar) + 2 + 1 + 1 + maxLen*3];
   sprintf_P(cmd, fmt_gattaddchar, uuid16, props, minLen, maxLen, zeros);
   int32_t pos;
-  assertOK(sendCommandWithIntReply(cmd, &pos), F("Could not add characteristic"), UNDEFINED_ID);
+  assertOK(sendCommandWithIntReply(cmd, &pos), F("add charac."), UNDEFINED_ID);
   return (int8_t) pos;
 }
 
@@ -86,23 +86,8 @@ void Adafruit_BluefruitLE_GATT::setGattCharacteristicValue(int8_t id, byte *valu
   
   char cmd[strlen_P(fmt_gattsetchar) + len*3];
   sprintf_P(cmd, fmt_gattsetchar, id, str);
-  assertOK(sendCommandCheckOK(cmd), F("Could not set characteristic value"), id);
+  assertOK(sendCommandCheckOK(cmd), F("set charac. value"), id);
 }
-
-
-void Adafruit_BluefruitLE_GATT::setGattCharacteristicValue(int8_t id, int16_t value) {
-  byte bytes[sizeof(int16_t)];
-  memcpy(bytes, &value, sizeof(int16_t));
-  reverseBytes(bytes, sizeof(int16_t));
-  setGattCharacteristicValue(id, bytes, sizeof(int16_t)); 
-}
-void Adafruit_BluefruitLE_GATT::setGattCharacteristicValue(int8_t id, uint16_t value) {
-  byte bytes[sizeof(uint16_t)];
-  memcpy(bytes, &value, sizeof(uint16_t));
-  reverseBytes(bytes, sizeof(uint16_t));
-  setGattCharacteristicValue(id, bytes, sizeof(uint16_t)); 
-}
-
 
 void Adafruit_BluefruitLE_GATT::setGattCharacteristicValue(int8_t id, int32_t value) {
   byte bytes[sizeof(int32_t)];
@@ -133,7 +118,7 @@ uint16_t Adafruit_BluefruitLE_GATT::getGattCharacteristicValue(int8_t id, byte *
   // AT+GATTCHAR returns each byte in hex separated by a dash, e.g. 4 bytes: xx-xx-xx-xx (= 11 characters)
   char replyStr[maxLen*3];  // includes terminating '\0'
   uint16_t strLen;
-  assertOK(sendCommandWithStringReply(cmd, replyStr, &strLen), F("Could not get characteristic value"), id);
+  assertOK(sendCommandWithStringReply(cmd, replyStr, &strLen), F("get charac. value"), id);
   
   if (strLen == 0 || (strLen + 1) % 3 != 0) {
     return 0;
@@ -146,22 +131,6 @@ uint16_t Adafruit_BluefruitLE_GATT::getGattCharacteristicValue(int8_t id, byte *
   }
   return numBytes;
 }
-
-
-void Adafruit_BluefruitLE_GATT::getGattCharacteristicValue(int8_t id, int16_t *reply) {
-  byte bytes[sizeof(int16_t)];
-  getGattCharacteristicValue(id, bytes, sizeof(int16_t));
-  reverseBytes(bytes, sizeof(int16_t));
-  memcpy(reply, bytes, sizeof(int16_t));
-}
-
-void Adafruit_BluefruitLE_GATT::getGattCharacteristicValue(int8_t id, uint16_t *reply) {
-  byte bytes[sizeof(uint16_t)];
-  getGattCharacteristicValue(id, bytes, sizeof(uint16_t));
-  reverseBytes(bytes, sizeof(uint16_t));
-  memcpy(reply, bytes, sizeof(uint16_t));
-}
-
 
 void Adafruit_BluefruitLE_GATT::getGattCharacteristicValue(int8_t id, int32_t *reply) {
   byte bytes[sizeof(int32_t)];

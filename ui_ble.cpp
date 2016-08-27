@@ -69,7 +69,7 @@ void BLEUI::readUserRequest() {
     }
 
     // reset characteristic value to CMD_NONE:
-    ble.setGattCharacteristicValue(userRequestCID, CMD_NONE);
+    ble.setGattCharacteristicValue(userRequestCID, (uint32_t)CMD_NONE);
     
     #ifdef DEBUG_BLE_UI
       Serial.print(F("DEBUG_BLE_UI: user request received: "));
@@ -117,8 +117,8 @@ void BLEUI::notifyStatusChange(StatusNotification *notification) {
   boolean notified = false;
 
   if (notification->notifyProperties & NOTIFY_STATE) {
-    ble.setGattCharacteristicValue(stateCID, notification->state);
-    ble.setGattCharacteristicValue(acceptedUserCommandsCID, notification->acceptedUserCommands);
+    ble.setGattCharacteristicValue(stateCID,(uint32_t) notification->state);
+    ble.setGattCharacteristicValue(acceptedUserCommandsCID, (uint32_t)notification->acceptedUserCommands);
     notified = true;
   }
   if (notification->notifyProperties & NOTIFY_TIME_IN_STATE) {
