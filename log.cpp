@@ -4,7 +4,7 @@
 
 Timestamp Log::logMessage(MessageID id, int16_t param1, int16_t param2) {
   if (sizeof(LogMessageData) != sizeof(LogData)) {
-    S_O_S(MSG_LOG_DATA_SIZE, LOG_DATA_TYPE_MESSAGE, 0);
+    log_S_O_S(MSG_LOG_DATA_SIZE, LOG_DATA_TYPE_MESSAGE, 0);
   }
   LogMessageData data;
   data.id = id;
@@ -19,7 +19,7 @@ Timestamp Log::logMessage(MessageID id, int16_t param1, int16_t param2) {
 
 Timestamp Log::logValues(Temperature water, Temperature ambient, Flags flags) {
   if (sizeof(LogValuesData) != sizeof(LogData)) {
-    S_O_S(MSG_LOG_DATA_SIZE, LOG_DATA_TYPE_VALUES, 0);
+    log_S_O_S(MSG_LOG_DATA_SIZE, LOG_DATA_TYPE_VALUES, 0);
   }
   LogValuesData data;
   data.water = water;
@@ -34,7 +34,7 @@ Timestamp Log::logValues(Temperature water, Temperature ambient, Flags flags) {
 
 Timestamp Log::logState(StateID previous, StateID current, EventID event) {
   if (sizeof(LogStateData) != sizeof(LogData)) {
-    S_O_S(MSG_LOG_DATA_SIZE, LOG_DATA_TYPE_STATE, 0);
+    log_S_O_S(MSG_LOG_DATA_SIZE, LOG_DATA_TYPE_STATE, 0);
   }
   LogStateData data;
   data.previous = previous;
@@ -49,7 +49,7 @@ Timestamp Log::logState(StateID previous, StateID current, EventID event) {
 
 Timestamp Log::logConfigParam(ConfigParamID id, float newValue) {
   if (sizeof(LogValuesData) != sizeof(LogData)) {
-    S_O_S(MSG_LOG_DATA_SIZE, LOG_DATA_TYPE_CONFIG, 0);
+    log_S_O_S(MSG_LOG_DATA_SIZE, LOG_DATA_TYPE_CONFIG, 0);
   }
   LogConfigParamData data;
   data.id = id;

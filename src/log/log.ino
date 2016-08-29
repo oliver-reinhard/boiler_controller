@@ -1,4 +1,4 @@
-#include <ArduinoUnit.h>
+#include <ArduinoUnitX.h>
 
 #define UNIT_TEST
 #include "LogTime.h"
@@ -263,3 +263,10 @@ test(e_log_reader_most_recent) {
   //
   assertFalse(logging.nextLogEntry(e));
 }
+
+/*
+test(z_s_o_s) {
+  S_O_S(F("Program execution halted, S.O.S. Verify line number with test-code"));
+}
+*/
+

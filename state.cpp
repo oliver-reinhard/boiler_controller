@@ -408,7 +408,7 @@ AbstractState *BoilerStateAutomaton::getState(StateEnum id) {
       return ALL_STATES[i];
     }
   }
-  context->log->S_O_S(MSG_UNKNOWN_STATE, id, 0);  // function NEVER RETURNS
+  context->log->log_S_O_S(MSG_UNKNOWN_STATE, id, 0);  // function NEVER RETURNS
   abort();
 }
 

@@ -4,7 +4,6 @@
 
 #define LOG_ENTRY_SIZE sizeof(LogEntry)
 #define NUM_SLOTS_SIZE sizeof(uint16_t)
-#define ASSERT(cond, msg) ((cond) ? (void)0 : S_O_S(F(msg)))
 
 
 AbstractLog::AbstractLog(const uint16_t eepromOffset, const uint16_t eepromlogSize) {
@@ -203,27 +202,10 @@ boolean AbstractLog::nextLogEntry(LogEntry &entry) {
   return false;
 }
 
-
-void AbstractLog::S_O_S(MessageID id, int16_t param1, int16_t param2) {
-  Timestamp ts = logMessage(id, param1, param2);
-  ts = ts; // prevents warning: unused variable
-  #ifdef DEBUG_LOG
-    char buf[MAX_TIMESTAMP_STR_LEN];
-    Serial.print(F("DEBUG_LOG: S.O.S. : See log message "));
-    Serial.println(formatTimestamp(ts, buf));
-  #endif
-  S_O_S(NULL);
-}
-
-
-void AbstractLog::S_O_S(const __FlashStringHelper *debug) {
-  if (debug != NULL) {  // also prevents warning: unused parameter
-    #ifdef DEBUG_LOG
-      Serial.print(F("DEBUG_LOG: S.O.S. : "));
-      Serial.println(debug);
-    #endif
-  }
-  
+/*
+ * Infinite loop, never ends.
+ */
+void blink_S_O_S() {
   int pulse = 300; // [ms]
   while(1) {
     // S.O.S. . . . – – – . . .
@@ -236,6 +218,25 @@ void AbstractLog::S_O_S(const __FlashStringHelper *debug) {
       delay(pulse); 
     }      
   }
+}
+
+void AbstractLog::log_S_O_S(MessageID id, int16_t param1, int16_t param2) {
+  Timestamp ts = logMessage(id, param1, param2);
+  ts = ts; // prevents warning: unused variable
+  #ifdef DEBUG_LOG
+    char buf[MAX_TIMESTAMP_STR_LEN];
+    Serial.print(F("DEBUG_LOG: S.O.S. : See log message "));
+    Serial.println(formatTimestamp(ts, buf));
+  #endif
+  blink_S_O_S();
+}
+
+void write_S_O_S(const __FlashStringHelper *debug, uint16_t line) {
+  Serial.print(F("DEBUG_LOG: S.O.S. : "));
+  Serial.print(debug);
+  Serial.print(F(", line "));
+  Serial.println(line);
+  blink_S_O_S();
 }
 
 

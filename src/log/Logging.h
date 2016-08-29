@@ -14,6 +14,9 @@
     #define SOS_LED_PIN 13
   #endif
 
+  #define S_O_S(flashStringHelper) write_S_O_S(flashStringHelper, __LINE__)
+  #define ASSERT(cond, msg) ((cond) ? (void)0 : S_O_S(F(msg)))
+  
   /* 
    *  Storage type for message identifiers.
    */
@@ -173,13 +176,7 @@
        * Log a message, halt program execution and blink the universal S-O-S code on the Arduino board's LED.
        * Note: The actual LED pin can be configured / changed via symbol definition (SOS_LED_PIN).
        */
-      void S_O_S(MessageID id, int16_t param1, int16_t param2);
-      
-      /*
-       * Write a debug string to Serial, halt program execution and blink the universal S-O-S code on the Arduino board's LED.
-       * Note: The actual LED pin can be configured / changed via symbol definition (SOS_LED_PIN).
-       */
-      void S_O_S(const __FlashStringHelper *debug);
+      void log_S_O_S(MessageID id, int16_t param1, int16_t param2);
 
     protected:
       /*
@@ -235,6 +232,13 @@
        */ 
       LogEntry addLogEntry(LogDataTypeID type, LogData *data);
   };
-
+  
+      
+  /*
+   * Write a debug string to Serial, halt program execution and blink the universal S-O-S code on the Arduino board's LED.
+   * Note: The actual LED pin can be configured / changed via symbol definition (SOS_LED_PIN).
+   * @param line usually pass the source-code line number pseudo variable "__LINE__"
+   */
+  void write_S_O_S(const __FlashStringHelper *debug, uint16_t line);
 
 #endif

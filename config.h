@@ -32,7 +32,7 @@
   #define DEFAULT_LOG_TEMP_DELTA              50 // [°C * 100]
   #define DEFAULT_LOG_TIME_DELTA              60 // [s]
   #define DEFAULT_TANK_CAPACITY               10.0 // [litre]
-  #define DEFAULT_HEATER_POWER                210 // [W]
+  #define DEFAULT_HEATER_POWER                204 // [W]
 
   typedef enum {
     PARAM_TYPE_UNDEFINED = -1,
