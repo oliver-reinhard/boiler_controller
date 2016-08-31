@@ -239,6 +239,6 @@
    * Note: The actual LED pin can be configured / changed via symbol definition (SOS_LED_PIN).
    * @param line usually pass the source-code line number pseudo variable "__LINE__"
    */
-  void write_S_O_S(const __FlashStringHelper *debug, uint16_t line);
+  void write_S_O_S(const __FlashStringHelper *msg, uint16_t line);
 
 #endif

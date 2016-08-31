@@ -231,9 +231,9 @@ void AbstractLog::log_S_O_S(MessageID id, int16_t param1, int16_t param2) {
   blink_S_O_S();
 }
 
-void write_S_O_S(const __FlashStringHelper *debug, uint16_t line) {
+void write_S_O_S(const __FlashStringHelper *msg, uint16_t line) {
   Serial.print(F("DEBUG_LOG: S.O.S. : "));
-  Serial.print(debug);
+  Serial.print(msg);
   Serial.print(F(", line "));
   Serial.println(line);
   blink_S_O_S();

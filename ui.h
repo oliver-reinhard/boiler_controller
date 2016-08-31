@@ -43,7 +43,10 @@
        * Read one user request and store it in the context->op->request struct
        */
       virtual void readUserRequest() { }
-      
+
+      /*
+       * Passes information in response to an explicit user request.
+       */
       virtual void provideUserInfo(BoilerStateAutomaton *) {  }
     
       virtual void notifyNewLogEntry(LogEntry) { }

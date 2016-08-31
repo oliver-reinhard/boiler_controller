@@ -17,7 +17,7 @@
 #define TEMP_SENSOR_READOUT_WAIT         800L // [ms] = 750 ms + safety margin
 #define MIN_USER_NOTIFICATION_INTERVAL  1000L // [ms] (notification only happens if relevant changes occurred)
 #define MAX_USER_NOTIFICATION_INTERVAL 10000L // [ms] notify user after this period at the latest
-#define NOTIFICATION_TEMP_DELTA           20  // [°C / 100]
+#define NOTIFICATION_TEMP_DELTA           20  // [°C * 100]
 
 typedef enum {
   CYCLE_STAGE_0 = 0,
