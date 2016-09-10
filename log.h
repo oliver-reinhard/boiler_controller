@@ -46,7 +46,7 @@
   /*
    * IDs for enum types, some defined in higher-level modules.
    */
-  typedef uint8_t StateID;
+  typedef int8_t StateID;
   typedef uint16_t EventID;
   
   /**

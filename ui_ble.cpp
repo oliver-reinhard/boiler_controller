@@ -2,13 +2,33 @@
 
 #define DEBUG_BLE_MODULE false
 
-#define DEBUG_BLE_UI
+//#define DEBUG_BLE_UI
 
 const char BC_DEVICE_NAME[] = "Boiler Controller";
-const uint16_t BC_CONTROLLER_SERVICE_ID[] = { 0x4c, 0xef, 0xdd, 0x58, 0xcb, 0x95, 0x44, 0x50, 0x90, 0xfb, 0xf4, 0x04, 0xdc, 0x20, 0x2f, 0x7c};
+
+const uint8_t BC_CONTROLLER_SERVICE_UUID128[] = { 0x4c, 0xef, 0xdd, 0x58, 0xcb, 0x95, 0x44, 0x50, 0x90, 0xfb, 0xf4, 0x04, 0xdc, 0x20, 0x2f, 0x7c};
+///const uint16_t BC_CONTROLLER_SERVICE_SHORT_UUID16 = 0x4cef;
+
 const int8_t USER_CMD_MAX_SIZE = sizeof(UserCommandID) + USER_CMD_PARAMETER_MAX_SIZE;
 
+/** Service ID */
+const int8_t CONTROLLER_SID = 1;
 
+/* Status Characteristics IDs */
+const int8_t STATE_CID = 1;
+const int8_t TIME_IN_STATE_CID = 2;
+const int8_t TIME_HEATING_CID = 3;
+const int8_t ACCEPTED_USER_CMDS_CID = 4;
+const int8_t USER_REQUEST_CID = 5;
+const int8_t WATER_SENSOR_CID = 6;
+const int8_t AMBIENT_SENSOR_CID = 7;
+
+/* Configuration Characteristics IDs */
+const int8_t TARGET_TEMP_CID = 8;
+
+ /* Log Characteristics IDs */
+const int8_t LOG_ENTRY_CID = 9;
+  
 /* Status Characteristics */
 const char STR_SVC_CONTROLLER[]           PROGMEM = "Controller";
 
@@ -61,7 +81,7 @@ void bleGattRX(int32_t cid, uint8_t data[], uint16_t len) {
           Serial.print(", cmd = ");
           Serial.println(cmd);
         #endif
-        bleContext->op->request.command = (UserCommandEnum)cmd; /// !!!!!!!! USER INPUT : CHECK BEFORE CONVERSION !!!!!!!!
+        bleContext->op->request.setCommand(cmd);
       }
       break;
     case TARGET_TEMP_CID:
@@ -72,9 +92,7 @@ void bleGattRX(int32_t cid, uint8_t data[], uint16_t len) {
           Serial.print(", target Temp = ");
           Serial.println(targetTemp);
         #endif
-        bleContext->op->request.command = CMD_CONFIG_SET_VALUE;
-        bleContext->op->request.param = PARAM_TARGET_TEMP;
-        bleContext->op->request.intValue = targetTemp;
+        bleContext->op->request.setParamValue(PARAM_TARGET_TEMP, (int32_t) targetTemp);
       }
       break;
     default:
@@ -96,12 +114,10 @@ void BLEUI::setDeviceName(const char *name) {
   ASSERT(ble.waitForOK(), "set device name");
 }
 
-
-void BLEUI::addServiceChecked(const uint16_t uuid128[], const uint8_t sid, PGM_P description, uint16_t line) {
-  uint8_t returnedSid = gatt.addService((uint16_t) uuid128);
+void BLEUI::addServiceChecked(const uint8_t uuid128[], const uint8_t sid, PGM_P description, uint16_t line) {
+  uint8_t returnedSid = gatt.addService((uint8_t *) uuid128);
   returnedSid == sid ? (void)0 : write_S_O_S((reinterpret_cast<const __FlashStringHelper *>(description)), line);
 }
-
 
 void BLEUI::addCharacteristicChecked(const uint16_t uuid16, const uint8_t cid, uint8_t properties, uint8_t minLen, uint8_t maxLen, BLEDataType_t datatype, PGM_P description, uint16_t line) {
   char buf[20];
@@ -124,8 +140,10 @@ void BLEUI::setup() {
   /* Disable command echo from Bluefruit */
   ble.echo(false);
 
-  /* Print Bluefruit information */
-  ble.info();
+  #ifdef DEBUG_BLE_UI
+    /* Print Bluefruit information */
+    ble.info();
+  #endif
 
   // this line is particularly required for Flora, but is a good idea anyways for the super long lines ahead!
   // ble.setInterCharWriteDelay(5); // 5 ms
@@ -133,7 +151,7 @@ void BLEUI::setup() {
   setDeviceName(BC_DEVICE_NAME);
 
   // service
-  addServiceChecked(BC_CONTROLLER_SERVICE_ID, CONTROLLER_SID, STR_SVC_CONTROLLER, __LINE__);
+  addServiceChecked(BC_CONTROLLER_SERVICE_UUID128, CONTROLLER_SID, STR_SVC_CONTROLLER, __LINE__);
 
   // status
   addCharacteristicChecked(0x0001, STATE_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, sizeof(StateID), sizeof(StateID), BLE_DATATYPE_AUTO, STR_CHAR_STATE, __LINE__);
@@ -146,13 +164,19 @@ void BLEUI::setup() {
   
   // configuration
   addCharacteristicChecked(0x1000, TARGET_TEMP_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_WRITE,  sizeof(Temperature), sizeof(Temperature), BLE_DATATYPE_AUTO, STR_CHAR_TARGET_TEMP, __LINE__);
+  gatt.setChar(TARGET_TEMP_CID, context->config->targetTemp);
   
   // logs
   addCharacteristicChecked(0x2000, LOG_ENTRY_CID, GATT_CHARS_PROPERTIES_NOTIFY, sizeof(LogEntry), sizeof(LogEntry), BLE_DATATYPE_AUTO, STR_CHAR_LOG_ENTRY, __LINE__);
   
+  //uint8_t advdata[] { 0x02, 0x01, 0x06, 0x05, 0x02, 0x09, 0x18, 0x0a, 0x18 };
+  uint8_t advdata[] { 0x02, 0x01, 0x06, 
+    0x03, 0x02, BC_CONTROLLER_SERVICE_UUID128[1], BC_CONTROLLER_SERVICE_UUID128[0]  // 0x4c, 0xef /////// 03 = # bytes, 02 = 16-bit UUID, 0xef4c = UUID => use type for 128-bit UUID !!!!!!!
+  };
+  ble.setAdvData( advdata, sizeof(advdata) );
+  
   /* Reset the device for the new service setting changes to take effect */
   ble.reset();
-
   
   ble.setConnectCallback(deviceConnected);
   ble.setDisconnectCallback(deviceDisconnected);
@@ -162,31 +186,8 @@ void BLEUI::setup() {
 
 void BLEUI::readUserRequest() {
   ble.update(100); // ms
-  /*
-  byte cmd[USER_CMD_MAX_SIZE];
-  uint16_t len;
-  gatt.getChar(USER_REQUEST_CID, cmd, USER_CMD_MAX_SIZE);
-  UserCommandID cmdId;
-  memcpy(&cmdId, cmd, sizeof(UserCommandID));
-  if (cmdId != CMD_NONE) {
-    context->op->request.command = (UserCommandEnum) cmdId;
-
-    if (len > sizeof(UserCommandID)) {
-      // 
-      // TODO get params and store somehow as context->op->request->args
-      //
-    }
-
-    // reset characteristic value to CMD_NONE:
-    gatt.setChar(USER_REQUEST_CID, (uint32_t)CMD_NONE);
-    
-    #ifdef DEBUG_BLE_UI
-      Serial.print(F("DEBUG_BLE_UI: user request received: "));
-      Serial.println(cmdId);
-    #endif
-  }
-  */
 }
+
 
 void BLEUI::provideUserInfo(BoilerStateAutomaton *automaton) {
   if (automaton != NULL) { } // prevent 'unused parameter' warning

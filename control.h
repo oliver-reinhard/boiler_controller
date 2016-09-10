@@ -54,6 +54,7 @@
    * ID for enum type.
    */
   typedef uint16_t UserCommandID;
+  const UserCommandID MAX_USER_COMMAND_ID = 2 << (NUM_USER_COMMANDS - 1);
 
   // Bitwise OR combination ("|") of UserCommandEnum(s):
   typedef uint16_t UserCommands;
@@ -74,6 +75,23 @@
       intValue = INT32_MIN;
       floatValue = -999999;
       event = 0;
+    }
+
+    void setCommand(UserCommandID id) {
+      ASSERT(id <= MAX_USER_COMMAND_ID, "command id");
+      command = (UserCommandEnum)id;
+    }
+
+    void setParamValue(ConfigParamEnum p, int32_t value) {
+      command = CMD_CONFIG_SET_VALUE;
+      param = p;
+      intValue = value;
+    }
+
+    void setParamValue(ConfigParamEnum p, float value) {
+      command = CMD_CONFIG_SET_VALUE;
+      param = p;
+      floatValue = value;
     }
   };
 

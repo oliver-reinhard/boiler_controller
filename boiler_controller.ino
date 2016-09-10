@@ -51,10 +51,12 @@ ControlActions controlActions = ControlActions(&context, &ui);
 BoilerStateAutomaton automaton;
 
 void setup() {
+  /*
   Serial.begin(115200);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
+  */
   
   #if defined UNIT_TEST
     //Test::min_verbosity = TEST_VERBOSITY_ALL;
@@ -231,7 +233,7 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
     #ifdef DEBUG_MAIN
       Serial.println(F("DEBUG_MAIN: notify status case 1"));
     #endif
-    notify |= NOTIFY_TIME_IN_STATE | NOTIFY_TIME_HEATING;
+    notify |= NOTIFY_TIME_IN_STATE;
   }
   
   if (notification.state != automaton->state()->id()) {
@@ -267,8 +269,12 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
 
   if (notify) {
     notification.timeInState = now - context->op->currentStateStartMillis / 1000L;
-    notification.heatingTime = heatingTotalMillis(context->op) / 1000L;
-    notify |= NOTIFY_TIME_IN_STATE | NOTIFY_TIME_HEATING;
+    notify |= NOTIFY_TIME_IN_STATE;
+    uint32_t heatingTotalTime = heatingTotalMillis(context->op) / 1000L;
+    if (heatingTotalTime != notification.heatingTime) {
+      notification.heatingTime = heatingTotalTime;
+      notify |= NOTIFY_TIME_HEATING;
+    }
     notification.notifyProperties = notify;
     
     notificationTimeMillis = now;
