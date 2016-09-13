@@ -54,13 +54,13 @@ static ExecutionContext *bleContext;
  */
 void deviceConnected(void) {
   #ifdef DEBUG_BLE_UI
-    Serial.print(F("DEBUG_BLE_UI: Device connected"));
+    Serial.println(F("DEBUG_BLE_UI: Device connected"));
   #endif
 }
 
 void deviceDisconnected(void) {
   #ifdef DEBUG_BLE_UI
-    Serial.print(F("DEBUG_BLE_UI: Device disconnected"));
+    Serial.println(F("DEBUG_BLE_UI: Device disconnected"));
   #endif
 }
 

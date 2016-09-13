@@ -51,12 +51,12 @@ ControlActions controlActions = ControlActions(&context, &ui);
 BoilerStateAutomaton automaton;
 
 void setup() {
-  /*
-  Serial.begin(115200);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
-  */
+  #ifdef WAIT_FOR_SERIAL
+    Serial.begin(115200);
+    while (!Serial) {
+      ; // wait for serial port to connect. Needed for native USB port only
+    }
+  #endif
   
   #if defined UNIT_TEST
     //Test::min_verbosity = TEST_VERBOSITY_ALL;

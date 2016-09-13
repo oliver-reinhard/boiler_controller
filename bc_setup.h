@@ -10,5 +10,10 @@
     // Comment the following line to prevent execution of STATE tests:
     #define UT_STATE
   #endif
+   
+  #ifdef BLE_UI
+    // Comment the following line to prevent waiting for the serial connection:
+    //#define WAIT_FOR_SERIAL
+  #endif
   
 #endif
