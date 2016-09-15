@@ -268,11 +268,15 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
   }
 
   if (notify) {
-    notification.timeInState = now - context->op->currentStateStartMillis / 1000L;
+    // currentStateStartMillis is set at state change which can be later than when 'now' was set => negative time:
+    notification.timeInState = now < context->op->currentStateStartMillis ? 0L : (now - context->op->currentStateStartMillis) / 1000L;
     notify |= NOTIFY_TIME_IN_STATE;
     uint32_t heatingTotalTime = heatingTotalMillis(context->op) / 1000L;
     if (heatingTotalTime != notification.heatingTime) {
       notification.heatingTime = heatingTotalTime;
+      #ifdef DEBUG_MAIN
+        Serial.println(F("DEBUG_MAIN: notify status case 5"));
+      #endif
       notify |= NOTIFY_TIME_HEATING;
     }
     notification.notifyProperties = notify;
