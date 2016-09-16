@@ -101,12 +101,12 @@ void loop() {
     Test::run();
     
   #else
-    static uint32_t controlCycleStart = 0L;
+    static TimeMills controlCycleStart = 0L;
     static CycleStageEnum cycleStage = CYCLE_STAGE_0;
-    static uint32_t lastUserNotificationCheck = 0L;
+    static TimeMills lastUserNotificationCheck = 0L;
     
-    uint32_t now = millis();
-    uint32_t elapsed = now - controlCycleStart;
+    TimeMills now = millis();
+    TimeMills elapsed = now - controlCycleStart;
     if (controlCycleStart == 0L || elapsed >= CONTROL_CYCLE_DURATION) {
       controlCycleStart = now;
       elapsed = 0L;
@@ -184,9 +184,9 @@ EventEnum processEventCandidates(EventCandidates cand) {
  * - values have changed sufficiently to warrant logging (context->config->logTempDelta)
  * - enough time has elapsed for a new logging record (context->config->logTimeDelta)
  */
-void logTemperatureValues(ControlContext *context) {
+void logTemperatureValues(ExecutionContext *context) {
   if (context->op->loggingValues) {
-    uint32_t time = millis();
+    TimeMills time = millis();
 
     if (time - context->op->water.lastLoggedTime > context->config->logTimeDelta * 1000L || time - context->op->ambient.lastLoggedTime > context->config->logTimeDelta * 1000L) {
       boolean logValuesNow = false;
@@ -222,27 +222,30 @@ void logTemperatureValues(ControlContext *context) {
 }
 
 
-void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automaton, uint32_t now) {
+void checkForStatusChange(ExecutionContext *context, BoilerStateAutomaton *automaton, TimeMills now) {
   // timepoint [ms] when this (= most recent) notification was sent to user:
-  static uint32_t notificationTimeMillis;
+  static TimeMills notificationTimeMillis;
   static StatusNotification notification;
 
   NotifyProperties notify = NOTIFY_NONE;
+  StateEnum currentState = automaton->state()->id();
+  
+  if (notification.state != currentState) {
+    notification.state = currentState;
+    notification.acceptedUserCommands = automaton->acceptedUserCommands();
+    #ifdef DEBUG_MAIN
+      Serial.println(F("DEBUG_MAIN: notify status case 2"));
+    #endif
+    notify |= NOTIFY_STATE;
+    notify |= NOTIFY_TIME_IN_STATE;
+  }
 
   if (now - notificationTimeMillis >= MAX_USER_NOTIFICATION_INTERVAL) {
     #ifdef DEBUG_MAIN
       Serial.println(F("DEBUG_MAIN: notify status case 1"));
     #endif
     notify |= NOTIFY_TIME_IN_STATE;
-  }
-  
-  if (notification.state != automaton->state()->id()) {
-    notification.state = automaton->state()->id();
-    notification.acceptedUserCommands = automaton->acceptedUserCommands();
-    #ifdef DEBUG_MAIN
-      Serial.println(F("DEBUG_MAIN: notify status case 2"));
-    #endif
-    notify |= NOTIFY_STATE;
+    notify |= NOTIFY_TIME_TO_GO;
   }
 
   if (notification.waterSensorStatus != context->op->water.sensorStatus
@@ -254,6 +257,7 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
       Serial.println(F("DEBUG_MAIN: notify status case 3"));
     #endif
     notify |= NOTIFY_WATER_SENSOR;
+    notify |= NOTIFY_TIME_TO_GO;
   }
 
   if (notification.ambientSensorStatus != context->op->ambient.sensorStatus
@@ -267,11 +271,12 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
     notify |= NOTIFY_AMBIENT_SENSOR;
   }
 
-  if (notify) {
+  if (notify & NOTIFY_TIME_IN_STATE) {
     // currentStateStartMillis is set at state change which can be later than when 'now' was set => negative time:
     notification.timeInState = now < context->op->currentStateStartMillis ? 0L : (now - context->op->currentStateStartMillis) / 1000L;
-    notify |= NOTIFY_TIME_IN_STATE;
-    uint32_t heatingTotalTime = heatingTotalMillis(context->op) / 1000L;
+    notificationTimeMillis = now;
+    
+    TimeSeconds heatingTotalTime = heatingTotalMillis(context->op) / 1000L;
     if (heatingTotalTime != notification.heatingTime) {
       notification.heatingTime = heatingTotalTime;
       #ifdef DEBUG_MAIN
@@ -279,9 +284,30 @@ void checkForStatusChange(ControlContext *context, BoilerStateAutomaton *automat
       #endif
       notify |= NOTIFY_TIME_HEATING;
     }
+  }
+
+  if (notify & NOTIFY_TIME_TO_GO) {
+    TimeSeconds timeToGo;
+    if (currentState == STATE_IDLE) {
+      // the original time to go is only calculated in state IDLE:
+      context->op->originalTimeToGo = context->originalTimeToGo();
+      timeToGo = context->op->originalTimeToGo;
+    } else if (NOTIFY_TIME_HEATING) {
+      timeToGo = context->op->originalTimeToGo - notification.heatingTime;
+    } else {
+      timeToGo = context->op->originalTimeToGo;
+    }
+
+    if (timeToGo != notification.timeToGo) {
+      notification.timeToGo = timeToGo;
+    } else {
+      // don't notify:
+      notify &= ~NOTIFY_TIME_TO_GO;
+    }
+  }
+
+  if (notify) {
     notification.notifyProperties = notify;
-    
-    notificationTimeMillis = now;
     ui.notifyStatusChange(&notification);
   }
 }

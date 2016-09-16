@@ -2,8 +2,10 @@
 
 // #define DEBUG_CONTROL
 
-uint32_t heatingTotalMillis(OperationalParams *op) {
-  uint32_t duration = op->heatingAccumulatedMillis;
+#define WATER_HEAT_CAPACITY 4182.0 // J / (kg*K)
+
+TimeMills heatingTotalMillis(OperationalParams *op) {
+  TimeMills duration = op->heatingAccumulatedMillis;
   if (op->heatingStartMillis != 0L) {
     duration += millis() - op->heatingStartMillis;
   }
@@ -25,6 +27,20 @@ void OperationalParams::swapTempSensorIDs() {
   ambient.sensorStatus = tempStatus;      
 }
 
+
+/*
+ * CONTROL CONTEXT
+ */
+ 
+TimeSeconds ControlContext::originalTimeToGo() {
+  if (op->water.sensorStatus == SENSOR_OK) {
+    float tempDiff =  ((float) (config->targetTemp - op->water.currentTemp)) / 100.0;
+    if (tempDiff > 0.0) {
+      return config->tankCapacity * WATER_HEAT_CAPACITY * tempDiff / config->heaterPower;
+    }
+  }
+  return UNDEFINED_TIME_SECONDS;
+}
 
 /*
  * CONTROL ACTIONS

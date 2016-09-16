@@ -18,16 +18,17 @@ const int8_t CONTROLLER_SID = 1;
 const int8_t STATE_CID = 1;
 const int8_t TIME_IN_STATE_CID = 2;
 const int8_t TIME_HEATING_CID = 3;
-const int8_t ACCEPTED_USER_CMDS_CID = 4;
-const int8_t USER_REQUEST_CID = 5;
-const int8_t WATER_SENSOR_CID = 6;
-const int8_t AMBIENT_SENSOR_CID = 7;
+const int8_t TIME_TO_GO_CID = 4;
+const int8_t ACCEPTED_USER_CMDS_CID = 5;
+const int8_t USER_REQUEST_CID = 6;
+const int8_t WATER_SENSOR_CID = 7;
+const int8_t AMBIENT_SENSOR_CID = 8;
 
 /* Configuration Characteristics IDs */
-const int8_t TARGET_TEMP_CID = 8;
+const int8_t TARGET_TEMP_CID = 9;
 
  /* Log Characteristics IDs */
-const int8_t LOG_ENTRY_CID = 9;
+const int8_t LOG_ENTRY_CID = 10;
   
 /* Status Characteristics */
 const char STR_SVC_CONTROLLER[]           PROGMEM = "Controller";
@@ -40,6 +41,7 @@ const char STR_CHAR_ACCEPTED_USER_CMDS[]  PROGMEM = "Accepted User Cmds";
 const char STR_CHAR_USER_REQUEST[]        PROGMEM = "User Request";
 const char STR_CHAR_WATER_SENSOR[]        PROGMEM = "Water Temp";
 const char STR_CHAR_AMBIENT_SENSOR[]      PROGMEM = "Ambient Temp";
+const char STR_TIME_TO_GO[]               PROGMEM = "Time to Go";
 
 /* Configuration Characteristics */
 const char STR_CHAR_TARGET_TEMP[]         PROGMEM = "Target Temp";
@@ -157,10 +159,11 @@ void BLEUI::setup() {
   addCharacteristicChecked(0x0001, STATE_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, sizeof(StateID), sizeof(StateID), BLE_DATATYPE_AUTO, STR_CHAR_STATE, __LINE__);
   addCharacteristicChecked(0x0002, TIME_IN_STATE_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_TIME_IN_STATE, __LINE__);  // milliseconds
   addCharacteristicChecked(0x0003, TIME_HEATING_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_TIME_HEATING, __LINE__);  // milliseconds
-  addCharacteristicChecked(0x0004, ACCEPTED_USER_CMDS_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, sizeof(UserCommands), sizeof(UserCommands), BLE_DATATYPE_AUTO, STR_CHAR_ACCEPTED_USER_CMDS, __LINE__);
-  addCharacteristicChecked(0x0005, USER_REQUEST_CID, GATT_CHARS_PROPERTIES_WRITE,  sizeof(UserCommandID), USER_CMD_MAX_SIZE, BLE_DATATYPE_AUTO, STR_CHAR_USER_REQUEST, __LINE__); 
-  addCharacteristicChecked(0x0006, WATER_SENSOR_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_WATER_SENSOR, __LINE__);
-  addCharacteristicChecked(0x0007, AMBIENT_SENSOR_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_AMBIENT_SENSOR, __LINE__);
+  addCharacteristicChecked(0x0004, TIME_TO_GO_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_TIME_TO_GO, __LINE__);
+  addCharacteristicChecked(0x0005, ACCEPTED_USER_CMDS_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, sizeof(UserCommands), sizeof(UserCommands), BLE_DATATYPE_AUTO, STR_CHAR_ACCEPTED_USER_CMDS, __LINE__);
+  addCharacteristicChecked(0x0006, USER_REQUEST_CID, GATT_CHARS_PROPERTIES_WRITE,  sizeof(UserCommandID), USER_CMD_MAX_SIZE, BLE_DATATYPE_AUTO, STR_CHAR_USER_REQUEST, __LINE__); 
+  addCharacteristicChecked(0x0007, WATER_SENSOR_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_WATER_SENSOR, __LINE__);
+  addCharacteristicChecked(0x0008, AMBIENT_SENSOR_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_AMBIENT_SENSOR, __LINE__);
   
   // configuration
   addCharacteristicChecked(0x1000, TARGET_TEMP_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_WRITE,  sizeof(Temperature), sizeof(Temperature), BLE_DATATYPE_AUTO, STR_CHAR_TARGET_TEMP, __LINE__);
@@ -221,6 +224,10 @@ void BLEUI::notifyStatusChange(StatusNotification *notification) {
   }
   if (notification->notifyProperties & NOTIFY_TIME_HEATING) {
     gatt.setChar(TIME_HEATING_CID, notification->heatingTime);
+    notified = true;
+  }
+  if (notification->notifyProperties & NOTIFY_TIME_TO_GO) {
+    gatt.setChar(TIME_TO_GO_CID, notification->timeToGo);
     notified = true;
   }
   if (notification->notifyProperties & NOTIFY_WATER_SENSOR) {

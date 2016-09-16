@@ -503,7 +503,7 @@ void SerialUI::provideUserInfo(BoilerStateAutomaton *automaton) {
     }
     Serial.println();
 
-    uint32_t duration = heatingTotalMillis(op);
+    TimeMills duration = heatingTotalMillis(op);
     if (duration != 0L) {
       Serial.print(F("Accumulated heating time [s]: "));
       Serial.println(duration / 1000L);

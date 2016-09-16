@@ -232,10 +232,12 @@ StateEnum Recording::transAction(EventEnum event) {
 
 void Recording::entryAction() {
   context->op->loggingValues = true;
+  context->op->originalTimeToGo = context->originalTimeToGo();
 }
 
 void Recording::exitAction(){
   context->op->loggingValues = false;
+  context->op->originalTimeToGo = UNDEFINED_TIME_SECONDS;
 }
 
 /*

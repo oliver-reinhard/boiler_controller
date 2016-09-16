@@ -99,12 +99,16 @@
     public:
       virtual void commandExecuted(boolean /* success */) { }
   };
+
+  typedef uint32_t TimeMills;
+  typedef int32_t TimeSeconds;
   
+  #define UNDEFINED_TIME_SECONDS -1
   
   struct OperationalParams {
     
     /* Timepoint [ms] of most recent transition to current state.  */
-    uint32_t currentStateStartMillis = 0L;
+    TimeMills currentStateStartMillis = 0L;
 
     /* Representation of the physical water-temperature sensor. */
     DS18B20TemperatureSensor water = DS18B20TemperatureSensor("Water");
@@ -119,10 +123,13 @@
     boolean heating = false;
     
     /*  Time [ms] of most recent transition to state HEATING.*/
-    uint32_t heatingStartMillis = 0L;
+    TimeMills heatingStartMillis = 0L;
     
     /* Accumulated time in state HEATING, not including the period since last start (if heatingStartMillis != 0L). */
-    uint32_t heatingAccumulatedMillis = 0L;
+    TimeMills heatingAccumulatedMillis = 0L;
+
+    /* Time [s] to reach target temperature when heating first started. This value doesn't change during heating. */
+    TimeSeconds originalTimeToGo = UNDEFINED_TIME_SECONDS;
     
     /* Are we logging value changes such as measured temperatures? */
     boolean loggingValues = false;
@@ -134,7 +141,7 @@
   /*
    * Calculates the accumulated heating time.
    */
-  uint32_t heatingTotalMillis(OperationalParams *op);
+  TimeMills heatingTotalMillis(OperationalParams *op);
   
 
   class ControlContext {
@@ -143,6 +150,15 @@
       ConfigParams *config;
       OperationalParams *op;
       DS18B20Controller *controller;
+
+      /*
+       * Calculates and returns the time to reach target temperature based on
+       *   - current water temperature
+       *   - target temperature
+       *   - water mass
+       *  @return UNDEFINED_TIME_SECONDS if a value cannot be calculated (e.g. because the water-temperature sensor is NOK)
+       */
+       TimeSeconds originalTimeToGo();
   };
 
   /*
