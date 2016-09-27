@@ -5,8 +5,8 @@
   #include "config.h"
   #include "log.h"
 
-  #define HEATER_PIN   9
-  #define ONE_WIRE_PIN 10 // Temperature sensors
+  #define HEATER_PIN    9
+  #define ONE_WIRE_PIN  10 // Temperature sensors
 
   typedef enum {
     MSG_WATER_TEMP_SENSOR_SILENT = 20,      // Water-temperature sensor not responding. Check wiring and sensor, then restart.

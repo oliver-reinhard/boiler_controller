@@ -3,7 +3,7 @@
   
   // Uncomment AT MOST ONE (!) of the following lines:
     // #define UNIT_TEST
-     #define BLE_UI
+    #define BLE_UI
     // #define SERIAL_UI
   
   #ifdef UNIT_TEST
@@ -14,6 +14,11 @@
   #ifdef BLE_UI
     // Comment the following line to prevent waiting for the serial connection:
     //#define WAIT_FOR_SERIAL
+  #endif
+   
+  #ifdef SERIAL_UI
+    // Comment the following line to prevent waiting for the serial connection:
+    #define WAIT_FOR_SERIAL
   #endif
   
 #endif

@@ -288,8 +288,7 @@ void checkForStatusChange(ExecutionContext *context, BoilerStateAutomaton *autom
 
   if (notify & NOTIFY_TIME_TO_GO) {
     TimeSeconds timeToGo;
-    if (currentState == STATE_IDLE 
-      || currentState == STATE_STANDBY && heatingTotalMillis(context->op) == 0) { // we're recording but haven't started heating yet
+    if (currentState == STATE_IDLE || (currentState == STATE_STANDBY && heatingTotalMillis(context->op) == 0)) { // we're recording but haven't started heating yet
       // the original time to go is only calculated in state IDLE:
       context->op->originalTimeToGo = context->originalTimeToGo();
       timeToGo = context->op->originalTimeToGo;
