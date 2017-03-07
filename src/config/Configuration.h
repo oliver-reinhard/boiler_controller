@@ -3,17 +3,11 @@
   
   #include <Arduino.h>
   
-  typedef uint16_t LayoutVersion;
-  
-  /*
-   * Static version identifier. Should be increased whenever the required storage size or the
-   * types or sizes of individual configuration parameters change.
-   */
-  #define EEPROM_LAYOUT_VERSION  1
-  
   /*
    * The EEPROM storage structure for configuration parameters is as follows:
-   * - Version number (2 bytes)
+   * 
+   * - Magic number (1 byte) -- enables detectiton whether the config area has been written before
+   * - Version (1 byte) -- enables detection of structural changes of the config are  
    * - Parameter values (n bytes)  
    * 
    * This class implements version number storage and provides a base for extension for
@@ -28,16 +22,17 @@
     public:
       /*
        * @param eepromOffset number of bytes this object's storage is offset from the first byte of the EEPROM store.
+       * @param layoutVersion static version identifier of the config data structure. Should be increased whenever the number or parameter,  their types or sizes change.
        */
-      AbstractConfigParams(const uint16_t eepromOffset);
+      AbstractConfigParams(const uint16_t eepromOffset, const uint8_t layoutVersion);
       
       /*
        * Returns the version identifier.
        */
-      LayoutVersion version();
+      uint8_t version();
       
       /*
-       * Clears the version and all config-parameter values stored on the EEPROM by writing 0x0 to each memory cell.
+       * Clears magic number, version and all config-parameter values stored on the EEPROM by writing 0x0 to each memory cell.
        */
       void clear();
 
@@ -72,6 +67,16 @@
        * Byte offset of config space within EEPROM.
        */
       uint16_t eepromOffset;
+
+      /*
+       * Version identifier of the config data structure.
+       */
+      uint8_t layoutVersion;
+
+      /*
+       * Returns the "magic number" used to identify whether the config area in the EEPROM has been initialised.
+       */
+      uint8_t magicNumber();
       
       /*
        * Reads the configuration values (and only these) from the EEPROM. No initialisation of values is performed.

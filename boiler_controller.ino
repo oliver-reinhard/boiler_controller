@@ -13,6 +13,18 @@
 
 // #define DEBUG_MAIN
 
+// If the controller doesn't want to proceed out of state INIT (0), or if the serial command line does not process user input, then 
+// - uncomment the '#define ERASE_CONFIG' line
+// - upload the sketch
+// - 'stat' to see that sensor ids are 'Auto-Assigned'
+// - 'config ack ids'
+// - 'stat' to see that the *individual* sensor ids are 'OK'
+// - 'config' to see that sensor ids are not 00-00-00...
+// - comment the '#define ERASE_CONFIG' line
+// - upload the sketch
+// 
+// #define ERASE_CONFIG
+
 #define CONTROL_CYCLE_DURATION          5000L// [ms]
 #define TEMP_SENSOR_READOUT_WAIT         800L // [ms] = 750 ms + safety margin
 #define MIN_USER_NOTIFICATION_INTERVAL  1000L // [ms] (notification only happens if relevant changes occurred)
@@ -65,15 +77,12 @@ void setup() {
   #else
     logger.init();
     logger.logMessage(MSG_SYSTEM_INIT, 0, 0);
-    //
-    // If the controller doesn't want to proceed out of state INIT (0), then uncomment the 'configParams.reset()' line, then
-    // - 'stat' to see that sensor ids are 'Auto-Assigned'
-    // - 'config ack ids'
-    // - 'stat' to see that sensor ids are 'OK'
-    // - 'config' to see that sensor ids are not 00-00-00...
-    //
-    // configParams.reset(); 
-    //
+
+    // Erease the config params (do this e.g. after the physical layout has changed)
+    #ifdef ERASE_CONFIG
+      configParams.reset(); 
+    #endif
+    
     configParams.load(); 
 
     context.log = &logger;

@@ -40,11 +40,13 @@
     PARAM_TYPE_TEMPERATURE = 1,
     PARAM_TYPE_FLOAT = 2
   } ConfigParamTypeEnum;
+
   
+  #define CONFIG_PARAMS_VERSION 3
   
   class ConfigParams : public AbstractConfigParams {
     public:
-      ConfigParams() : AbstractConfigParams(0L) { };
+      ConfigParams() : AbstractConfigParams(0L, CONFIG_PARAMS_VERSION) { };
       
       TempSensorID waterTempSensorId;
       TempSensorID ambientTempSensorId;

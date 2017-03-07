@@ -17,17 +17,18 @@ void loop() {
 
 // ------ Unit Tests --------
 
-#define EEPROM_OFFSET 50L
+#define EEPROM_OFFSET    50L
+#define TEST_DATA_VERSION 12
 #define TEST_DATA_LENGTH 4
-#define BLOB_BASE_VALUE 222
-#define BLOB_NEW_VALUE  111
+#define BLOB_BASE_VALUE  222
+#define BLOB_NEW_VALUE   111
 
 class TestConfigParams : public AbstractConfigParams {
   public:
-    TestConfigParams() : AbstractConfigParams(EEPROM_OFFSET) { };
+    TestConfigParams() : AbstractConfigParams(EEPROM_OFFSET, TEST_DATA_VERSION) { };
 
     // Actual configuration parameters:
-    // (public for test verification purposes)
+    // (is public for test verification purposes)
     byte blob[TEST_DATA_LENGTH];
 
     uint16_t memSize() { return sizeof(*this); };
@@ -47,7 +48,7 @@ class TestConfigParams : public AbstractConfigParams {
 test(configuration) {
   TestConfigParams config = TestConfigParams();
   assertEqual(config.memSize(), sizeof(TestConfigParams));
-  assertEqual(config.eepromSize(), sizeof(LayoutVersion) + TEST_DATA_LENGTH);
+  assertEqual(config.eepromSize(), 2*sizeof(uint8_t) + TEST_DATA_LENGTH);
   
   config.clear();
   assertEqual(config.version(), 0);
@@ -56,7 +57,7 @@ test(configuration) {
   #ifdef DEBUG_UT_CONFIG
     config.print();
   #endif
-  assertEqual(config.version(), EEPROM_LAYOUT_VERSION);
+  assertEqual(config.version(), TEST_DATA_VERSION);
 
   assertEqual(config.blob[0], BLOB_BASE_VALUE); 
   uint16_t index = TEST_DATA_LENGTH-1;
@@ -67,7 +68,7 @@ test(configuration) {
   
   TestConfigParams config2 = TestConfigParams();
   config2.load();
-  assertEqual(config2.version(), EEPROM_LAYOUT_VERSION);
+  assertEqual(config2.version(), TEST_DATA_VERSION);
   assertEqual(config2.blob[0], BLOB_BASE_VALUE);
   assertEqual(config2.blob[index], BLOB_NEW_VALUE);
   
