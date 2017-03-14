@@ -122,9 +122,9 @@ void AbstractCompositeState::exit(EventEnum event, StateEnum next) {
 
 EventCandidates Init::eval() {
   EventCandidates result = AbstractState::eval();
-  if (context->op->water.sensorStatus == SENSOR_INITIALISING) {
+  if (context->op->water.sensorStatus == DS18B20_SENSOR_INITIALISING) {
     result |= EVENT_NONE;  // = wait
-  } else if (context->op->water.sensorStatus == SENSOR_OK) {
+  } else if (context->op->water.sensorStatus == DS18B20_SENSOR_OK) {
     result |= EVENT_READY;
   } else  {
     result |= EVENT_SENSORS_NOK;

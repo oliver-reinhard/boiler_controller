@@ -22,7 +22,7 @@ Timestamp Log::logMessage(MessageID id, int16_t param1, int16_t param2) {
   return e.timestamp;
 }
 
-Timestamp Log::logValues(Temperature water, Temperature ambient, Flags flags) {
+Timestamp Log::logValues(CF_Temperature water, CF_Temperature ambient, Flags flags) {
   #ifdef DEBUG_LOG
     Serial.println(F("DEBUG_LOG: logValues(..)"));
   #endif

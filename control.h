@@ -111,10 +111,10 @@
     TimeMills currentStateStartMillis = 0L;
 
     /* Representation of the physical water-temperature sensor. */
-    DS18B20TemperatureSensor water = DS18B20TemperatureSensor("Water");
+    DS18B20_Sensor water = DS18B20_Sensor("Water");
     
     /* Representation of the physical ambient-temperature sensor.*/
-    DS18B20TemperatureSensor ambient = DS18B20TemperatureSensor("Ambient");
+    DS18B20_Sensor ambient = DS18B20_Sensor("Ambient");
 
     /* A control request made by the user. */
     UserRequest request;
@@ -135,7 +135,7 @@
     boolean loggingValues = false;
 
     /* Swap sensor IDs and sensor states between water and ambient sensor. */
-    void swapTempSensorIDs();
+    void swapDS18B20_SensorIDs();
   };
 
   /*
@@ -149,7 +149,7 @@
       Log *log;
       ConfigParams *config;
       OperationalParams *op;
-      DS18B20Controller *controller;
+      DS18B20_Controller *controller;
 
       /*
        * Calculates and returns the time to reach target temperature based on
@@ -211,7 +211,7 @@
       /*
        * Logs a problem that arose during sensor setup.
        */
-      void logSensorSetupIssue(DS18B20TemperatureSensor *sensor, ControlMessageEnum msg);
+      void logSensorSetupIssue(DS18B20_Sensor *sensor, ControlMessageEnum msg);
       
       /*
        * Sets a config param value and logs the change.
@@ -222,20 +222,20 @@
       /*
        * Swap the sensor IDs and states of water- and ambient-temperature sensor in the operational parameters.
        */
-      void swapTempSensorIDs();
+      void swapDS18B20_SensorIDs();
 
       /*
        * Clears the sensor IDs of water- and ambient-temperature sensors in the configuration parameters and saves the latter to persistent storage. 
        */
-      void clearTempSensorIDs();
+      void clearDS18B20_SensorIDs();
       
       /*
        * Copies the sensor IDs of water- and ambient-temperature sensors of the the configuration parameters to the configuration parameters and saves the latter to persistent storage. 
-       * Sets the sensor status of one or both sensors to SENSOR_OK iff sensor status is SENSOR_ID_AUTO_ASSIGNED.
+       * Sets the sensor status of one or both sensors to DS18B20_SENSOR_OK iff sensor status is DS18B20_SENSOR_ID_AUTO_ASSIGNED.
        * 
        * @return true if at lestt one ID was copied and status was changed.
        */
-      boolean confirmTempSensorIDs();
+      boolean confirmDS18B20_SensorIDs();
   };
   
 #endif

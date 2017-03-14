@@ -51,9 +51,9 @@ FRAMStore logStore = FRAMStore(&configStore, 1024);
 ConfigParams configParams = ConfigParams(&configStore);
 Log logger = Log(&logStore); 
 OperationalParams opParams;
-DS18B20TemperatureSensor *sensors[] = {&opParams.water, &opParams.ambient};
+DS18B20_Sensor *sensors[] = {&opParams.water, &opParams.ambient};
 OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor to +5V is necessary)
-DS18B20Controller controller = DS18B20Controller(&oneWire, sensors, 2);
+DS18B20_Controller controller = DS18B20_Controller(&oneWire, sensors, 2);
 
 ExecutionContext context;
 
@@ -213,22 +213,22 @@ void logTemperatureValues(ExecutionContext *context) {
 
     if (time - context->op->water.lastLoggedTime > context->config->logTimeDelta * 1000L || time - context->op->ambient.lastLoggedTime > context->config->logTimeDelta * 1000L) {
       boolean logValuesNow = false;
-      Temperature water = UNDEFINED_TEMPERATURE;
-      Temperature ambient = UNDEFINED_TEMPERATURE;
+      CF_Temperature water = CF_UNDEFINED_TEMPERATURE;
+      CF_Temperature ambient = CF_UNDEFINED_TEMPERATURE;
       
-      if (context->op->water.sensorStatus == SENSOR_OK && abs(context->op->water.currentTemp - context->op->water.lastLoggedTemp) >= context->config->logTempDelta) {
+      if (context->op->water.sensorStatus == DS18B20_SENSOR_OK && abs(context->op->water.currentTemp - context->op->water.lastLoggedTemp) >= context->config->logTempDelta) {
         logValuesNow = true;
         water = context->op->water.currentTemp;
         
-      } else if (context->op->water.sensorStatus == SENSOR_NOK && context->op->water.lastLoggedTemp != UNDEFINED_TEMPERATURE) {
+      } else if (context->op->water.sensorStatus == DS18B20_SENSOR_NOK && context->op->water.lastLoggedTemp != CF_UNDEFINED_TEMPERATURE) {
         logValuesNow = true;;
       }
       
-      if (context->op->ambient.sensorStatus == SENSOR_OK && abs(context->op->ambient.currentTemp - context->op->ambient.lastLoggedTemp) >= context->config->logTempDelta) {
+      if (context->op->ambient.sensorStatus == DS18B20_SENSOR_OK && abs(context->op->ambient.currentTemp - context->op->ambient.lastLoggedTemp) >= context->config->logTempDelta) {
         logValuesNow = true;
         ambient = context->op->ambient.currentTemp;
         
-      } else if (context->op->ambient.sensorStatus == SENSOR_NOK && context->op->ambient.lastLoggedTemp != UNDEFINED_TEMPERATURE) {
+      } else if (context->op->ambient.sensorStatus == DS18B20_SENSOR_NOK && context->op->ambient.lastLoggedTemp != CF_UNDEFINED_TEMPERATURE) {
         logValuesNow = true;
       }
       

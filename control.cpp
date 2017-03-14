@@ -16,13 +16,13 @@ TimeMills heatingTotalMillis(OperationalParams *op) {
  * OPERATIONAL PARAMS
  */
 
-void OperationalParams::swapTempSensorIDs() {
-  TempSensorID tempId;
-  memcpy(tempId, water.id, TEMP_SENSOR_ID_BYTES);
+void OperationalParams::swapDS18B20_SensorIDs() {
+  DS18B20_SensorID tempId;
+  memcpy(tempId, water.id, DS18B20_SENSOR_ID_BYTES);
   water.setId(ambient.id);
   ambient.setId(tempId);
   
-  SensorStatusEnum tempStatus = water.sensorStatus;
+  DS18B20_StatusEnum tempStatus = water.sensorStatus;
   water.sensorStatus = ambient.sensorStatus;
   ambient.sensorStatus = tempStatus;      
 }
@@ -33,7 +33,7 @@ void OperationalParams::swapTempSensorIDs() {
  */
  
 TimeSeconds ControlContext::originalTimeToGo() {
-  if (op->water.sensorStatus == SENSOR_OK) {
+  if (op->water.sensorStatus == DS18B20_SENSOR_OK) {
     float tempDiff =  ((float) (config->targetTemp - op->water.currentTemp)) / 100.0;
     if (tempDiff > 0.0) {
       return config->tankCapacity * WATER_HEAT_CAPACITY * tempDiff / config->heaterPower;
@@ -57,15 +57,15 @@ void ControlActions::modifyConfig() {
     userFeedback->commandExecuted(success);
     
   } else if (command == CMD_CONFIG_SWAP_IDS) {
-    swapTempSensorIDs();
+    swapDS18B20_SensorIDs();
     userFeedback->commandExecuted(true);
     
   } else if (command == CMD_CONFIG_CLEAR_IDS) {
-    clearTempSensorIDs();
+    clearDS18B20_SensorIDs();
     userFeedback->commandExecuted(true);
     
   } else if (command == CMD_CONFIG_ACK_IDS) {
-    boolean success = confirmTempSensorIDs();
+    boolean success = confirmDS18B20_SensorIDs();
     userFeedback->commandExecuted(success);
     
   } else {
@@ -79,7 +79,7 @@ boolean ControlActions::setConfigParamValue(ConfigParamEnum p, int32_t intValue,
   switch(p) {
     case PARAM_TARGET_TEMP: 
       {
-        Temperature targetTemp = (Temperature) intValue;
+        CF_Temperature targetTemp = (CF_Temperature) intValue;
         if (config->targetTemp != targetTemp) {
           config->targetTemp = targetTemp;
           log->logConfigParam(p, (float) config->targetTemp);
@@ -89,7 +89,7 @@ boolean ControlActions::setConfigParamValue(ConfigParamEnum p, int32_t intValue,
       
     case PARAM_HEATER_CUT_OUT_WATER_TEMP: 
       {
-        Temperature heaterCutOutWaterTemp = (Temperature) intValue;
+        CF_Temperature heaterCutOutWaterTemp = (CF_Temperature) intValue;
         if (config->heaterCutOutWaterTemp != heaterCutOutWaterTemp) {
           config->heaterCutOutWaterTemp = heaterCutOutWaterTemp;
           log->logConfigParam(p, (float) config->heaterCutOutWaterTemp);
@@ -99,7 +99,7 @@ boolean ControlActions::setConfigParamValue(ConfigParamEnum p, int32_t intValue,
       
     case PARAM_HEATER_BACK_OK_WATER_TEMP: 
       {
-        Temperature heaterBackOkWaterTemp = (Temperature) intValue;
+        CF_Temperature heaterBackOkWaterTemp = (CF_Temperature) intValue;
         if (config->heaterBackOkWaterTemp != heaterBackOkWaterTemp) {
           config->heaterBackOkWaterTemp = heaterBackOkWaterTemp;
           log->logConfigParam(p, (float) config->heaterBackOkWaterTemp);
@@ -109,7 +109,7 @@ boolean ControlActions::setConfigParamValue(ConfigParamEnum p, int32_t intValue,
       
     case PARAM_LOG_TEMP_DELTA: 
       {
-        Temperature logTempDelta = (Temperature) intValue;
+        CF_Temperature logTempDelta = (CF_Temperature) intValue;
         if (config->logTempDelta != logTempDelta) {
           config->logTempDelta = logTempDelta;
           log->logConfigParam(p, (float) config->logTempDelta);
@@ -152,21 +152,21 @@ boolean ControlActions::setConfigParamValue(ConfigParamEnum p, int32_t intValue,
   }
 }
 
-void ControlActions::swapTempSensorIDs() {
-  context->op->swapTempSensorIDs();
+void ControlActions::swapDS18B20_SensorIDs() {
+  context->op->swapDS18B20_SensorIDs();
 }
 
-void ControlActions::clearTempSensorIDs() {
-  context->config->setTempSensorIDs((uint8_t*) UNDEFINED_SENSOR_ID, (uint8_t*) UNDEFINED_SENSOR_ID);
+void ControlActions::clearDS18B20_SensorIDs() {
+  context->config->setDS18B20_SensorIDs((uint8_t*) DS18B20_UNDEFINED_SENSOR_ID, (uint8_t*) DS18B20_UNDEFINED_SENSOR_ID);
   context->config->save();
   context->log->logConfigParam(PARAM_WATER_TEMP_SENSOR_ID, 0.0);
   context->log->logConfigParam(PARAM_AMBIENT_TEMP_SENSOR_ID, 0.0);
   context->log->logMessage(MSG_TEMP_SENSOR_IDS_CLEARED, 0, 0);
 }
 
-boolean ControlActions::confirmTempSensorIDs() {
-  if (context->op->water.sensorStatus == SENSOR_ID_AUTO_ASSIGNED || context->op->ambient.sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
-    context->config->setTempSensorIDs(context->op->water.id, context->op->ambient.id);
+boolean ControlActions::confirmDS18B20_SensorIDs() {
+  if (context->op->water.sensorStatus == DS18B20_SENSOR_ID_AUTO_ASSIGNED || context->op->ambient.sensorStatus == DS18B20_SENSOR_ID_AUTO_ASSIGNED) {
+    context->config->setDS18B20_SensorIDs(context->op->water.id, context->op->ambient.id);
     context->config->save();
     context->log->logConfigParam(PARAM_WATER_TEMP_SENSOR_ID, 0.0);
     context->log->logConfigParam(PARAM_AMBIENT_TEMP_SENSOR_ID, 0.0);
@@ -180,31 +180,31 @@ boolean ControlActions::confirmTempSensorIDs() {
 
 
 uint8_t ControlActions::setupSensors() {
-  DS18B20TemperatureSensor *waterSensor = &context->op->water;
+  DS18B20_Sensor *waterSensor = &context->op->water;
   waterSensor->setId(context->config->waterTempSensorId);
   waterSensor->rangeMin = WATER_MIN_TEMP;
   waterSensor->rangeMax = WATER_MAX_TEMP;
   
-  DS18B20TemperatureSensor *ambientSensor = &context->op->ambient;
+  DS18B20_Sensor *ambientSensor = &context->op->ambient;
   ambientSensor->setId(context->config->ambientTempSensorId);
   ambientSensor->rangeMin = AMBIENT_MIN_TEMP;
   ambientSensor->rangeMax = AMBIENT_MAX_TEMP;
   
   uint8_t matched = context->controller->setupSensors();
   
-  if (waterSensor->sensorStatus == SENSOR_INITIALISING) {
+  if (waterSensor->sensorStatus == DS18B20_SENSOR_INITIALISING) {
     logSensorSetupIssue(waterSensor, MSG_WATER_TEMP_SENSOR_SILENT); 
-  } else if (waterSensor->sensorStatus == SENSOR_ID_UNDEFINED) {
+  } else if (waterSensor->sensorStatus == DS18B20_SENSOR_ID_UNDEFINED) {
     logSensorSetupIssue(waterSensor, MSG_WATER_TEMP_SENSOR_ID_UNDEF); 
-  } else if (waterSensor->sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
+  } else if (waterSensor->sensorStatus == DS18B20_SENSOR_ID_AUTO_ASSIGNED) {
     logSensorSetupIssue(waterSensor, MSG_WATER_TEMP_SENSOR_ID_AUTO); 
   }
   
-  if (ambientSensor->sensorStatus == SENSOR_INITIALISING) {
+  if (ambientSensor->sensorStatus == DS18B20_SENSOR_INITIALISING) {
     logSensorSetupIssue(ambientSensor, MSG_AMBIENT_TEMP_SENSOR_SILENT); 
-  } else if (ambientSensor->sensorStatus == SENSOR_ID_UNDEFINED) {
+  } else if (ambientSensor->sensorStatus == DS18B20_SENSOR_ID_UNDEFINED) {
     logSensorSetupIssue(ambientSensor, MSG_AMBIENT_TEMP_SENSOR_ID_UNDEF); 
-  } else if (ambientSensor->sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
+  } else if (ambientSensor->sensorStatus == DS18B20_SENSOR_ID_AUTO_ASSIGNED) {
    logSensorSetupIssue(ambientSensor, MSG_AMBIENT_TEMP_SENSOR_ID_AUTO); 
   } 
 
@@ -232,7 +232,7 @@ void ControlActions::heat(boolean on) {
   }
 }
 
-void ControlActions::logSensorSetupIssue(DS18B20TemperatureSensor *sensor, ControlMessageEnum msg) {
+void ControlActions::logSensorSetupIssue(DS18B20_Sensor *sensor, ControlMessageEnum msg) {
   context->log->logMessage(msg, 0, 0); 
   #ifdef DEBUG_CONTROL
     Serial.print(F("DEBUG_CONTROL: "));

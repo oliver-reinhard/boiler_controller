@@ -47,7 +47,7 @@
         void clear() { }
         void init()  { }
         Timestamp logMessage(MessageID msg, int16_t param1, int16_t param2);
-        Timestamp logValues(Temperature water, Temperature ambient, Flags flags);
+        Timestamp logValues(Temperature water, CF_Temperature ambient, Flags flags);
         Timestamp logState(StateID previous, StateID current, EventID event);
       
         // Mock counters:

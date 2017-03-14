@@ -2,7 +2,7 @@
   #define BC_CONFIG_H_INCLUDED
   
   #include <CF_Configuration.h>
-  #include "src/sensors/OneWireSensors.h"
+  #include "src/sensors/DS18B20.h"
   
   /*
    * ID values are defined by ConfigParamEnum.
@@ -24,8 +24,8 @@
   
   const uint8_t NUM_CONFIG_PARAMS = 9;
   
-  #define DEFAULT_WATER_TEMP_SENSOR_ID        UNDEFINED_SENSOR_ID
-  #define DEFAULT_AMBIENT_TEMP_SENSOR_ID      UNDEFINED_SENSOR_ID
+  #define DEFAULT_WATER_TEMP_SENSOR_ID        DS18B20_UNDEFINED_SENSOR_ID
+  #define DEFAULT_AMBIENT_TEMP_SENSOR_ID      DS18B20_UNDEFINED_SENSOR_ID
   #define DEFAULT_TARGET_TEMP                 4200 // [°C * 100]
   #define DEFAULT_HEATER_CUT_OUT_WATER_TEMP   7000 // [°C * 100]
   #define DEFAULT_HEATER_BACK_OK_WATER_TEMP   6000 // [°C * 100]
@@ -48,12 +48,12 @@
     public:
       ConfigParams(AbstractStore *store) : AbstractConfigParams(store, CONFIG_PARAMS_VERSION) { };
       
-      TempSensorID waterTempSensorId;
-      TempSensorID ambientTempSensorId;
-      Temperature targetTemp; // [°C * 100]
-      Temperature heaterCutOutWaterTemp; // [°C * 100]
-      Temperature heaterBackOkWaterTemp; // [°C * 100]
-      Temperature logTempDelta; // [°C * 100]
+      DS18B20_SensorID waterTempSensorId;
+      DS18B20_SensorID ambientTempSensorId;
+      CF_Temperature targetTemp; // [°C * 100]
+      CF_Temperature heaterCutOutWaterTemp; // [°C * 100]
+      CF_Temperature heaterBackOkWaterTemp; // [°C * 100]
+      CF_Temperature logTempDelta; // [°C * 100]
       uint16_t logTimeDelta; // [s]
       float tankCapacity;  // [litre]
       float heaterPower;  // [Watts]
@@ -63,7 +63,7 @@
       ConfigParamTypeEnum paramType(ConfigParamEnum param);
 
       /* Sets the sensor IDs for both temperature sensors. */
-      void setTempSensorIDs(TempSensorID water, TempSensorID ambient);
+      void setDS18B20_SensorIDs(DS18B20_SensorID water, DS18B20_SensorID ambient);
 
       /* Clears als parameter values (see clear()), then initialises all values (see initParams(.)). */
       void reset();

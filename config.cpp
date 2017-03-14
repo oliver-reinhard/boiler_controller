@@ -1,9 +1,9 @@
 #include "config.h"
 
 
-void ConfigParams::setTempSensorIDs(TempSensorID water, TempSensorID ambient) {
-  memcpy(this->waterTempSensorId, water, TEMP_SENSOR_ID_BYTES);
-  memcpy(this->ambientTempSensorId, ambient, TEMP_SENSOR_ID_BYTES);
+void ConfigParams::setDS18B20_SensorIDs(DS18B20_SensorID water, DS18B20_SensorID ambient) {
+  memcpy(this->waterTempSensorId, water, DS18B20_SENSOR_ID_BYTES);
+  memcpy(this->ambientTempSensorId, ambient, DS18B20_SENSOR_ID_BYTES);
 }
 
 
@@ -78,11 +78,11 @@ ConfigParamTypeEnum ConfigParams::paramType(ConfigParamEnum param) {
 }
 
 void ConfigParams::print() {
-  char buf[max(MAX_TEMPERATURE_STR_LEN, MAX_TEMP_SENSOR_ID_STR_LEN)];
+  char buf[max(MAX_TEMPERATURE_STR_LEN, MAX_DS18B20_SENSOR_ID_STR_LEN)];
   AbstractConfigParams::print();
   Serial.println(formatTemperature(targetTemp, buf));
-  Serial.println(formatTempSensorID(waterTempSensorId, buf));
-  Serial.println(formatTempSensorID(ambientTempSensorId, buf));
+  Serial.println(formatDS18B20_SensorID(waterTempSensorId, buf));
+  Serial.println(formatDS18B20_SensorID(ambientTempSensorId, buf));
   Serial.println(formatTemperature(heaterCutOutWaterTemp, buf));
   Serial.println(formatTemperature(heaterBackOkWaterTemp, buf));
   Serial.println(formatTemperature(logTempDelta, buf));

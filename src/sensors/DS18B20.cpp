@@ -1,7 +1,7 @@
 
-#include "OneWireSensors.h"
+#include "DS18B20.h"
 
-// #define DEBUG_SENSORS
+// #define DEBUG_DS18B20
 
 #define ASCII_0 48  // char(48)
 
@@ -15,14 +15,14 @@
 /*
  * Configuration-byte position in data vector returned by the DS18B20
  */
-#define DATA_CONFIG_BYTE  4
+#define DS18B20_DATA_CONFIG_BYTE  4
 
-uint8_t DS18B20Controller::setupSensors() {
+uint8_t DS18B20_Controller::setupSensors() {
   for(uint8_t i=0; i<numSensors; i++) {
     if(sensors[i]->idUndefined()) {
-      sensors[i]->sensorStatus = SENSOR_ID_UNDEFINED;
-      #ifdef DEBUG_SENSORS
-        Serial.print(F("DEBUG_SENSORS: Sensor "));
+      sensors[i]->sensorStatus = DS18B20_SENSOR_ID_UNDEFINED;
+      #ifdef DEBUG_DS18B20
+        Serial.print(F("DEBUG_DS18B20: Sensor "));
         Serial.print(sensors[i]->label);
         Serial.println(F(": setting to status ID undefined"));
       #endif
@@ -30,24 +30,24 @@ uint8_t DS18B20Controller::setupSensors() {
   }
   
   oneWire->reset();
-  uint8_t addr[TEMP_SENSOR_ID_BYTES];
+  uint8_t addr[DS18B20_SENSOR_ID_BYTES];
   uint8_t matchedAddressCount = 0;
   
   while(oneWire->search(addr)) { 
-    if (OneWire::crc8(addr, TEMP_SENSOR_ID_BYTES-1) != addr[TEMP_SENSOR_ID_BYTES-1]) {
+    if (OneWire::crc8(addr, DS18B20_SENSOR_ID_BYTES-1) != addr[DS18B20_SENSOR_ID_BYTES-1]) {
       continue;
     }
     
-    DS18B20TemperatureSensor *sensor = getSensor(addr);
+    DS18B20_Sensor *sensor = getSensor(addr);
     if (sensor != NULL) {
-        sensor->sensorStatus = SENSOR_OK;
+        sensor->sensorStatus = DS18B20_SENSOR_OK;
         matchedAddressCount++;
     
     } else {
       sensor = getFirstUndefinedSensor();
       if (sensor != NULL) {
-        memcpy(sensor->id, addr, TEMP_SENSOR_ID_BYTES);
-        sensor->sensorStatus = SENSOR_ID_AUTO_ASSIGNED;
+        memcpy(sensor->id, addr, DS18B20_SENSOR_ID_BYTES);
+        sensor->sensorStatus = DS18B20_SENSOR_ID_AUTO_ASSIGNED;
         matchedAddressCount++;
       }
     }
@@ -60,7 +60,7 @@ uint8_t DS18B20Controller::setupSensors() {
   return matchedAddressCount;
 }
 
-void DS18B20Controller::initSensorReadout() {
+void DS18B20_Controller::initSensorReadout() {
   oneWire->reset();
   // Talk to all slaves on bus:
   oneWire->skip();
@@ -72,57 +72,57 @@ void DS18B20Controller::initSensorReadout() {
 }
 
 
-void DS18B20Controller::completeSensorReadout() {
+void DS18B20_Controller::completeSensorReadout() {
   // initialise OK sensors to state NOK and leave other states untouched:
   for(uint8_t i=0; i<numSensors; i++) {
-    if(sensors[i]->sensorStatus == SENSOR_OK) {
-      sensors[i]->sensorStatus = SENSOR_NOK;
+    if(sensors[i]->sensorStatus == DS18B20_SENSOR_OK) {
+      sensors[i]->sensorStatus = DS18B20_SENSOR_NOK;
     }
-    sensors[i]->currentTemp  = UNDEFINED_TEMPERATURE;
+    sensors[i]->currentTemp  = CF_UNDEFINED_TEMPERATURE;
   }
   
-  uint8_t addr[TEMP_SENSOR_ID_BYTES];
+  uint8_t addr[DS18B20_SENSOR_ID_BYTES];
   
   while(oneWire->search(addr)) {  
-    if (OneWire::crc8(addr, TEMP_SENSOR_ID_BYTES-1) != addr[TEMP_SENSOR_ID_BYTES-1]) {
+    if (OneWire::crc8(addr, DS18B20_SENSOR_ID_BYTES-1) != addr[DS18B20_SENSOR_ID_BYTES-1]) {
       continue;
     }
     
-    uint8_t data[TEMP_SENSOR_READOUT_BYTES];
+    uint8_t data[DS18B20_SENSOR_READOUT_BYTES];
     if (! readSensorScratchpad(addr, data)) {
       continue;
     }
     
-    DS18B20TemperatureSensor *sensor = getSensor(addr);
+    DS18B20_Sensor *sensor = getSensor(addr);
     if (sensor != NULL) {
-      TemperatureReadout readout = getCelcius(data);
-      #ifdef DEBUG_SENSORS
-        Serial.print(F("DEBUG_SENSORS: Sensor "));
+      DS18B20_Readout readout = getCelcius(data);
+      #ifdef DEBUG_DS18B20
+        Serial.print(F("DEBUG_DS18B20: Sensor "));
         Serial.print(sensor->label);
       #endif
       
       // only set temperature and state for NOK sensors and AUTO_ASSIGNED sensors (leave others untouched):
-      if (sensor->sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
+      if (sensor->sensorStatus == DS18B20_SENSOR_ID_AUTO_ASSIGNED) {
         sensor->currentTemp  = readout.celcius;
-        #ifdef DEBUG_SENSORS
-          char buf[MAX_TEMP_SENSOR_ID_STR_LEN];
+        #ifdef DEBUG_DS18B20
+          char buf[MAX_DS18B20_SENSOR_ID_STR_LEN];
           Serial.print(F(": ID AUTO ASSIGNED, "));
           Serial.println(formatTemperature(readout.celcius, buf));
         #endif
         
-      } else if (sensor->sensorStatus == SENSOR_NOK) {
+      } else if (sensor->sensorStatus == DS18B20_SENSOR_NOK) {
         // Ensure temperature is plausible:
-        if((sensor->rangeMin == UNDEFINED_TEMPERATURE || readout.celcius >= sensor->rangeMin) 
-            && (sensor->rangeMax == UNDEFINED_TEMPERATURE || readout.celcius <= sensor->rangeMax)) {
-          sensor->sensorStatus = SENSOR_OK;
+        if((sensor->rangeMin == CF_UNDEFINED_TEMPERATURE || readout.celcius >= sensor->rangeMin) 
+            && (sensor->rangeMax == CF_UNDEFINED_TEMPERATURE || readout.celcius <= sensor->rangeMax)) {
+          sensor->sensorStatus = DS18B20_SENSOR_OK;
           sensor->currentTemp  = readout.celcius;
-          #ifdef DEBUG_SENSORS
-            char buf[MAX_TEMP_SENSOR_ID_STR_LEN];
+          #ifdef DEBUG_DS18B20
+            char buf[MAX_DS18B20_SENSOR_ID_STR_LEN];
             Serial.print(F(": OK, "));
             Serial.println(formatTemperature(readout.celcius, buf));
           #endif
         } else {
-          #ifdef DEBUG_SENSORS
+          #ifdef DEBUG_DS18B20
             Serial.println(F(": NOK"));
           #endif
         }
@@ -133,16 +133,16 @@ void DS18B20Controller::completeSensorReadout() {
 }
 
 
-DS18B20TemperatureSensor *DS18B20Controller::getSensor(uint8_t addr[]) {
+DS18B20_Sensor *DS18B20_Controller::getSensor(uint8_t addr[]) {
   for(uint8_t i=0; i<numSensors; i++) {
-    if (! memcmp(addr, sensors[i]->id, TEMP_SENSOR_ID_BYTES)) {
+    if (! memcmp(addr, sensors[i]->id, DS18B20_SENSOR_ID_BYTES)) {
       return sensors[i];
     }
   }
   return NULL;
 }
 
-DS18B20TemperatureSensor *DS18B20Controller::getFirstUndefinedSensor() {
+DS18B20_Sensor *DS18B20_Controller::getFirstUndefinedSensor() {
   for(uint8_t i=0; i<numSensors; i++) {
     if(sensors[i]->idUndefined()) {
       return sensors[i];
@@ -155,33 +155,33 @@ DS18B20TemperatureSensor *DS18B20Controller::getFirstUndefinedSensor() {
  * @param addr  4-byte ID of DS18B20 temperature sensor
  * @param data  data vector returned by the DS18B20: 8 byte data + 1 byte CRC
  */
-boolean DS18B20Controller::readSensorScratchpad(uint8_t addr[], uint8_t *data) {
+boolean DS18B20_Controller::readSensorScratchpad(uint8_t addr[], uint8_t *data) {
   oneWire->reset();
   // Talk only to sensor with 'addr':
   oneWire->select(addr);
   oneWire->write(CMD_READ_SCRATCHPAD);
   
   // Read 8 byte of data + 1 byte of CRC
-  for (uint8_t i = 0; i < TEMP_SENSOR_READOUT_BYTES; i++) {           
+  for (uint8_t i = 0; i < DS18B20_SENSOR_READOUT_BYTES; i++) {           
     data[i] = oneWire->read();
   }
   oneWire->reset();
-  return OneWire::crc8(data, TEMP_SENSOR_READOUT_BYTES-1) == data[TEMP_SENSOR_READOUT_BYTES-1];
+  return OneWire::crc8(data, DS18B20_SENSOR_READOUT_BYTES-1) == data[DS18B20_SENSOR_READOUT_BYTES-1];
 }
 
 /*
  * Parse temperature [°C] from raw DS18B20 data
  * @param data  data vector returned by the DS18B20: 8 byte data + 1 byte CRC
  */
-TemperatureReadout DS18B20Controller::getCelcius(uint8_t data[]) {
+DS18B20_Readout DS18B20_Controller::getCelcius(uint8_t data[]) {
   int16_t raw = (data[1] << 8) | data[0];
-  #ifdef DEBUG_SENSORS
-    Serial.print(F("DEBUG_SENSORS: read raw temp = "));
+  #ifdef DEBUG_DS18B20
+    Serial.print(F("DEBUG_DS18B20: read raw temp = "));
     Serial.println(raw);
   #endif
-  uint8_t configByte = (data[DATA_CONFIG_BYTE] & 0x60);
+  uint8_t configByte = (data[DS18B20_DATA_CONFIG_BYTE] & 0x60);
   
-  TemperatureReadout temp;
+  DS18B20_Readout temp;
   // At lower resolution, the low bits are undefined, so let's zero them
   if (configByte == 0x00) {
     raw = raw & ~7;  // 9 bit resolution, 93.75 ms
@@ -201,7 +201,7 @@ TemperatureReadout DS18B20Controller::getCelcius(uint8_t data[]) {
 }
 
 
-char *formatTemperature(Temperature t, char s[MAX_TEMPERATURE_STR_LEN]) {
+char *formatTemperature(CF_Temperature t, char s[MAX_TEMPERATURE_STR_LEN]) {
   uint8_t deg = t / 100;
   uint8_t frac = t % 100;
   s[8] = '\0';
@@ -216,12 +216,12 @@ char *formatTemperature(Temperature t, char s[MAX_TEMPERATURE_STR_LEN]) {
   return s;
 }
 
-char *formatTempSensorID(TempSensorID id, char s[MAX_TEMP_SENSOR_ID_STR_LEN]) {
+char *formatDS18B20_SensorID(DS18B20_SensorID id, char s[MAX_DS18B20_SENSOR_ID_STR_LEN]) {
   uint8_t pos = 0;
-  for (uint8_t i=0; i<TEMP_SENSOR_ID_BYTES; i++) {
+  for (uint8_t i=0; i<DS18B20_SENSOR_ID_BYTES; i++) {
     sprintf(&s[pos], "%02X", id[i]);
     pos += 2;
-    if (i < TEMP_SENSOR_ID_BYTES - 1) {
+    if (i < DS18B20_SENSOR_ID_BYTES - 1) {
       s[pos++] = '-';
     }
   }

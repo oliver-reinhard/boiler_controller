@@ -36,8 +36,8 @@
    * LogDataType: LOG_DATA_TYPE_VALUES, "subtype" of LogData
    */
   struct LogValuesData {
-    Temperature water;
-    Temperature ambient;
+    CF_Temperature water;
+    CF_Temperature ambient;
     Flags flags;
   };
   
@@ -78,7 +78,7 @@
       /*
        * Log a value change.
        */
-      virtual Timestamp logValues(Temperature water, Temperature ambient, Flags flags);
+      virtual Timestamp logValues(CF_Temperature water, CF_Temperature ambient, Flags flags);
 
       /*
        * Log a state change.

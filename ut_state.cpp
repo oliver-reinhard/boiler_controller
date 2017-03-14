@@ -69,7 +69,7 @@
     return logTime.timestamp();
   }
   
-  Timestamp MockLog::logValues(Temperature, Temperature, Flags) {
+  Timestamp MockLog::logValues(CF_Temperature, CF_Temperature, Flags) {
     #ifdef DEBUG_UT_STATE
       Serial.println(F("DEBUG_UT_STATE: logValues(...)"));
     #endif
@@ -117,8 +117,8 @@
     assertEqual(int16_t(automaton.acceptedUserCommands()), int16_t(CMD_NONE));
     assertEqual(control.totalInvocations(), 0);
 
-    // water sensor = SENSOR_INITIALISING => evaluate => no event
-    assertEqual(int16_t(context.op->water.sensorStatus), int16_t(SENSOR_INITIALISING));
+    // water sensor = DS18B20_SENSOR_INITIALISING => evaluate => no event
+    assertEqual(int16_t(context.op->water.sensorStatus), int16_t(DS18B20_SENSOR_INITIALISING));
     EventCandidates cand = automaton.evaluate();
     assertEqual(int16_t(cand), int16_t(EVENT_NONE));
     assertEqual(automaton.state()->id(), STATE_INIT);
@@ -140,7 +140,7 @@
     //
     // set water sensor OK => evaluate => event READY
     //
-    op.water.sensorStatus = SENSOR_OK;
+    op.water.sensorStatus = DS18B20_SENSOR_OK;
     op.water.currentTemp = 2300;
     cand = automaton.evaluate();
     assertEqual(int16_t(cand), int16_t(EVENT_READY));
@@ -325,7 +325,7 @@
     //
     // set water sensor NOK => evaluate => event SENSORS_NOK
     //
-    op.water.sensorStatus = SENSOR_NOK;
+    op.water.sensorStatus = DS18B20_SENSOR_NOK;
     EventCandidates cand = automaton.evaluate();
     assertEqual(int16_t(cand), int16_t(EVENT_SENSORS_NOK));
     

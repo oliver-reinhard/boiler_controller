@@ -27,10 +27,10 @@
     // accumulated heating time [s] up to now:
     TimeSeconds heatingTime = 0L;
     TimeSeconds timeToGo = UNDEFINED_TIME_SECONDS;
-    SensorStatusID waterSensorStatus = SENSOR_INITIALISING;
-    Temperature waterTemp = UNDEFINED_TEMPERATURE;
-    SensorStatusID ambientSensorStatus = SENSOR_INITIALISING;
-    Temperature ambientTemp = UNDEFINED_TEMPERATURE;
+    DS18B20_StatusID waterSensorStatus = DS18B20_SENSOR_INITIALISING;
+    CF_Temperature waterTemp = CF_UNDEFINED_TEMPERATURE;
+    DS18B20_StatusID ambientSensorStatus = DS18B20_SENSOR_INITIALISING;
+    CF_Temperature ambientTemp = CF_UNDEFINED_TEMPERATURE;
   };
 
 

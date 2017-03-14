@@ -35,6 +35,7 @@ const __FlashStringHelper *getConfigParamName(ConfigParamEnum literal) {
 
 #if defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAMD_MKR1000)
 // dtostrf is missing from AVR library for SAMD ...
+// see https://github.com/adafruit/Adafruit_MQTT_Library/blob/master/Adafruit_MQTT.cpp
 static char *dtostrf (double val, signed char width, unsigned char prec, char *sout) {
   char fmt[20];
   sprintf(fmt, "%%%d.%df", width, prec);
@@ -61,9 +62,9 @@ char *getConfigParamValue(ConfigParams *all, ConfigParamEnum p, char buf[]) {
     case PARAM_TARGET_TEMP: 
       return formatTemperature(all->targetTemp, buf);
     case PARAM_WATER_TEMP_SENSOR_ID: 
-      return formatTempSensorID(all->waterTempSensorId, buf);
+      return formatDS18B20_SensorID(all->waterTempSensorId, buf);
     case PARAM_AMBIENT_TEMP_SENSOR_ID: 
-      return formatTempSensorID(all->ambientTempSensorId, buf);
+      return formatDS18B20_SensorID(all->ambientTempSensorId, buf);
     case PARAM_HEATER_CUT_OUT_WATER_TEMP: 
       return formatTemperature(all->heaterCutOutWaterTemp, buf);
     case PARAM_HEATER_BACK_OK_WATER_TEMP: 
@@ -174,13 +175,13 @@ char *getUserCommandName(UserCommandEnum literal, char buf[]) {
 /*
  * SENSOR STATUS
  */
-const __FlashStringHelper *getSensorStatusName(SensorStatusEnum literal) {
+const __FlashStringHelper *getSensorStatusName(DS18B20_StatusEnum literal) {
   switch(literal) {
-    case SENSOR_INITIALISING:     return F("Init");
-    case SENSOR_ID_AUTO_ASSIGNED: return F("Auto ID");
-    case SENSOR_ID_UNDEFINED:     return F("No ID");
-    case SENSOR_OK:               return F("OK");
-    case SENSOR_NOK:              return F("NOK");
+    case DS18B20_SENSOR_INITIALISING:     return F("Init");
+    case DS18B20_SENSOR_ID_AUTO_ASSIGNED: return F("Auto ID");
+    case DS18B20_SENSOR_ID_UNDEFINED:     return F("No ID");
+    case DS18B20_SENSOR_OK:               return F("OK");
+    case DS18B20_SENSOR_NOK:              return F("NOK");
     default: return FP(STR_ILLEGAL);
   }
 }
@@ -421,11 +422,11 @@ void printLogEntry(LogEntry *e) {
         LogValuesData data;
         memcpy(&data, &(e->data), sizeof(LogValuesData));
         Serial.print(F("V  water:"));
-        Serial.print(getSensorStatusName((SensorStatusEnum)(data.flags>>4)));
+        Serial.print(getSensorStatusName((DS18B20_StatusEnum)(data.flags>>4)));
         Serial.print(F(" "));
         Serial.print(formatTemperature(data.water, buf));
         Serial.print(F(", ambient:"));
-        Serial.print(getSensorStatusName((SensorStatusEnum)(data.flags&0x0F)));
+        Serial.print(getSensorStatusName((DS18B20_StatusEnum)(data.flags&0x0F)));
         Serial.print(F(" "));
         Serial.println(formatTemperature(data.ambient, buf));
       }
@@ -499,7 +500,7 @@ void SerialUI::provideUserInfo(BoilerStateAutomaton *automaton) {
     
     Serial.print(F("Water:   "));
     Serial.print(getSensorStatusName(op->water.sensorStatus));
-    if (op->water.sensorStatus == SENSOR_OK  || op->water.sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
+    if (op->water.sensorStatus == DS18B20_SENSOR_OK  || op->water.sensorStatus == DS18B20_SENSOR_ID_AUTO_ASSIGNED) {
       Serial.print(F(", "));
       Serial.print(formatTemperature(op->water.currentTemp, buf));
     }
@@ -507,7 +508,7 @@ void SerialUI::provideUserInfo(BoilerStateAutomaton *automaton) {
     
     Serial.print(F("Ambient: "));
     Serial.print(getSensorStatusName(op->ambient.sensorStatus));
-    if (op->ambient.sensorStatus == SENSOR_OK || op->ambient.sensorStatus == SENSOR_ID_AUTO_ASSIGNED) {
+    if (op->ambient.sensorStatus == DS18B20_SENSOR_OK || op->ambient.sensorStatus == DS18B20_SENSOR_ID_AUTO_ASSIGNED) {
       Serial.print(F(", "));
       Serial.print(formatTemperature(op->ambient.currentTemp, buf));
     }

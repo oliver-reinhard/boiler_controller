@@ -88,8 +88,8 @@ void bleGattRX(int32_t cid, uint8_t data[], uint16_t /*len*/) {
       break;
     case TARGET_TEMP_CID:
       {
-        Temperature targetTemp;
-        memcpy(&targetTemp, data, sizeof(Temperature));
+        CF_Temperature targetTemp;
+        memcpy(&targetTemp, data, sizeof(CF_Temperature));
         #ifdef DEBUG_BLE_UI
           Serial.print(", target Temp = ");
           Serial.println(targetTemp);
@@ -168,7 +168,7 @@ void BLEUI::setup() {
   addCharacteristicChecked(0x0008, AMBIENT_SENSOR_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_AMBIENT_SENSOR, __LINE__);
   
   // configuration
-  addCharacteristicChecked(0x1000, TARGET_TEMP_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_WRITE,  sizeof(Temperature), sizeof(Temperature), BLE_DATATYPE_AUTO, STR_CHAR_TARGET_TEMP, __LINE__);
+  addCharacteristicChecked(0x1000, TARGET_TEMP_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_WRITE,  sizeof(CF_Temperature), sizeof(CF_Temperature), BLE_DATATYPE_AUTO, STR_CHAR_TARGET_TEMP, __LINE__);
   gatt.setChar(TARGET_TEMP_CID, context->config->targetTemp);
   
   // logs

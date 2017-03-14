@@ -5,8 +5,8 @@
 
  // #define DEBUG_MOCK_ONE_WIRE
   
-  #define TEMP_SENSOR_ID_BYTES 8
-  #define TEMP_SENSOR_READOUT_BYTES 9
+  #define DS18B20_SENSOR_ID_BYTES 8
+  #define DS18B20_SENSOR_READOUT_BYTES 9
   #define MAX_PRECONFIGURED_TEMPERATURES 10
 
   class MockOneWire : public OneWire{
@@ -20,7 +20,7 @@
         #ifdef DEBUG_MOCK_ONE_WIRE
           Serial.print(F("DEBUG_MOCK_ONE_WIRE: _setSearchResults: "));
           for(uint8_t i=0; i<len; i++) {
-              Serial.print(formatTempSensorID(&searchResult[i * TEMP_SENSOR_ID_BYTES]));
+              Serial.print(formatDS18B20_SensorID(&searchResult[i * DS18B20_SENSOR_ID_BYTES]));
               Serial.print(", ");
           }
           Serial.println();
@@ -36,12 +36,12 @@
         if (searchResultIndex >= searchResultLen) {
           return 0;
         }
-        uint8_t *sensorAddr = &searchResult[searchResultIndex * TEMP_SENSOR_ID_BYTES];
+        uint8_t *sensorAddr = &searchResult[searchResultIndex * DS18B20_SENSOR_ID_BYTES];
         searchResultIndex++;
-        memcpy(newAddr, sensorAddr, TEMP_SENSOR_ID_BYTES);
+        memcpy(newAddr, sensorAddr, DS18B20_SENSOR_ID_BYTES);
         #ifdef DEBUG_MOCK_ONE_WIRE
           Serial.print(F("DEBUG_MOCK_ONE_WIRE: search returns "));
-          Serial.println(formatTempSensorID(newAddr));
+          Serial.println(formatDS18B20_SensorID(newAddr));
         #endif
         return 1;
       }
@@ -58,7 +58,7 @@
       void _setReadResults(const int16_t *temperature100, uint8_t len) {
         readResultLen = min(len, MAX_PRECONFIGURED_TEMPERATURES);
         for(uint8_t i=0; i<readResultLen; i++) {
-          putTemperature(&readResult[i * TEMP_SENSOR_READOUT_BYTES], temperature100[i]);
+          putTemperature(&readResult[i * DS18B20_SENSOR_READOUT_BYTES], temperature100[i]);
         }
         readIndex = 0;
       }
@@ -69,7 +69,7 @@
        *  NOTE: Ensure that the declaration in OneWire.h has "virtual" inserted.
        */
       uint8_t read(void) { 
-        if (readIndex >= readResultLen * TEMP_SENSOR_READOUT_BYTES) {
+        if (readIndex >= readResultLen * DS18B20_SENSOR_READOUT_BYTES) {
           return 0;
         }
         return readResult[readIndex++];
@@ -79,7 +79,7 @@
       uint8_t *searchResult;
       uint8_t searchResultLen = 0;
       uint8_t searchResultIndex = 0;
-      uint8_t readResult[MAX_PRECONFIGURED_TEMPERATURES * TEMP_SENSOR_READOUT_BYTES];
+      uint8_t readResult[MAX_PRECONFIGURED_TEMPERATURES * DS18B20_SENSOR_READOUT_BYTES];
       uint8_t readResultLen = 0;
       uint8_t readIndex = 0;
 
@@ -98,16 +98,16 @@
         *p++ = 0x00;
         *p++ = 0x00;
         *p++ = 0x00;
-        *p++ = OneWire::crc8(buf, TEMP_SENSOR_READOUT_BYTES-1);
+        *p++ = OneWire::crc8(buf, DS18B20_SENSOR_READOUT_BYTES-1);
       }
       
-      String formatTempSensorID(uint8_t *id) {
-        char s[3*TEMP_SENSOR_ID_BYTES];
+      String formatDS18B20_SensorID(uint8_t *id) {
+        char s[3*DS18B20_SENSOR_ID_BYTES];
         uint8_t pos = 0;
-        for (uint8_t i=0; i<TEMP_SENSOR_ID_BYTES; i++) {
+        for (uint8_t i=0; i<DS18B20_SENSOR_ID_BYTES; i++) {
           sprintf(&s[pos], "%02X", id[i]);
           pos += 2;
-          if (i < TEMP_SENSOR_ID_BYTES - 1) {
+          if (i < DS18B20_SENSOR_ID_BYTES - 1) {
             s[pos++] = '-';
           }
         }
