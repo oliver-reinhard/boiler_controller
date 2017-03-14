@@ -225,12 +225,12 @@
       void swapTempSensorIDs();
 
       /*
-       * Clears the sensor IDs of water- and ambient-temperature sensors in the configuration parameters and saves the latter to EEPROM. 
+       * Clears the sensor IDs of water- and ambient-temperature sensors in the configuration parameters and saves the latter to persistent storage. 
        */
       void clearTempSensorIDs();
       
       /*
-       * Copies the sensor IDs of water- and ambient-temperature sensors of the the configuration parameters to the configuration parameters and saves the latter to EEPROM. 
+       * Copies the sensor IDs of water- and ambient-temperature sensors of the the configuration parameters to the configuration parameters and saves the latter to persistent storage. 
        * Sets the sensor status of one or both sensors to SENSOR_OK iff sensor status is SENSOR_ID_AUTO_ASSIGNED.
        * 
        * @return true if at lestt one ID was copied and status was changed.

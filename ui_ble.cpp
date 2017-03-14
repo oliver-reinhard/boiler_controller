@@ -35,7 +35,7 @@ const char STR_SVC_CONTROLLER[]           PROGMEM = "Controller";
 
 /* Status Characteristics */
 const char STR_CHAR_STATE[]               PROGMEM = "State";
-const char STR_CHAR_TIME_IN_STATE[]       PROGMEM = "Tine in State";
+const char STR_CHAR_TIME_IN_STATE[]       PROGMEM = "Time in State";
 const char STR_CHAR_TIME_HEATING[]        PROGMEM = "Time Heating";
 const char STR_CHAR_ACCEPTED_USER_CMDS[]  PROGMEM = "Accepted User Cmds";
 const char STR_CHAR_USER_REQUEST[]        PROGMEM = "User Request";
@@ -66,7 +66,7 @@ void deviceDisconnected(void) {
   #endif
 }
 
-void bleGattRX(int32_t cid, uint8_t data[], uint16_t len) {
+void bleGattRX(int32_t cid, uint8_t data[], uint16_t /*len*/) {
   #ifdef DEBUG_BLE_UI
     Serial.print( F("DEBUG_BLE_UI: Callback for "));
     Serial.print(cid);
@@ -126,6 +126,8 @@ void BLEUI::addCharacteristicChecked(const uint16_t uuid16, const uint8_t cid, u
   strncpy_P(buf, description, sizeof(buf));
   buf[sizeof(buf)-1] = '\0';
   uint8_t returnedCid = gatt.addCharacteristic(uuid16, properties, minLen, maxLen, datatype, buf);
+  //Serial.print("Expected cid="); Serial.print(cid);
+  //Serial.print(", returned cid="); Serial.println(returnedCid);
   // Check –– write_S_O_S WILL NEVER RETURN !
   returnedCid == cid ? (void)0 : write_S_O_S((reinterpret_cast<const __FlashStringHelper *>(description)), line);
 }

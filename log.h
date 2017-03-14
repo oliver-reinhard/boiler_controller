@@ -2,7 +2,7 @@
   #define BC_LOG_H_INCLUDED
 
   #include "config.h"
-  #include "src/log/Logging.h"
+  #include <CF_Logging.h>
 
   
   /*
@@ -13,8 +13,6 @@
   typedef enum {
     MSG_LOG_DATA_SIZE = 10   // Size of LogData subtype does not correspond to sizeof(LogData); subtype = [LogDataTypeEnum]
   } LogMessageEnum;
-  
-  #define LOG_DATA_PAYLOAD_SIZE 5
   
   typedef enum {
     LOG_DATA_TYPE_MESSAGE = 0,
@@ -28,8 +26,8 @@
    * LogDataType: LOG_DATA_TYPE_MESSAGE, "subtype" of LogData
    */
   struct LogMessageData {
-    MessageID id;
     int16_t params[2];
+    MessageID id;
   };
   
   typedef uint8_t Flags; // value logging
@@ -70,7 +68,7 @@
   
   class Log : public AbstractLog {
     public:
-      Log(uint16_t eepromOffset) : AbstractLog(eepromOffset) { };
+      Log(AbstractStore *store) : AbstractLog(store) { };
 
       /*
        * Log a message.

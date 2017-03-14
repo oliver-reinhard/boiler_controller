@@ -32,7 +32,7 @@
     
     class MockConfig : public ConfigParams {
       public:
-        LayoutVersion version()  { return EEPROM_LAYOUT_VERSION; }
+        MockConfig() : ConfigParams(NULL) { }
         void clear() { }
         void load()  { }
         void save()  { }

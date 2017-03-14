@@ -1,4 +1,5 @@
 #include "bc_setup.h"
+#include <CF_FRAM.h>
 #include "log.h"
 #include "control.h"
 #include "state.h"
@@ -42,8 +43,13 @@ typedef enum {
 /*
  * GLOBALS
  */
-ConfigParams configParams = ConfigParams();
-Log logger = Log(configParams.eepromSize()); 
+FRAMStore configStore = FRAMStore(sizeof(ConfigParams));
+FRAMStore logStore = FRAMStore(&configStore, 1024);
+//RAMStore configStore = RAMStore(sizeof(ConfigParams));
+//RAMStore logStore = RAMStore(1024);
+
+ConfigParams configParams = ConfigParams(&configStore);
+Log logger = Log(&logStore); 
 OperationalParams opParams;
 DS18B20TemperatureSensor *sensors[] = {&opParams.water, &opParams.ambient};
 OneWire oneWire = OneWire(ONE_WIRE_PIN);  // on pin 10 (a 4.7K pull-up resistor to +5V is necessary)
@@ -75,6 +81,13 @@ void setup() {
     Serial.println(F("Unit Testing."));
     
   #else
+    Serial.println(F("Starting up ..."));
+    bool connected = configStore.init();
+    if(!connected) {
+      // program halts, never returns:
+      write_S_O_S(F("FRAM not connected"), __LINE__);
+    }
+    
     logger.init();
     logger.logMessage(MSG_SYSTEM_INIT, 0, 0);
 
@@ -98,8 +111,8 @@ void setup() {
     
     context.op->request.clear();
     ui.setup();
+    Serial.println(F("... Ready."));
     
-    Serial.println(F("Starting."));
   #endif
  
 }
@@ -150,6 +163,7 @@ void loop() {
           // the user's command was chosen as the event with the highest priority
           
           if (context.op->request.event == EVENT_INFO) {
+    Serial.println(F("event == EVENT_INFO"));
             ui.provideUserInfo(&automaton);
           }
         }
@@ -243,7 +257,7 @@ void checkForStatusChange(ExecutionContext *context, BoilerStateAutomaton *autom
     notification.state = currentState;
     notification.acceptedUserCommands = automaton->acceptedUserCommands();
     #ifdef DEBUG_MAIN
-      Serial.println(F("DEBUG_MAIN: notify status case 2"));
+      Serial.println(F("DEBUG_MAIN: notify status case 1"));
     #endif
     notify |= NOTIFY_STATE;
     notify |= NOTIFY_TIME_IN_STATE;
@@ -251,7 +265,7 @@ void checkForStatusChange(ExecutionContext *context, BoilerStateAutomaton *autom
 
   if (now - notificationTimeMillis >= MAX_USER_NOTIFICATION_INTERVAL) {
     #ifdef DEBUG_MAIN
-      Serial.println(F("DEBUG_MAIN: notify status case 1"));
+      Serial.println(F("DEBUG_MAIN: notify status case 2"));
     #endif
     notify |= NOTIFY_TIME_IN_STATE;
     notify |= NOTIFY_TIME_TO_GO;

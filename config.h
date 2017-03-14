@@ -1,7 +1,7 @@
 #ifndef BC_CONFIG_H_INCLUDED
   #define BC_CONFIG_H_INCLUDED
   
-  #include "src/config/Configuration.h"
+  #include <CF_Configuration.h>
   #include "src/sensors/OneWireSensors.h"
   
   /*
@@ -46,7 +46,7 @@
   
   class ConfigParams : public AbstractConfigParams {
     public:
-      ConfigParams() : AbstractConfigParams(0L, CONFIG_PARAMS_VERSION) { };
+      ConfigParams(AbstractStore *store) : AbstractConfigParams(store, CONFIG_PARAMS_VERSION) { };
       
       TempSensorID waterTempSensorId;
       TempSensorID ambientTempSensorId;

@@ -33,10 +33,21 @@ const __FlashStringHelper *getConfigParamName(ConfigParamEnum literal) {
 
 #define MAX_FLOAT_STR_LEN 20
 
+#if defined(ARDUINO_SAMD_ZERO) || defined(ARDUINO_SAMD_MKR1000)
+// dtostrf is missing from AVR library for SAMD ...
+static char *dtostrf (double val, signed char width, unsigned char prec, char *sout) {
+  char fmt[20];
+  sprintf(fmt, "%%%d.%df", width, prec);
+  sprintf(sout, fmt, val);
+  return sout;
+}
+#endif
+
 char *formatFloat(float f, char s[]) {
   dtostrf((double)f, 6, 2, s); 
   return s;
 }
+
 
 #define MAX_INT_STR_LEN 8  // from 16-bit integer
 
@@ -253,14 +264,11 @@ void printError(const __FlashStringHelper *err) {
 
 
 char *readCommandLine(char buf[]) {
-  // fill buffer with 0's => always \0-terminated!
-  memset(buf, 0, CMD_LINE_BUF_SIZE);
-
   uint8_t count = 0;
   do {
     count += Serial.readBytes(&buf[count], CMD_LINE_BUF_SIZE);
     delay(2);
-  } while( (count < CMD_LINE_BUF_SIZE) && !(Serial.peek() < 0) );
+  } while( (count < CMD_LINE_BUF_SIZE) && Serial.available());
   #ifdef DEBUG_UI
     Serial.print(F("DEBUG_UI: read cmd line: '"));
     Serial.print(buf);
@@ -288,12 +296,14 @@ char *readCommandLine(char buf[]) {
 
       
 void SerialUI::readUserRequest() {
-  if( Serial.peek() < 0 ) {
+  if( ! Serial.available()) {
     return;
   }
   delay(2);
   
   char buf[CMD_LINE_BUF_SIZE+1];
+  // fill buffer with 0's => always \0-terminated!
+  memset(buf, 0, CMD_LINE_BUF_SIZE+1);
   char *cmdLine = readCommandLine(buf);
   
   UserRequest *request = &(context->op->request);
