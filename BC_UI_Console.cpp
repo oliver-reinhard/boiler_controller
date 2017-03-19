@@ -1,5 +1,5 @@
-#include "ui_ser.h"
-#include "config.h"
+#include <BC_Config.h>
+#include "BC_UI_Console.h"
 
 // #define DEBUG_UI
 
@@ -81,48 +81,6 @@ char *getConfigParamValue(ConfigParams *all, ConfigParamEnum p, char buf[]) {
       buf[0] = '\0';
       return buf;
   }
-}
-
-
-/*
- * STATES
- */
-const __FlashStringHelper *getStateName(StateEnum literal) {
-  switch(literal) {
-    case STATE_UNDEFINED: return F("Undef");
-    case STATE_SAME: return F("Same");
-    case STATE_INIT: return F("Init");
-    case STATE_SENSORS_NOK: return F("Sensors NOK");
-    case STATE_READY: return F("Ready");
-    case STATE_IDLE: return F("Idle");
-    case STATE_RECORDING: return F("Recording");
-    case STATE_STANDBY: return F("Standby");
-    case STATE_HEATING: return F("Heating");
-    case STATE_OVERHEATED: return F("Overheated");
-    default: return FP(STR_ILLEGAL);
-  }
-}
-
-/*
- * EVENTS
- */  
-const __FlashStringHelper *getEventName(EventEnum literal) {
-  switch(literal) {
-    case EVENT_NONE: return FP(STR_NONE);
-    case EVENT_READY: return F("Ready");
-    case EVENT_SENSORS_NOK: return F("Sensors NOK");
-    case EVENT_INFO: return F("Info");
-    case EVENT_CONFIG_MODIFY: return F("Config Modify");
-    case EVENT_CONFIG_RESET: return F("Config Reset");
-    case EVENT_REC_ON: return F("Rec On");
-    case EVENT_REC_OFF: return F("Rec Off");
-    case EVENT_HEAT_ON: return F("Heat On");
-    case EVENT_HEAT_OFF: return F("Heat Off");
-    case EVENT_HEAT_RESET: return F("Heat Reset");
-    case EVENT_TEMP_OVER: return F("Temp Over");
-    case EVENT_TEMP_OK: return F("Temp OK");
-    default: return FP(STR_ILLEGAL);
-  } 
 }
 
 
@@ -296,7 +254,7 @@ char *readCommandLine(char buf[]) {
 }
 
       
-void SerialUI::readUserRequest() {
+void ConsoleUI::readUserRequest() {
   if( ! Serial.available()) {
     return;
   }
@@ -380,7 +338,7 @@ void SerialUI::readUserRequest() {
     Serial.print(',');
     Serial.print(request->floatValue);
     Serial.print(',');
-    Serial.print(request->event);
+    Serial.print(request->event.id());
     Serial.println('}');
   #endif
 }
@@ -389,7 +347,7 @@ void SerialUI::readUserRequest() {
  * COMMAND EXECUTION
  */
 
-void SerialUI::commandExecuted(boolean success) {
+void ConsoleUI::commandExecuted(boolean success) {
   if (success) {
     Serial.println(F("* command ok."));
   } else {
@@ -437,11 +395,11 @@ void printLogEntry(LogEntry *e) {
         LogStateData data;
         memcpy(&data, &e->data, sizeof(LogStateData));
         Serial.print(F("S  "));
-        Serial.print(getStateName((StateEnum)data.previous));
+        Serial.print(States::findState((T_State_ID)data.previous).name());
         Serial.print(F(" -> ["));
-        Serial.print(getEventName((EventEnum)data.event));
+        Serial.print(Events::findEvent((T_Event_ID)data.event).name());
         Serial.print(F("] -> "));
-        Serial.println(getStateName((StateEnum)data.current));
+        Serial.println(States::findState((T_State_ID)data.current).name());
       }
       break;
       
@@ -463,7 +421,7 @@ void printLogEntry(LogEntry *e) {
   }
 }
       
-void SerialUI::provideUserInfo(BoilerStateAutomaton *automaton) {
+void ConsoleUI::provideUserInfo(BoilerStateAutomaton *automaton) {
   UserCommandEnum request = context->op->request.command;
   #ifdef DEBUG_UI
     Serial.print(F("DEBUG_UI: processing info request: 0x"));
@@ -494,7 +452,7 @@ void SerialUI::provideUserInfo(BoilerStateAutomaton *automaton) {
     
   } else if (request == CMD_INFO_STAT) {
     Serial.print(F("State: "));
-    Serial.print(getStateName(automaton->state()->id()));
+    Serial.print(automaton->state()->id().name());
     Serial.print(F(", Time in state [s]: "));
     Serial.println((millis() - op->currentStateStartMillis) / 1000L);
     
@@ -557,11 +515,11 @@ void SerialUI::provideUserInfo(BoilerStateAutomaton *automaton) {
 }
 
   
-void SerialUI::notifyStatusChange(StatusNotification *) {
+void ConsoleUI::notifyStatusChange(StatusNotification *) {
   Serial.println(F("* status notification"));
 }
 
-void SerialUI::notifyNewLogEntry(LogEntry) {
+void ConsoleUI::notifyNewLogEntry(LogEntry) {
   Serial.println(F("* new log entry"));
 }
 

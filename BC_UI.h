@@ -1,8 +1,8 @@
 #ifndef BOILER_UI_H_INCLUDED
   #define BOILER_UI_H_INCLUDED
 
-  #include "control.h"
-  #include "state.h"
+  #include <BC_Control.h>
+  #include <BC_State.h>
 
   typedef enum {
     NOTIFY_NONE = 0x0,
@@ -20,7 +20,7 @@
   struct StatusNotification {
     // the bits of notifyProperties tell which values have changed:
     NotifyProperties notifyProperties;
-    StateID state;
+    StateID state = STATE_UNDEFINED;
     UserCommands acceptedUserCommands;
     // time [s] since most recent transition to current state:
     TimeSeconds timeInState = 0L;
@@ -28,19 +28,20 @@
     TimeSeconds heatingTime = 0L;
     TimeSeconds timeToGo = UNDEFINED_TIME_SECONDS;
     DS18B20_StatusID waterSensorStatus = DS18B20_SENSOR_INITIALISING;
-    CF_Temperature waterTemp = CF_UNDEFINED_TEMPERATURE;
+    ACF_Temperature waterTemp = ACF_UNDEFINED_TEMPERATURE;
     DS18B20_StatusID ambientSensorStatus = DS18B20_SENSOR_INITIALISING;
-    CF_Temperature ambientTemp = CF_UNDEFINED_TEMPERATURE;
+    ACF_Temperature ambientTemp = ACF_UNDEFINED_TEMPERATURE;
   };
 
 
-  class NullUI : public UserFeedback {
+  class AbstractUI : public UserFeedback {
     public:
-      NullUI(ExecutionContext *context) {
+      AbstractUI() : UserFeedback() {}
+      
+      virtual void init(ExecutionContext *context) {
         this->context = context;
       }
       
-      virtual void setup() { }
       /*
        * Read one user request and store it in the context->op->request struct
        */

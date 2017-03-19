@@ -1,11 +1,11 @@
 #ifndef BC_UI_SER_H_INCLUDED
   #define BC_UI_SER_H_INCLUDED
 
-  #include "ui.h"
+  #include "BC_UI.h"
   
-  class SerialUI : public NullUI {
+  class ConsoleUI : public AbstractUI {
     public:
-      SerialUI(ExecutionContext *context) : NullUI(context) { }
+      ConsoleUI() : AbstractUI() { }
       
       void readUserRequest();
       

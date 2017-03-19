@@ -1,8 +1,8 @@
 #ifndef BC_UI_BLE_H_INCLUDED
   #define BC_UI_BLE_H_INCLUDED
 
-  #include "ui.h"
-  #include "Adafruit_BLEGatt.h"
+  #include "BC_UI.h"
+  #include <Adafruit_BLEGatt.h>
   #include <Adafruit_BluefruitLE_SPI.h>
   
   // ----------------------------------------------------------------------------------------------
@@ -18,12 +18,12 @@
   #define USER_CMD_PARAMETER_MAX_SIZE 8
   
   
-  class BLEUI : public NullUI {
+  class BLEUI : public AbstractUI {
     public:
       
-      BLEUI(ExecutionContext *context) : NullUI(context) { }
+      BLEUI() : AbstractUI() { }
       
-      void setup();
+      void init(ExecutionContext *context);
     
       void readUserRequest();
       

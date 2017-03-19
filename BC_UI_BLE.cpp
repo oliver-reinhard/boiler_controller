@@ -1,4 +1,4 @@
-#include "ui_ble.h"
+#include "BC_UI_BLE.h"
 
 #define DEBUG_BLE_MODULE false
 
@@ -88,8 +88,8 @@ void bleGattRX(int32_t cid, uint8_t data[], uint16_t /*len*/) {
       break;
     case TARGET_TEMP_CID:
       {
-        CF_Temperature targetTemp;
-        memcpy(&targetTemp, data, sizeof(CF_Temperature));
+        ACF_Temperature targetTemp;
+        memcpy(&targetTemp, data, sizeof(ACF_Temperature));
         #ifdef DEBUG_BLE_UI
           Serial.print(", target Temp = ");
           Serial.println(targetTemp);
@@ -132,7 +132,8 @@ void BLEUI::addCharacteristicChecked(const uint16_t uuid16, const uint8_t cid, u
   returnedCid == cid ? (void)0 : write_S_O_S((reinterpret_cast<const __FlashStringHelper *>(description)), line);
 }
 
-void BLEUI::setup() {
+void BLEUI::init(ExecutionContext *context) {
+  AbstractUI::init(context);
   
   bleContext = context; // this is a sin ... but the callbacks are static and global
   
@@ -158,7 +159,7 @@ void BLEUI::setup() {
   addServiceChecked(BC_CONTROLLER_SERVICE_UUID128, CONTROLLER_SID, STR_SVC_CONTROLLER, __LINE__);
 
   // status
-  addCharacteristicChecked(0x0001, STATE_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, sizeof(StateID), sizeof(StateID), BLE_DATATYPE_AUTO, STR_CHAR_STATE, __LINE__);
+  addCharacteristicChecked(0x0001, STATE_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, sizeof(T_State_ID), sizeof(T_State_ID), BLE_DATATYPE_AUTO, STR_CHAR_STATE, __LINE__);
   addCharacteristicChecked(0x0002, TIME_IN_STATE_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_TIME_IN_STATE, __LINE__);  // milliseconds
   addCharacteristicChecked(0x0003, TIME_HEATING_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_TIME_HEATING, __LINE__);  // milliseconds
   addCharacteristicChecked(0x0004, TIME_TO_GO_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_TIME_TO_GO, __LINE__);
@@ -168,7 +169,7 @@ void BLEUI::setup() {
   addCharacteristicChecked(0x0008, AMBIENT_SENSOR_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_AMBIENT_SENSOR, __LINE__);
   
   // configuration
-  addCharacteristicChecked(0x1000, TARGET_TEMP_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_WRITE,  sizeof(CF_Temperature), sizeof(CF_Temperature), BLE_DATATYPE_AUTO, STR_CHAR_TARGET_TEMP, __LINE__);
+  addCharacteristicChecked(0x1000, TARGET_TEMP_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_WRITE,  sizeof(ACF_Temperature), sizeof(ACF_Temperature), BLE_DATATYPE_AUTO, STR_CHAR_TARGET_TEMP, __LINE__);
   gatt.setChar(TARGET_TEMP_CID, context->config->targetTemp);
   
   // logs
@@ -216,7 +217,7 @@ void BLEUI::notifyStatusChange(StatusNotification *notification) {
   boolean notified = false;
 
   if (notification->notifyProperties & NOTIFY_STATE) {
-    gatt.setChar(STATE_CID,notification->state);
+    gatt.setChar(STATE_CID,notification->state.id());
     gatt.setChar(ACCEPTED_USER_CMDS_CID, notification->acceptedUserCommands);
     notified = true;
   }
