@@ -16,17 +16,17 @@
 // 
 // #define ERASE_CONFIG
 
-#define CONTROL_CYCLE_DURATION          5000L // [ms]
+#define SENSOR_CYCLE_DURATION           5000L // [ms] duration of sensor-management cycle: init; read; evaluate; wait; init ...
 #define TEMP_SENSOR_READOUT_WAIT         800L // [ms] = 750 ms + safety margin
 #define MIN_USER_NOTIFICATION_INTERVAL  1000L // [ms] (notification only happens if relevant changes occurred)
 #define MAX_USER_NOTIFICATION_INTERVAL 10000L // [ms] notify user after this period at the latest
 #define NOTIFICATION_TEMP_DELTA           20  // [°C * 100]
 
-enum class CycleStage {
-  STAGE_0 = 0,
-  STAGE_1 = 1,
-  STAGE_2 = 2,
-  STAGE_3 = 3
+enum class SensorManagementCycle {
+  STAGE_0 = 0,  // init sensor readout
+  STAGE_1 = 1,  // complete sensor readout
+  STAGE_2 = 2,  // log values
+  STAGE_3 = 3   // idle (i.e. no sensor management) until control-cycle timeout and return to STAGE_0
 };
 
 
@@ -91,30 +91,31 @@ class BC_Controller {
       
       ui->init(&context);
     }  
+    
 
     void loop() {
-      static TimeMills controlCycleStart = 0L;
-      static CycleStage cycleStage = CycleStage::STAGE_0;
-      static TimeMills lastUserNotificationCheck = 0L;
+      static TimeMillis sensorCycleStart = 0L;
+      static SensorManagementCycle sensorCycle = SensorManagementCycle::STAGE_0;
+      static TimeMillis lastUserNotificationCheck = 0L;
       
-      TimeMills now = millis();
-      TimeMills elapsed = now - controlCycleStart;
-      if (controlCycleStart == 0L || elapsed >= CONTROL_CYCLE_DURATION) {
-        controlCycleStart = now;
+      TimeMillis now = millis();
+      TimeMillis elapsed = now - sensorCycleStart;
+      if (sensorCycleStart == 0L || elapsed >= SENSOR_CYCLE_DURATION) {
+        sensorCycleStart = now;
         elapsed = 0L;
-        cycleStage = CycleStage::STAGE_0;
+        sensorCycle = SensorManagementCycle::STAGE_0;
       }
     
-      if (cycleStage == CycleStage::STAGE_0 && elapsed == 0L) {
-        cycleStage = CycleStage::STAGE_1;
+      if (sensorCycle == SensorManagementCycle::STAGE_0 && elapsed == 0L) {
+        sensorCycle = SensorManagementCycle::STAGE_1;
         context.control->initSensorReadout();
         
-      } else if (cycleStage == CycleStage::STAGE_1 && elapsed >= TEMP_SENSOR_READOUT_WAIT) {
-        cycleStage = CycleStage::STAGE_2;
+      } else if (sensorCycle == SensorManagementCycle::STAGE_1 && elapsed >= TEMP_SENSOR_READOUT_WAIT) {
+        sensorCycle = SensorManagementCycle::STAGE_2;
         context.control->completeSensorReadout();
         
-      } else if (cycleStage == CycleStage::STAGE_2) {
-        cycleStage = CycleStage::STAGE_3;
+      } else if (sensorCycle == SensorManagementCycle::STAGE_2) {
+        sensorCycle = SensorManagementCycle::STAGE_3;
         logTemperatureValues(&context);
       }
     
@@ -188,7 +189,7 @@ class BC_Controller {
      */
     void logTemperatureValues(ExecutionContext *context) {
       if (context->op->loggingValues) {
-        TimeMills time = millis();
+        TimeMillis time = millis();
     
         if (time - context->op->water.lastLoggedTime > context->config->logTimeDelta * 1000L || time - context->op->ambient.lastLoggedTime > context->config->logTimeDelta * 1000L) {
           boolean logValuesNow = false;
@@ -224,9 +225,9 @@ class BC_Controller {
     }
     
     
-    void checkForStatusChange(ExecutionContext *context, BoilerStateAutomaton *automaton, TimeMills now) {
+    void checkForStatusChange(ExecutionContext *context, BoilerStateAutomaton *automaton, TimeMillis now) {
       // timepoint [ms] when this (= most recent) notification was sent to user:
-      static TimeMills notificationTimeMillis;
+      static TimeMillis notificationTimeMillis;
       static StatusNotification notification;
     
       NotifyProperties notify = NOTIFY_NONE;
@@ -274,8 +275,7 @@ class BC_Controller {
       }
     
       if (notify & NOTIFY_TIME_IN_STATE) {
-        // currentStateStartMillis is set at state change which can be later than when 'now' was set => negative time:
-        notification.timeInState = now < context->op->currentStateStartMillis ? 0L : (now - context->op->currentStateStartMillis) / 1000L;
+        notification.timeInState = automaton->inStateMillis() / 1000L;
         notificationTimeMillis = now;
         
         TimeSeconds heatingTotalTime = heatingTotalMillis(context->op) / 1000L;
