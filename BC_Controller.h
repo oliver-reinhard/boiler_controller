@@ -1,4 +1,5 @@
 #include <ACF_FRAM.h>
+#include <ACF_Messages.h>
 #include <BC_Control.h>
 #include "BC_UI.h"
 
@@ -65,7 +66,7 @@ class BC_Controller {
       }
       
       logger.init();
-      logger.logMessage(MSG_SYSTEM_INIT, 0, 0);
+      logger.logMessage(static_cast<T_Message_ID>(ACF_Msg::SYSTEM_INIT), 0, 0);
     
       // Erease the config params (do this e.g. after the physical layout has changed)
       #ifdef ERASE_CONFIG

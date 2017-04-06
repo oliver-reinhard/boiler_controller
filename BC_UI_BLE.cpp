@@ -9,7 +9,7 @@ const char BC_DEVICE_NAME[] = "Boiler Controller";
 const uint8_t BC_CONTROLLER_SERVICE_UUID128[] = { 0x4c, 0xef, 0xdd, 0x58, 0xcb, 0x95, 0x44, 0x50, 0x90, 0xfb, 0xf4, 0x04, 0xdc, 0x20, 0x2f, 0x7c};
 ///const uint16_t BC_CONTROLLER_SERVICE_SHORT_UUID16 = 0x4cef;
 
-const int8_t USER_CMD_MAX_SIZE = sizeof(UserCommandID) + USER_CMD_PARAMETER_MAX_SIZE;
+const int8_t USER_CMD_MAX_SIZE = sizeof(T_UserCommand_ID) + USER_CMD_PARAMETER_MAX_SIZE;
 
 /** Service ID */
 const int8_t CONTROLLER_SID = 1;
@@ -77,8 +77,8 @@ void bleGattRX(int32_t cid, uint8_t data[], uint16_t /*len*/) {
   switch(cid) {
     case USER_REQUEST_CID: 
       {
-        UserCommandID cmd;
-        memcpy(&cmd, data, sizeof(UserCommandID));
+        T_UserCommand_ID cmd;
+        memcpy(&cmd, data, sizeof(T_UserCommand_ID));
         #ifdef DEBUG_BLE_UI
           Serial.print(", cmd = ");
           Serial.println(cmd);
@@ -94,7 +94,7 @@ void bleGattRX(int32_t cid, uint8_t data[], uint16_t /*len*/) {
           Serial.print(", target Temp = ");
           Serial.println(targetTemp);
         #endif
-        bleContext->op->request.setParamValue(PARAM_TARGET_TEMP, (int32_t) targetTemp);
+        bleContext->op->request.setParamValue(ConfigParam::TARGET_TEMP, (int32_t) targetTemp);
       }
       break;
     default:
@@ -164,7 +164,7 @@ void BLEUI::init(ExecutionContext *context) {
   addCharacteristicChecked(0x0003, TIME_HEATING_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_TIME_HEATING, __LINE__);  // milliseconds
   addCharacteristicChecked(0x0004, TIME_TO_GO_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_TIME_TO_GO, __LINE__);
   addCharacteristicChecked(0x0005, ACCEPTED_USER_CMDS_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, sizeof(UserCommands), sizeof(UserCommands), BLE_DATATYPE_AUTO, STR_CHAR_ACCEPTED_USER_CMDS, __LINE__);
-  addCharacteristicChecked(0x0006, USER_REQUEST_CID, GATT_CHARS_PROPERTIES_WRITE,  sizeof(UserCommandID), USER_CMD_MAX_SIZE, BLE_DATATYPE_AUTO, STR_CHAR_USER_REQUEST, __LINE__); 
+  addCharacteristicChecked(0x0006, USER_REQUEST_CID, GATT_CHARS_PROPERTIES_WRITE,  sizeof(T_UserCommand_ID), USER_CMD_MAX_SIZE, BLE_DATATYPE_AUTO, STR_CHAR_USER_REQUEST, __LINE__); 
   addCharacteristicChecked(0x0007, WATER_SENSOR_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_WATER_SENSOR, __LINE__);
   addCharacteristicChecked(0x0008, AMBIENT_SENSOR_CID, GATT_CHARS_PROPERTIES_READ | GATT_CHARS_PROPERTIES_NOTIFY, 4, 4, BLE_DATATYPE_AUTO, STR_CHAR_AMBIENT_SENSOR, __LINE__);
   

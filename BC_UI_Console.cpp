@@ -16,17 +16,17 @@ const char STR_ILLEGAL[] PROGMEM = "Illegal";
 /*
  * CONFIG PARAM NAMES
  */
-const __FlashStringHelper *getConfigParamName(ConfigParamEnum literal) {
+const __FlashStringHelper *getConfigParamName(ConfigParam literal) {
   switch(literal) {
-    case PARAM_TARGET_TEMP: return F("Target Temp");
-    case PARAM_WATER_TEMP_SENSOR_ID: return F("Water Temp Sensor ID");
-    case PARAM_AMBIENT_TEMP_SENSOR_ID: return F("Ambient Temp Sensor ID");
-    case PARAM_HEATER_CUT_OUT_WATER_TEMP: return F("Heater Cut-out Temp");
-    case PARAM_HEATER_BACK_OK_WATER_TEMP: return F("Heater Back-ok Temp");
-    case PARAM_LOG_TEMP_DELTA: return F("Log Temp Delta");
-    case PARAM_LOG_TIME_DELTA: return F("Log Time Delta [s]");
-    case PARAM_TANK_CAPACITY: return F("Tank Capacity [ml]");
-    case PARAM_HEATER_POWER: return F("Heater Power [W]");
+    case ConfigParam::TARGET_TEMP: return F("Target Temp");
+    case ConfigParam::WATER_TEMP_SENSOR_ID: return F("Water Temp Sensor ID");
+    case ConfigParam::AMBIENT_TEMP_SENSOR_ID: return F("Ambient Temp Sensor ID");
+    case ConfigParam::HEATER_CUT_OUT_WATER_TEMP: return F("Heater Cut-out Temp");
+    case ConfigParam::HEATER_BACK_OK_WATER_TEMP: return F("Heater Back-ok Temp");
+    case ConfigParam::LOG_TEMP_DELTA: return F("Log Temp Delta");
+    case ConfigParam::LOG_TIME_DELTA: return F("Log Time Delta [s]");
+    case ConfigParam::TANK_CAPACITY: return F("Tank Capacity [ml]");
+    case ConfigParam::HEATER_POWER: return F("Heater Power [W]");
     default: return F("Undef");
   }
 }
@@ -57,25 +57,25 @@ char *formatInt(uint16_t i, char s[]) {
   return s;
 }
 
-char *getConfigParamValue(ConfigParams *all, ConfigParamEnum p, char buf[]) {
+char *getConfigParamValue(ConfigParams *all, ConfigParam p, char buf[]) {
   switch(p) {
-    case PARAM_TARGET_TEMP: 
+    case ConfigParam::TARGET_TEMP: 
       return formatTemperature(all->targetTemp, buf);
-    case PARAM_WATER_TEMP_SENSOR_ID: 
+    case ConfigParam::WATER_TEMP_SENSOR_ID: 
       return formatDS18B20_SensorID(all->waterTempSensorId, buf);
-    case PARAM_AMBIENT_TEMP_SENSOR_ID: 
+    case ConfigParam::AMBIENT_TEMP_SENSOR_ID: 
       return formatDS18B20_SensorID(all->ambientTempSensorId, buf);
-    case PARAM_HEATER_CUT_OUT_WATER_TEMP: 
+    case ConfigParam::HEATER_CUT_OUT_WATER_TEMP: 
       return formatTemperature(all->heaterCutOutWaterTemp, buf);
-    case PARAM_HEATER_BACK_OK_WATER_TEMP: 
+    case ConfigParam::HEATER_BACK_OK_WATER_TEMP: 
       return formatTemperature(all->heaterBackOkWaterTemp, buf);
-    case PARAM_LOG_TEMP_DELTA: 
+    case ConfigParam::LOG_TEMP_DELTA: 
       return formatTemperature(all->logTempDelta, buf);
-    case PARAM_LOG_TIME_DELTA:
+    case ConfigParam::LOG_TIME_DELTA:
       return formatInt(all->logTimeDelta, buf);
-    case PARAM_TANK_CAPACITY:
+    case ConfigParam::TANK_CAPACITY:
       return formatFloat(all->tankCapacity, buf);
-    case PARAM_HEATER_POWER:
+    case ConfigParam::HEATER_POWER:
       return formatFloat(all->heaterPower, buf);
     default: 
       buf[0] = '\0';
@@ -299,16 +299,16 @@ void ConsoleUI::readUserRequest() {
     // determine length of config param id (=number):
     uint8_t len = strspn(args, INT_CHARS);
     args[len] = '\0';
-    UserCommandID id = atoi(args);
+    T_UserCommand_ID id = atoi(args);
     char *paramValue = &args[len+1];
 
     if (id < NUM_CONFIG_PARAMS) {
-      ConfigParamEnum param = (ConfigParamEnum)id;
-      ConfigParamTypeEnum type = context->config->paramType(param);
+      ConfigParam param = ConfigParam(id);
+      ConfigParamType type = context->config->paramType(param);
       request->param = param;
-      if (type == PARAM_TYPE_TEMPERATURE) {
+      if (type == ConfigParamType::TEMPERATURE) {
         request->intValue = atoi(paramValue);
-      } else if (type == PARAM_TYPE_FLOAT) {
+      } else if (type == ConfigParamType::FLOAT) {
         request->floatValue = atof(paramValue);
       } else {
         printError(F("Illegal value"));
@@ -360,9 +360,9 @@ void printLogEntry(LogEntry *e) {
   char buf[30];
   Serial.print(formatTimestamp(e->timestamp, buf));
   Serial.print("  ");
-  LogDataTypeEnum type = (LogDataTypeEnum)e->type;
+  LogDataType type = LogDataType(e->type);
   switch (type) {
-    case LOG_DATA_TYPE_MESSAGE:
+    case LogDataType::MESSAGE:
       {
         LogMessageData data;
         memcpy(&data, &e->data, sizeof(LogMessageData));
@@ -375,7 +375,7 @@ void printLogEntry(LogEntry *e) {
       }
       break;
       
-    case LOG_DATA_TYPE_VALUES:
+    case LogDataType::VALUES:
       {
         LogValuesData data;
         memcpy(&data, &(e->data), sizeof(LogValuesData));
@@ -390,7 +390,7 @@ void printLogEntry(LogEntry *e) {
       }
       break;
       
-    case LOG_DATA_TYPE_STATE:
+    case LogDataType::STATE:
       {
         LogStateData data;
         memcpy(&data, &e->data, sizeof(LogStateData));
@@ -403,12 +403,12 @@ void printLogEntry(LogEntry *e) {
       }
       break;
       
-    case LOG_DATA_TYPE_CONFIG:
+    case LogDataType::CONFIG:
       {
         LogConfigParamData data;
         memcpy(&data, &e->data, sizeof(LogConfigParamData));
         Serial.print(F("C  param:")); 
-        ConfigParamEnum param = (ConfigParamEnum) data.id;
+        ConfigParam param = ConfigParam(data.id);
         Serial.print(getConfigParamName(param));
         Serial.print(F(" = "));
         Serial.println(formatFloat(data.newValue, buf));  // line uses 1 KByte without the formatFloat!
@@ -502,10 +502,10 @@ void ConsoleUI::provideUserInfo(BoilerStateAutomaton *automaton) {
     }
     
   } else if (request == CMD_INFO_CONFIG) {
-    for(uint8_t i=0; i<NUM_CONFIG_PARAMS; i++) {
-      Serial.print(i);
+    for(uint8_t id=1; id<=NUM_CONFIG_PARAMS; id++) {
+      Serial.print(id);
       Serial.print(F(" - "));
-      ConfigParamEnum p = (ConfigParamEnum) i;
+      ConfigParam p = ConfigParam(id);
       Serial.print(getConfigParamName(p));
       Serial.print(F(": "));
       Serial.println(getConfigParamValue(context->config, p, buf));

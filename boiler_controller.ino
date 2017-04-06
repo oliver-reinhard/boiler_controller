@@ -1,7 +1,7 @@
 #include "BC_Controller.h"
 
 // Uncomment AT MOST ONE (!) of the following lines:
-   #define BLE_UI
+  #define BLE_UI
   //#define CONSOLE_UI
 
 // Comment the following line to prevent waiting for the serial connection:
